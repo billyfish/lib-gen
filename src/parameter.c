@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "debugging_utils.h"
+
 #include "memory.h"
 #include "parameter.h"
 
@@ -13,15 +14,39 @@ static BOOL SetParameterValue (char **param_value_ss, const char *start_p, const
 /**************************/
 
 
-BOOL FillInParameter (struct Parameter *param_p, const char *start_p, const char *end_p)
+static BOOL IsParameterFunctionPointer (const char *start_p, const char *end_p);
+
+static const char *ScrollPastWhiteSpace (const char *text_p, const char * const bounds_p);
+
+static const char *ScrollPastWhiteSpace (const char *text_p, const char * const bounds_p)
 {
-	BOOL success_flag = FALSE;
+	BOOL loop_flag = TRUE;
+	const int inc = (text_p < bounds_p) ? 1 : -1;
+	const char *res_p = NULL;
 
-	/* 
-		After trimming each end, the param name should start after the final space. It may
-		be preceeded by a dereferencer such as * or &. Or it could be a function pointer
-	*/
+	while (loop_flag)
+		{
+			if (text_p == bounds_p)
+				{
+					loop_flag = FALSE;
+				}
+			else if (isspace (*text_p))
+				{
+					text_p += inc; 
+				}
+			else
+				{
+					res_p = text_p;
+					loop_flag = FALSE;
+				}
+		}
 
+	return res_p;
+}
+
+
+static BOOL IsParameterFunctionPointer (const char *start_p, const char *end_p)
+{
 	const char *data_p = start_p;
 	BOOL is_param_function_pointer_flag = FALSE;
 
@@ -47,27 +72,51 @@ BOOL FillInParameter (struct Parameter *param_p, const char *start_p, const char
 
 		}		/* while (data_p && (data_p < end_p)) */ 
 
+	return is_param_function_pointer_flag;
+}
+
+BOOL FillInParameter (struct Parameter *param_p, const char *start_p, const char *end_p)
+{
+	BOOL success_flag = FALSE;
+
+	BOOL is_param_function_pointer_flag = IsParameterFunctionPointer (start_p, end_p);
+
+
+	/* 
+		After trimming each end, the param name should start after the final space. It may
+		be preceeded by a dereferencer such as * or &. Or it could be a function pointer
+	*/
+
+
 
 	if (is_param_function_pointer_flag)
 		{
+			DB (KPRINTF ("%s %ld - \"%s\" is a function pointer\n", __FILE__, __LINE__, start_p));		
 
 		}
 	else
 		{
 			BOOL loop_flag = TRUE;
-			data_p = (char *) end_p;
+			BOOL found_name_flag = FALSE;
+			const char *data_p = end_p;
 
-
-			while (loop_flag)
+			/* scroll to the start of the param name */
+			while (loop_flag && !found_name_flag)
 				{
 					if (isspace (*data_p))
 						{
-							loop_flag = FALSE;
+							/* scroll through any whitespace */
+							data_p = ScrollPastWhiteSpace (data_p, start_p);
+							
+							if (data_p)
+								{
+									found_name_flag = TRUE;
+								}
 						}
 					else if (*data_p == '*')
 						{
-							++ data_p;
-							loop_flag = FALSE;
+							found_name_flag = TRUE;
+
 						}
 					else
 						{
@@ -76,23 +125,34 @@ BOOL FillInParameter (struct Parameter *param_p, const char *start_p, const char
 						}
 
 				}		/* while (loop_flag) */
-			
+
+					
 			DB (KPRINTF ("%s %ld -  data_p: \"%s\"\n", __FILE__, __LINE__, data_p));		
 			DB (KPRINTF ("%s %ld -  start: \"%s\"\n", __FILE__, __LINE__, start_p));
 			DB (KPRINTF ("%s %ld -  end: \"%s\"\n", __FILE__, __LINE__, end_p));		
-						
-			if (data_p != (char *) start_p)
+			
+			if (found_name_flag)
 				{
-					if (SetParameterName (param_p, start_p, data_p))
+					if (SetParameterType (param_p, start_p, data_p))
 						{
-							if (SetParameterType (param_p, data_p + 1, end_p))
+							/* scroll to the first char of the name */
+							++ data_p;
+
+							if (data_p)
 								{
-									DB (KPRINTF ("%s %ld - param type: \"%s\" name: \"%s\" \n", __FILE__, __LINE__, param_p -> pa_type_s, param_p -> pa_name_s));		
+									if (SetParameterName (param_p, data_p, end_p))
+										{
+											DB (KPRINTF ("%s %ld - param type: \"%s\" name: \"%s\" \n", __FILE__, __LINE__, param_p -> pa_type_s, param_p -> pa_name_s));		
 								
-									success_flag = TRUE;
+											success_flag = TRUE;
+										}
+
 								}
+
 						}
+
 				}
+
 		}
 
 	return success_flag;

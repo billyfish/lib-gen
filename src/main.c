@@ -5,6 +5,7 @@
 
 #include "memory.h"
 #include "parameter.h"
+
 #include "debugging_utils.h"
 
 /**************************************/
@@ -42,6 +43,7 @@ int main (int argc, char *argv [])
 	UnitTest ("int *GetAddress (const int **ptr, const int num);", out_f);
 	UnitTest ("struct Test *GetTest (void);", out_f);
 	UnitTest ("void SetTest (struct Test *test_p, int num);", out_f);
+	UnitTest ("void SetFunction (int (*test_fn) (int num));", out_f);
 
 	return 0;
 }
@@ -139,7 +141,20 @@ struct ParameterArray *GetFunctionArguments (const char *function_s)
 									
 									++ param_p;
 									start_p = end_p + 1;
-									end_p = strchr (start_p, ',');
+
+									while (start_p && isspace (*start_p))
+										{
+											++ start_p;
+										}
+
+									if (start_p)
+										{
+											end_p = strchr (start_p, ',');
+										}
+									else
+										{
+											end_p = NULL;
+										}
 								}
 							else
 								{
