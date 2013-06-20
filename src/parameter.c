@@ -1,6 +1,7 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "debugging_utils.h"
 #include "memory.h"
 #include "parameter.h"
 
@@ -65,6 +66,7 @@ BOOL FillInParameter (struct Parameter *param_p, const char *start_p, const char
 						}
 					else if (*data_p == '*')
 						{
+							++ data_p;
 							loop_flag = FALSE;
 						}
 					else
@@ -75,12 +77,18 @@ BOOL FillInParameter (struct Parameter *param_p, const char *start_p, const char
 
 				}		/* while (loop_flag) */
 			
+			DB (KPRINTF ("%s %ld -  data_p: \"%s\"\n", __FILE__, __LINE__, data_p));		
+			DB (KPRINTF ("%s %ld -  start: \"%s\"\n", __FILE__, __LINE__, start_p));
+			DB (KPRINTF ("%s %ld -  end: \"%s\"\n", __FILE__, __LINE__, end_p));		
+						
 			if (data_p != (char *) start_p)
 				{
 					if (SetParameterName (param_p, start_p, data_p))
 						{
 							if (SetParameterType (param_p, data_p + 1, end_p))
 								{
+									DB (KPRINTF ("%s %ld - param type: \"%s\" name: \"%s\" \n", __FILE__, __LINE__, param_p -> pa_type_s, param_p -> pa_name_s));		
+								
 									success_flag = TRUE;
 								}
 						}
@@ -238,6 +246,8 @@ static BOOL SetParameterValue (char **param_value_ss, const char *start_p, const
 			strncpy (copy_s, start_p, l);
 			* (copy_s + l) = '\0';
 
+			DB (KPRINTF ("%s %ld -  setting param value to: \"%s\"\n", __FILE__, __LINE__, copy_s));	
+
 			*param_value_ss = copy_s;
 
 			success_flag = TRUE;
@@ -280,7 +290,7 @@ BOOL PrintParameterArray (FILE *out_f, const struct ParameterArray * const param
 	int i = params_p -> pa_num_params;
 	const struct Parameter *param_p = params_p -> pa_params_p;
 	
-	fprintf (out_f, "%ld: ", i);
+	fprintf (out_f, "%d: ", i);
 
 	for ( ; i > 0; -- i, ++ param_p)
 		{

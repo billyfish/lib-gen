@@ -5,6 +5,7 @@
 
 #include "memory.h"
 #include "parameter.h"
+#include "debugging_utils.h"
 
 /**************************************/
 /************ PROTOTYPES **************/
@@ -34,7 +35,7 @@ void UnitTest (const char * const prototype_s, FILE *out_f);
 
 int main (int argc, char *argv [])
 {
-	struct ParameterArray *params_p = NULL;
+//	struct ParameterArray *params_p = NULL;
 	FILE *out_f = stdout;
 
 	UnitTest ("int main (int argc, char **argv);", out_f);
@@ -125,10 +126,17 @@ struct ParameterArray *GetFunctionArguments (const char *function_s)
 					const char *end_p = strchr (start_p, ',');
 					BOOL success_flag = TRUE;
 
+					DB (KPRINTF ("%s %ld -  start: \"%s\"\n", __FILE__, __LINE__, start_p));
+					DB (KPRINTF ("%s %ld -  end: \"%s\"\n", __FILE__, __LINE__, end_p));		
+					
 					while ((end_p != NULL) && (success_flag == TRUE))
 						{
 							if (FillInParameter (param_p, start_p + 1, end_p))
 								{
+									printf (">>> param: ");
+									PrintParameter (stdout, param_p);
+									printf ("\n");
+									
 									++ param_p;
 									start_p = end_p + 1;
 									end_p = strchr (start_p, ',');
@@ -142,7 +150,7 @@ struct ParameterArray *GetFunctionArguments (const char *function_s)
 					if (success_flag)
 						{
 							/* now we have the final param left to do */
-							end_p = closing_bracket_p - 1;
+							end_p = closing_bracket_p;
 							success_flag = FillInParameter (param_p, start_p, end_p);
 
 							return params_p;
