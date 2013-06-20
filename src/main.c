@@ -10,7 +10,9 @@
 /************ PROTOTYPES **************/
 /**************************************/
 
-char *GetFunctionArguments (const char *function_s);
+struct ParameterArray *GetFunctionArguments (const char *function_s);
+
+void UnitTest (const char * const prototype_s, FILE *out_f);
 
 /************************************************/
 
@@ -32,12 +34,36 @@ char *GetFunctionArguments (const char *function_s);
 
 int main (int argc, char *argv [])
 {
+	struct ParameterArray *params_p = NULL;
+	FILE *out_f = stdout;
+
+	UnitTest ("int main (int argc, char **argv);", out_f);
+	UnitTest ("int *GetAddress (const int **ptr, const int num);", out_f);
+	UnitTest ("struct Test *GetTest (void);", out_f);
+	UnitTest ("void SetTest (struct Test *test_p, int num);", out_f);
 
 	return 0;
 }
 
 
-char *GetFunctionArguments (const char *function_s)
+void UnitTest (const char * const prototype_s, FILE *out_f)
+{
+	struct ParameterArray *params_p = NULL;
+
+	if ((params_p = GetFunctionArguments (prototype_s)) != NULL)
+		{
+			PrintParameterArray (out_f, params_p);						
+			fprintf (out_f, "\n");
+			FreeParameterArray (params_p);
+		}
+	else
+		{
+			fprintf (out_f, "No match for \"%s\"\n", prototype_s);
+		}
+}
+
+
+struct ParameterArray *GetFunctionArguments (const char *function_s)
 {
 	/* find the end of method */
 	const char *closing_bracket_p = strstr (function_s, ");");
@@ -101,7 +127,7 @@ char *GetFunctionArguments (const char *function_s)
 
 					while ((end_p != NULL) && (success_flag == TRUE))
 						{
-							if (FillInParameter (param_p, start_p, end_p))
+							if (FillInParameter (param_p, start_p + 1, end_p))
 								{
 									++ param_p;
 									start_p = end_p + 1;
@@ -118,6 +144,8 @@ char *GetFunctionArguments (const char *function_s)
 							/* now we have the final param left to do */
 							end_p = closing_bracket_p - 1;
 							success_flag = FillInParameter (param_p, start_p, end_p);
+
+							return params_p;
 						}
 
 				}		/* if (params_p) */

@@ -5,6 +5,13 @@
 #include "parameter.h"
 
 
+/**************************/
+
+static BOOL SetParameterValue (char **param_value_ss, const char *start_p, const char *end_p);
+
+/**************************/
+
+
 BOOL FillInParameter (struct Parameter *param_p, const char *start_p, const char *end_p)
 {
 	BOOL success_flag = FALSE;
@@ -21,13 +28,22 @@ BOOL FillInParameter (struct Parameter *param_p, const char *start_p, const char
 		{
 			data_p = strchr (data_p, '(');
 
-			if (data_p && (* (data_p + 1) == '*'))
+			if (data_p)
 				{
-					is_param_function_pointer_flag = TRUE;
+					if (* (data_p + 1) == '*')
+						{
+							is_param_function_pointer_flag = TRUE;
 					
-					/* Force exit from loop */
-					data_p = NULL;
-				}
+							/* Force exit from loop */
+							data_p = NULL;
+						}
+					else
+						{
+							++ data_p;
+						}
+
+				}		/* if (data_p) */
+
 		}		/* while (data_p && (data_p < end_p)) */ 
 
 
@@ -37,8 +53,8 @@ BOOL FillInParameter (struct Parameter *param_p, const char *start_p, const char
 		}
 	else
 		{
-			BOOL loop_flag = FALSE;
-			data_p = end_p;
+			BOOL loop_flag = TRUE;
+			data_p = (char *) end_p;
 
 
 			while (loop_flag)
@@ -59,9 +75,16 @@ BOOL FillInParameter (struct Parameter *param_p, const char *start_p, const char
 
 				}		/* while (loop_flag) */
 			
-
-
-
+			if (data_p != (char *) start_p)
+				{
+					if (SetParameterName (param_p, start_p, data_p))
+						{
+							if (SetParameterType (param_p, data_p + 1, end_p))
+								{
+									success_flag = TRUE;
+								}
+						}
+				}
 		}
 
 	return success_flag;
@@ -124,7 +147,7 @@ struct Parameter *AllocateParameter (const char *name_s, const char *type_s)
 
 			if (name_s)
 				{
-					if (!SetParameterName (param_p, name_s))
+					if (!SetParameterName (param_p, name_s, NULL))
 						{
 							success_flag = FALSE;
 						}
@@ -134,7 +157,7 @@ struct Parameter *AllocateParameter (const char *name_s, const char *type_s)
 				{
 					if (type_s)
 						{
-							if (!SetParameterType (param_p, type_s))
+							if (!SetParameterType (param_p, type_s, NULL))
 								{
 									success_flag = FALSE;
 								}
@@ -176,41 +199,47 @@ void ClearParameter (struct Parameter *param_p)
 }
 
 
-BOOL SetParameterName (struct Parameter *param_p, const char *name_s)
+BOOL SetParameterName (struct Parameter *param_p, const char *start_p, const char *end_p)
 {
-	BOOL success_flag = FALSE;
-	const size_t l = strlen (name_s);
-	char *copied_name_s = (char *) AllocMemory (l + 1);
-
-	if (copied_name_s)
-		{
-			if (param_p -> pa_type_s)
-				{
-					FreeMemory (param_p -> pa_type_s);
-				}
-
-			strcpy (copied_name_s, name_s);
-			success_flag = TRUE;
-		}
-
-	return success_flag;
+	return SetParameterValue (& (param_p -> pa_name_s), start_p, end_p);
 }
 
 
-BOOL SetParameterType (struct Parameter *param_p, const char *type_s)
+BOOL SetParameterType (struct Parameter *param_p, const char *start_p, const char *end_p)
+{
+	return SetParameterValue (& (param_p -> pa_type_s), start_p, end_p);
+}
+
+
+static BOOL SetParameterValue (char **param_value_ss, const char *start_p, const char *end_p)
 {
 	BOOL success_flag = FALSE;
-	const size_t l = strlen (type_s);
-	char *copied_type_s = (char *) AllocMemory (l + 1);
+	size_t l;
+	char *copy_s = NULL;
 
-	if (copied_type_s)
+	if (end_p)
 		{
-			if (param_p -> pa_type_s)
+			l = end_p - start_p;
+		}
+	else
+		{
+			l = strlen (start_p);
+		}
+
+	copy_s = (char *) AllocMemory (l + 1);
+
+	if (copy_s)
+		{
+			if (*param_value_ss)
 				{
-					FreeMemory (param_p -> pa_type_s);
+					FreeMemory (*param_value_ss);
 				}
 
-			strcpy (copied_type_s, type_s);
+			strncpy (copy_s, start_p, l);
+			* (copy_s + l) = '\0';
+
+			*param_value_ss = copy_s;
+
 			success_flag = TRUE;
 		}
 
@@ -220,7 +249,30 @@ BOOL SetParameterType (struct Parameter *param_p, const char *type_s)
 
 BOOL PrintParameter (FILE *out_f, const struct Parameter * const param_p)
 {
-	return (fprintf (out_f, "%s - %s", param_p -> pa_type_s, param_p -> pa_name_s) == 2);
+	BOOL success_flag;
+
+	if (param_p -> pa_type_s)
+		{
+			success_flag = (fprintf (out_f, "%s - ", param_p -> pa_type_s) == 1);
+		}
+	else
+		{
+			success_flag = (fprintf (out_f, "NULL - ") >= 0);
+		}
+
+	if (success_flag)
+		{
+			if (param_p -> pa_name_s)
+				{
+					success_flag = (fprintf (out_f, "%s - ", param_p -> pa_name_s) == 1);
+				}
+			else
+				{
+					success_flag = (fprintf (out_f, "NULL") >= 0);
+				}
+		}
+
+	return success_flag;
 }
 
 BOOL PrintParameterArray (FILE *out_f, const struct ParameterArray * const params_p)

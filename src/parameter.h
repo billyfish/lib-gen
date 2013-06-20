@@ -41,9 +41,9 @@ struct Parameter *AllocateParameter (const char *name_s, const char *type_s);
 
 BOOL FillInParameter (struct Parameter *param_p, const char *start_p, const char *end_p);
 
-BOOL SetParameterName (struct Parameter *param_p, const char *name_s);
+BOOL SetParameterName (struct Parameter *param_p, const char *start_p, const char *end_p);
 
-BOOL SetParameterType (struct Parameter *param_p, const char *type_s);
+BOOL SetParameterType (struct Parameter *param_p, const char *start_p, const char *end_p);
 
 void FreeParameter (struct Parameter *param_p);
 
