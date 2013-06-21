@@ -6,7 +6,7 @@
 #include "memory.h"
 #include "parameter.h"
 #include "utils.h"
-
+#include "string_list.h"
 #include "debugging_utils.h"
 
 /**************************************/
@@ -53,11 +53,11 @@ int main (int argc, char *argv [])
 
 void UnitTest (const char * const prototype_s, FILE *out_f)
 {
-	char *tokens_p = TokenizeFunctionPrototype (prototype_s);
+	struct List *tokens_p = TokenizeFunctionPrototype (prototype_s);
 
 	if (tokens_p)
 		{
-			FreeMemory (tokens_p);
+			FreeStringList (tokens_p);
 		}
 }
 

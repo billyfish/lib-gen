@@ -1,14 +1,52 @@
+#ifndef STRING_LISTNODE_H
+#define STRING_LISTNODE_H
 
-/**
- * A ListNode for LinkedLists that also stores
- * a string value.
- */
-struct StringListNode
+#include <dos/dos.h>
+
+#include <exec/lists.h>
+#include <exec/nodes.h>
+#include <exec/types.h>
+
+enum FdNodeTypes
 {
-	/** The ListNode. */
-	struct MinNode sln_node;
+	NT_FUNCTION_TYPE = 240,
+	NT_FUNCTION_NAME,
+	NT_PARAM_TYPE,
+	NT_PRAM_NAME,
+	NT_FUNCTION_POINTER,
+	NT_OPENING_BRACKET,
+	NT_CLOSING_BRACKET,
+	NT_DEREFERENCE
+};
 
-	/** The string value. */
-	STRPYsln_string_p;
 
-} StringListNode;
+#ifdef __cplusplus
+extern "C" 
+{
+#endif
+
+struct Node *AllocateStringNode (CONST_STRPTR start_p, CONST_STRPTR end_p, uint8 node_type);
+
+
+void FreeStringListNode (struct Node *node_p);
+
+struct List *AllocateStringList (void);
+
+void FreeStringList (struct List *list_p);
+
+void PrintNodeNameToFileHandle (BPTR file_p, struct Node *node_p);
+
+void PrintStringListToFileHandle (BPTR file_p, struct List *list_p);
+
+
+BOOL AddStringNode (struct List *tokens_p, CONST_STRPTR start_p, CONST_STRPTR end_p, uint8 node_type);
+
+
+
+#ifdef __cplusplus
+}
+#endif
+
+
+#endif		/* #ifndef STRING_LISTNODE_H */
+

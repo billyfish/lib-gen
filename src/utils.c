@@ -3,6 +3,7 @@
 
 #include "debugging_utils.h"
 #include "memory.h"
+#include "string_list.h"
 #include "utils.h"
 
 
@@ -15,8 +16,6 @@
  */
 char *CopyToNewString (const char *start_p, const char *end_p, const BOOL trim_flag)
 {
-	char *dest_p = NULL;
-
 	if (trim_flag)
 		{			
 			BOOL loop_flag = TRUE;
@@ -68,44 +67,73 @@ char *CopyToNewString (const char *start_p, const char *end_p, const BOOL trim_f
 
 
 
-char *TokenizeFunctionPrototype (const char *prototype_s)
+struct List *TokenizeFunctionPrototype (const char *prototype_s)
 {
-	char *buffer_s = (char *) AllocMemory (strlen (prototype_s) + 1);
+	struct List *tokens_p = AllocateStringList ();
 
-	if (buffer_s)
+	if (tokens_p)
 		{
-			const char *src_p = prototype_s;
-			char *dest_p = buffer_s;
-			BOOL space_flag = FALSE;
-
-			while (*src_p != '\0')
-				{					
-					if (isspace (*src_p))
+			//BOOL error_flag = FALSE;
+			BOOL space_flag = TRUE;
+			const char *token_start_p = NULL;
+			const char *token_end_p = NULL;
+			const char *index_p = prototype_s;
+			int32 num_open_brackets = 0;
+			
+			while (*index_p != '\0')
+				{		
+					if (isspace (*index_p))
 						{
 							if (!space_flag)
 								{
-									*dest_p = '-';
-									++ dest_p;
+									if (token_start_p)
+										{
+											token_end_p = index_p - 1;
+											
+											AddStringNode (tokens_p, token_start_p, token_end_p);
+											
+										}
+										
+										
 									space_flag = TRUE;
 								}
 						}			
 					else
 						{
+							switch (*index_p)
+								{
+									case '*':
+									
+										break;
+										
+									case '(':
+										/* either the start of a function pointer or the start of the function parameters */
+										++ num_open_brackets;
+										break;
+										
+										
+									case ')':
+									
+										-- num_open_brackets;
+										break;
+
+									default:
+										break;								
+								}
+													
+						
 							if (space_flag)
 								{
+									token_start_p = index_p;
+									token_end_p = NULL;
 									space_flag = FALSE;
 								}
-
-							*dest_p = *src_p;
-							++ dest_p;
 						}		
 					
-					++ src_p;
+					++ index_p;
 				}
 
-			*dest_p = '\0';
-
-			DB (KPRINTF ("%s %ld - buffer: \"%s\"\n", __FILE__, __LINE__, buffer_s));		
+			return tokens_p;
 		}
 	
 	return NULL;
