@@ -16,6 +16,7 @@
 		#define KPRINTF KPrintF
 	#endif
 #else
+	#include <stdio.h>
 	#define KPRINTF printf
 #endif
 

@@ -5,6 +5,7 @@
 
 #include "memory.h"
 #include "parameter.h"
+#include "utils.h"
 
 #include "debugging_utils.h"
 
@@ -12,7 +13,7 @@
 /************ PROTOTYPES **************/
 /**************************************/
 
-struct ParameterArray *GetFunctionArguments (const char *function_s);
+struct FunctionDefinition *GetFunctionArguments (const char *function_s);
 
 void UnitTest (const char * const prototype_s, FILE *out_f);
 
@@ -40,7 +41,7 @@ int main (int argc, char *argv [])
 	FILE *out_f = stdout;
 
 	UnitTest ("int main (int argc, char **argv);", out_f);
-	UnitTest ("int *GetAddress (const int **ptr, const int num);", out_f);
+	UnitTest ("int				*GetAddress (const int **ptr, const int num);", out_f);
 	UnitTest ("struct Test *GetTest (void);", out_f);
 	UnitTest ("void SetTest (struct Test *test_p, int num);", out_f);
 	UnitTest ("void SetFunction (int (*test_fn) (int num));", out_f);
@@ -49,15 +50,31 @@ int main (int argc, char *argv [])
 }
 
 
+
 void UnitTest (const char * const prototype_s, FILE *out_f)
 {
-	struct ParameterArray *params_p = NULL;
+	char *tokens_p = TokenizeFunctionPrototype (prototype_s);
 
-	if ((params_p = GetFunctionArguments (prototype_s)) != NULL)
+	if (tokens_p)
 		{
-			PrintParameterArray (out_f, params_p);						
-			fprintf (out_f, "\n");
-			FreeParameterArray (params_p);
+			FreeMemory (tokens_p);
+		}
+}
+
+
+
+
+
+void UnitTest2 (const char * const prototype_s, FILE *out_f)
+{
+	struct FunctionDefinition *fd_p = GetFunctionArguments (prototype_s);
+
+	if (fd_p)
+		{
+			fprintf (out_f, "********* BEGIN FD *********\n");
+			PrintFunctionDefinition (out_f, fd_p);						
+			fprintf (out_f, "\n********* END FD *********\n\n");
+			FreeFunctionDefinition (fd_p);
 		}
 	else
 		{
@@ -66,7 +83,7 @@ void UnitTest (const char * const prototype_s, FILE *out_f)
 }
 
 
-struct ParameterArray *GetFunctionArguments (const char *function_s)
+struct FunctionDefinition *GetFunctionArguments (const char *function_s)
 {
 	/* find the end of method */
 	const char *closing_bracket_p = strstr (function_s, ");");
@@ -119,64 +136,82 @@ struct ParameterArray *GetFunctionArguments (const char *function_s)
 	/* Have we matched the final closing bracket */
 	if (num_open_backets == 0)
 		{
-			struct ParameterArray *params_p = AllocateParameterArray (num_params);
+			struct FunctionDefinition *fd_p = AllocateFunctionDefinition (num_params);
 
-			if (params_p)
+			if (fd_p)
 				{
-					struct Parameter *param_p = params_p -> pa_params_p;
-					const char *start_p = opening_bracket_p;
-					const char *end_p = strchr (start_p, ',');
-					BOOL success_flag = TRUE;
+					const char *end_p = ScrollPastWhiteSpace (opening_bracket_p - 1, function_s, TRUE);
 
-					DB (KPRINTF ("%s %ld -  start: \"%s\"\n", __FILE__, __LINE__, start_p));
-					DB (KPRINTF ("%s %ld -  end: \"%s\"\n", __FILE__, __LINE__, end_p));		
+					if (end_p)
+						{
+							/* Get the function name and return type */
+							if (FillInParameter (fd_p -> fd_definition_p, function_s, end_p))
+								{
+									/* fill in the args */
+									struct Parameter *param_p = fd_p -> fd_args_p -> pa_params_p;
+									const char *start_p = opening_bracket_p;
+									BOOL success_flag = TRUE;
+
+									end_p = strchr (start_p, ',');
+							
+									DB (KPRINTF ("%s %ld -  start: \"%s\"\n", __FILE__, __LINE__, start_p));
+									DB (KPRINTF ("%s %ld -  end: \"%s\"\n", __FILE__, __LINE__, end_p));		
 					
-					while ((end_p != NULL) && (success_flag == TRUE))
-						{
-							if (FillInParameter (param_p, start_p + 1, end_p))
-								{
-									printf (">>> param: ");
-									PrintParameter (stdout, param_p);
-									printf ("\n");
+									while ((end_p != NULL) && (success_flag == TRUE))
+										{
+											if (FillInParameter (param_p, start_p + 1, end_p))
+												{
+													printf (">>> param: ");
+													PrintParameter (stdout, param_p);
+													printf ("\n");
 									
-									++ param_p;
-									start_p = end_p + 1;
+													++ param_p;
+													start_p = end_p + 1;
 
-									while (start_p && isspace (*start_p))
-										{
-											++ start_p;
+													while (start_p && isspace (*start_p))
+														{
+															++ start_p;
+														}
+
+													if (start_p)
+														{
+															end_p = strchr (start_p, ',');
+														}
+													else
+														{
+															end_p = NULL;
+														}
+												}
+											else
+												{
+													success_flag = FALSE;
+												}
 										}
 
-									if (start_p)
+									if (success_flag)
 										{
-											end_p = strchr (start_p, ',');
+											/* now we have the final param left to do */
+											end_p = closing_bracket_p;
+											success_flag = FillInParameter (param_p, start_p, end_p);
+
+											return fd_p;
 										}
-									else
-										{
-											end_p = NULL;
-										}
-								}
-							else
-								{
-									success_flag = FALSE;
-								}
+						
+								}		/* if (FillInParameter (fd_p -> fd_definition_p, function_s, opening_bracket_p)) */					
+
 						}
 
-					if (success_flag)
-						{
-							/* now we have the final param left to do */
-							end_p = closing_bracket_p;
-							success_flag = FillInParameter (param_p, start_p, end_p);
-
-							return params_p;
-						}
-
-				}		/* if (params_p) */
+					FreeFunctionDefinition (fd_p);
+				}		/* if (fd_p) */
 
 		}		/* if (num_open_backets == 0) */
 
 	return NULL;
 }
+
+
+
+
 
 
 

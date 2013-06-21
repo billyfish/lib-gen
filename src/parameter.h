@@ -3,14 +3,7 @@
 
 #include <stdio.h>
 
-#ifdef AMIGA
-	#include <exec/types.h>
-#else
-	typedef unsigned char BOOL;
-
-	#define TRUE (1)
-	#define FALSE (0)
-#endif
+#include "types.h"
 
 
 struct Parameter
@@ -28,13 +21,17 @@ struct ParameterArray
 struct FunctionDefinition
 {
 	struct Parameter *fd_definition_p;
-	struct ParameterArray *fs_args_p;
+	struct ParameterArray *fd_args_p;
 };
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+
+struct FunctionDefinition *AllocateFunctionDefinition (int num_params);
+
+void FreeFunctionDefinition (struct FunctionDefinition *fd_p);
 
 struct ParameterArray *AllocateParameterArray (int num_params);
 

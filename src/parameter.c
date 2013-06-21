@@ -5,6 +5,7 @@
 
 #include "memory.h"
 #include "parameter.h"
+#include "utils.h"
 
 
 /**************************/
@@ -16,33 +17,6 @@ static BOOL SetParameterValue (char **param_value_ss, const char *start_p, const
 
 static BOOL IsParameterFunctionPointer (const char *start_p, const char *end_p);
 
-static const char *ScrollPastWhiteSpace (const char *text_p, const char * const bounds_p);
-
-static const char *ScrollPastWhiteSpace (const char *text_p, const char * const bounds_p)
-{
-	BOOL loop_flag = TRUE;
-	const int inc = (text_p < bounds_p) ? 1 : -1;
-	const char *res_p = NULL;
-
-	while (loop_flag)
-		{
-			if (text_p == bounds_p)
-				{
-					loop_flag = FALSE;
-				}
-			else if (isspace (*text_p))
-				{
-					text_p += inc; 
-				}
-			else
-				{
-					res_p = text_p;
-					loop_flag = FALSE;
-				}
-		}
-
-	return res_p;
-}
 
 
 static BOOL IsParameterFunctionPointer (const char *start_p, const char *end_p)
@@ -75,6 +49,10 @@ static BOOL IsParameterFunctionPointer (const char *start_p, const char *end_p)
 	return is_param_function_pointer_flag;
 }
 
+
+
+
+
 BOOL FillInParameter (struct Parameter *param_p, const char *start_p, const char *end_p)
 {
 	BOOL success_flag = FALSE;
@@ -96,66 +74,79 @@ BOOL FillInParameter (struct Parameter *param_p, const char *start_p, const char
 		}
 	else
 		{
-			BOOL loop_flag = TRUE;
-			BOOL found_name_flag = FALSE;
-			const char *data_p = end_p;
-
-			/* scroll to the start of the param name */
-			while (loop_flag && !found_name_flag)
-				{
-					if (isspace (*data_p))
-						{
-							/* scroll through any whitespace */
-							data_p = ScrollPastWhiteSpace (data_p, start_p);
-							
-							if (data_p)
-								{
-									found_name_flag = TRUE;
-								}
-						}
-					else if (*data_p == '*')
-						{
-							found_name_flag = TRUE;
-
-						}
-					else
-						{
-							-- data_p;
-							loop_flag = (data_p != start_p);
-						}
-
-				}		/* while (loop_flag) */
-
-					
-			DB (KPRINTF ("%s %ld -  data_p: \"%s\"\n", __FILE__, __LINE__, data_p));		
-			DB (KPRINTF ("%s %ld -  start: \"%s\"\n", __FILE__, __LINE__, start_p));
-			DB (KPRINTF ("%s %ld -  end: \"%s\"\n", __FILE__, __LINE__, end_p));		
+			/* scroll to the end of the name */
+			end_p = ScrollPastWhiteSpace (end_p, start_p, TRUE);
 			
-			if (found_name_flag)
+			if (end_p)
 				{
-					if (SetParameterType (param_p, start_p, data_p))
+					/* now grab the name */
+					const char *name_start_p = ScrollPastWhiteSpace (end_p, start_p, FALSE);
+
+					if (name_start_p)
 						{
-							/* scroll to the first char of the name */
-							++ data_p;
+							const char *type_end_p = ScrollPastWhiteSpace (name_start_p, start_p, TRUE);
 
-							if (data_p)
+							if (type_end_p)
 								{
-									if (SetParameterName (param_p, data_p, end_p))
+									if (SetParameterType (param_p, start_p, type_end_p))
 										{
-											DB (KPRINTF ("%s %ld - param type: \"%s\" name: \"%s\" \n", __FILE__, __LINE__, param_p -> pa_type_s, param_p -> pa_name_s));		
+											if (SetParameterName (param_p, name_start_p, end_p))
+												{
+													DB (KPRINTF ("%s %ld - param type: \"%s\" name: \"%s\" \n", __FILE__, __LINE__, param_p -> pa_type_s, param_p -> pa_name_s));		
 								
-											success_flag = TRUE;
-										}
+													success_flag = TRUE;
+												}		/* if (SetParameterName (param_p, name_start_p, end_p)) */
 
-								}
+										}		/* if (SetParameterType (param_p, start_p, type_end_p)) */
 
-						}
+								}		/* if (type_end_p) */
+						
+						}		/* if (name_start_p) */
+				
+				}		/* if (end_p) */	
 
-				}
-
-		}
+		}		/* if (is_param_function_pointer_flag) else */
 
 	return success_flag;
+}
+
+
+struct FunctionDefinition *AllocateFunctionDefinition (int num_params)
+{
+	struct FunctionDefinition *fd_p = (struct FunctionDefinition *) AllocMemory (sizeof (struct FunctionDefinition));
+	
+	if (fd_p)
+		{
+			struct ParameterArray *params_p = AllocateParameterArray (num_params);
+
+			if (params_p)
+				{
+					struct Parameter *param_p = AllocateParameter (NULL, NULL);
+
+					if (param_p)
+						{
+							fd_p -> fd_definition_p = param_p;
+							fd_p -> fd_args_p = params_p;
+
+							return fd_p;
+						}
+					
+					FreeParameterArray (params_p);
+				}
+
+			FreeMemory (fd_p);
+		}
+
+	return NULL;
+}
+
+
+void FreeFunctionDefinition (struct FunctionDefinition *fd_p)
+{
+	FreeParameter (fd_p -> fd_definition_p);
+	FreeParameterArray (fd_p -> fd_args_p);
+
+	FreeMemory (fd_p);
 }
 
 
@@ -373,7 +364,7 @@ BOOL PrintFunctionDefinition (FILE *out_f, const struct FunctionDefinition * con
 
 	if (success_flag)
 		{
-			success_flag = PrintParameterArray (out_f, fn_p -> fs_args_p);
+			success_flag = PrintParameterArray (out_f, fn_p -> fd_args_p);
 		}
 
 	return success_flag;
