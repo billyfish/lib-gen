@@ -9,7 +9,8 @@ extern "C" {
 
 char *CopyToNewString (const char *start_p, const char *end_p, const BOOL trim_flag);
 
-const char *ScrollPastWhiteSpace (const char *text_p, const char * const bounds_p, const BOOL space_flag);
+
+const char *ScrollPastWhitespace (const char *text_p, const char * const bounds_p, const char * const delimiters_s, const BOOL space_flag);
 
 struct List *TokenizeFunctionPrototype (const char *prototype_s);
 

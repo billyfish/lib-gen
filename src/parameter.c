@@ -75,16 +75,16 @@ BOOL FillInParameter (struct Parameter *param_p, const char *start_p, const char
 	else
 		{
 			/* scroll to the end of the name */
-			end_p = ScrollPastWhiteSpace (end_p, start_p, TRUE);
+			end_p = ScrollPastWhitespace (end_p, start_p, NULL, TRUE);
 			
 			if (end_p)
 				{
 					/* now grab the name */
-					const char *name_start_p = ScrollPastWhiteSpace (end_p, start_p, FALSE);
+					const char *name_start_p = ScrollPastWhitespace (end_p, start_p, NULL, FALSE);
 
 					if (name_start_p)
 						{
-							const char *type_end_p = ScrollPastWhiteSpace (name_start_p, start_p, TRUE);
+							const char *type_end_p = ScrollPastWhitespace (name_start_p, start_p, NULL, TRUE);
 
 							if (type_end_p)
 								{
@@ -285,24 +285,43 @@ static BOOL SetParameterValue (char **param_value_ss, const char *start_p, const
 			l = strlen (start_p);
 		}
 
-	copy_s = (char *) AllocMemory (l + 1);
-
-	if (copy_s)
+	while ((start_p != end_p) && (isspace (*start_p)))
 		{
-			if (*param_value_ss)
+			++ start_p;
+			-- l;
+		} 
+		
+	if (start_p != end_p)
+		{
+			while ((start_p != end_p) && (isspace (*end_p)))
 				{
-					FreeMemory (*param_value_ss);
-				}
-
-			strncpy (copy_s, start_p, l);
-			* (copy_s + l) = '\0';
-
-			DB (KPRINTF ("%s %ld -  setting param value to: \"%s\"\n", __FILE__, __LINE__, copy_s));	
-
-			*param_value_ss = copy_s;
-
-			success_flag = TRUE;
+					-- end_p;
+					-- l;
+				} 	
 		}
+		
+	if (start_p != end_p)
+		{
+			copy_s = (char *) AllocMemory (l + 1);
+		
+			if (copy_s)
+				{
+					if (*param_value_ss)
+						{
+							FreeMemory (*param_value_ss);
+						}
+		
+					strncpy (copy_s, start_p, l);
+					* (copy_s + l) = '\0';
+		
+					DB (KPRINTF ("%s %ld -  setting param value to: \"%s\"\n", __FILE__, __LINE__, copy_s));	
+		
+					*param_value_ss = copy_s;
+		
+					success_flag = TRUE;
+				}		
+		
+		}		/* f (start_p != end_p) */
 
 	return success_flag;
 }
