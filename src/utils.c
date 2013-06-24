@@ -133,14 +133,24 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 
 											if (function_type_s)
 												{
-													/* now get each of the parameters */
 													struct Parameter *param_p = AllocateParameter (function_type_s, function_name_s);
 													
 													if (param_p)
 														{
+															const char *end_p = strrchr (prototype_s, ')');
+															
 															fd_p -> fd_definition_p = param_p;
+															
+															if (end_p)
+																{
+																	
+																	/* now get each of the parameters */
+																	while ((param_p = GetNextParameter (opening_bracket_p + 1, &end_p)) != NULL)
+																		{
+																			AddParameterAtFront (fd_p, param_p);
+																		}
+																} 
 														}			
-													
 												}
 										}
 

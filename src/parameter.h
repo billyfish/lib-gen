@@ -49,6 +49,10 @@ struct FunctionDefinition *AllocateFunctionDefinition (void);
 void FreeFunctionDefinition (struct FunctionDefinition *fd_p);
 
 
+BOOL AddParameterAtFront (struct FunctionDefinition *fd_p, struct Parameter *param_p);
+
+BOOL AddParameterAtBack (struct FunctionDefinition *fd_p, struct Parameter *param_p);
+
 struct Parameter *AllocateParameter (const char *type_s, const char *name_s);
 
 void FreeParameter (struct Parameter *param_p);
