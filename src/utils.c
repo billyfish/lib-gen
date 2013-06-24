@@ -5,6 +5,7 @@
 #include "memory.h"
 #include "string_list.h"
 #include "utils.h"
+#include "parameter.h"
 
 
 /**
@@ -65,11 +66,11 @@ char *CopyToNewString (const char *start_p, const char *end_p, const BOOL trim_f
 	return NULL;
 }
 
-static const char PeekNextChar (const char *text_s, BOOL ignore_whitespace_flag);
+static char PeekNextChar (const char *text_s, BOOL ignore_whitespace_flag);
 
-static const char PeekNextChar (const char *text_s, BOOL ignore_whitespace_flag)
+static char PeekNextChar (const char *text_s, BOOL ignore_whitespace_flag)
 {
-	if (*text_s != '\0)
+	if (*text_s != '\0')
 		{
 			if (ignore_whitespace_flag)
 				{
@@ -135,7 +136,9 @@ struct List *TokenizeFunctionPrototype (const char *prototype_s)
 
 											if (function_type_s)
 												{
-
+													/* now get each of the parameters */
+													
+													
 												}
 										}
 
@@ -147,6 +150,76 @@ struct List *TokenizeFunctionPrototype (const char *prototype_s)
 
 		}
 
+	return NULL;
+}
+
+/**
+ * Scroll backwards from the given end point and return a parameter if one
+ * can be created before we hit the given start point.
+ *
+ * @param start_p The start point which is the definite stopping point.
+ * @param end_pp Where we still start building the parameter from. If we
+ * successfully create the parameter, this will be updated to point to where
+ * to start building the next parameter from.
+ * @return A new parameter or NULL if one could not be created.
+ */ 
+struct Parameter *GetNextParameter (const char *start_p, const char **end_pp)
+{
+	char *name_s = NULL;
+	char *type_s = NULL;
+
+	/* scroll to the end of the function name */
+	const char *name_end_p = ScrollPastWhitespace (*end_pp, start_p, NULL, TRUE);
+
+	if (name_end_p)
+		{
+			/* scroll to the start of the function name */
+			const char *name_start_p = ScrollPastWhitespace (name_end_p, start_p, "*[]", FALSE);
+
+			/* TODO - Check for function pointer */
+			
+
+			if (name_start_p)
+				{
+					name_s = CopyToNewString (name_start_p, name_end_p, FALSE);
+
+					if (name_s)
+						{
+							const char *type_start_p = ScrollPastWhitespace (name_end_p, start_p, ",", FALSE);
+							
+							type_s = CopyToNewString (type_start_p, name_start_p - 1, TRUE);
+
+							if (type_s)
+								{
+									struct Parameter *param_p = AllocateParameter (name_s, type_s);
+									
+									if (param_p)
+										{
+											/* 
+												update current position and set to NULL if we have reached
+												the start position to signal that we have completed without
+												error. 
+										  */
+											if (type_start_p > start_p)
+												{
+													*end_pp = type_start_p - 1;
+												}
+											else
+												{
+													*end_pp = NULL;
+												}											
+											
+											return param_p;
+										}		/* if (param_p) */
+									
+								}		/* if (function_type_s) */
+						
+						}		/* if (function_name_s) */
+
+				}		/* if (name_start_p) */
+
+		}		/* if (name_end_p) */	
+		
 	return NULL;
 }
 
