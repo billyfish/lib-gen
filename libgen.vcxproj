@@ -85,6 +85,7 @@
     <ClInclude Include="src\debugging_utils.h" />
     <ClInclude Include="src\memory.h" />
     <ClInclude Include="src\parameter.h" />
+    <ClInclude Include="src\string_list.h" />
     <ClInclude Include="src\types.h" />
     <ClInclude Include="src\utils.h" />
   </ItemGroup>

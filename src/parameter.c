@@ -33,7 +33,7 @@ static BOOL IsParameterFunctionPointer (const char *start_p, const char *end_p)
 					if (* (data_p + 1) == '*')
 						{
 							is_param_function_pointer_flag = TRUE;
-					
+
 							/* Force exit from loop */
 							data_p = NULL;
 						}
@@ -44,7 +44,7 @@ static BOOL IsParameterFunctionPointer (const char *start_p, const char *end_p)
 
 				}		/* if (data_p) */
 
-		}		/* while (data_p && (data_p < end_p)) */ 
+		}		/* while (data_p && (data_p < end_p)) */
 
 	return is_param_function_pointer_flag;
 }
@@ -60,7 +60,7 @@ BOOL FillInParameter (struct Parameter *param_p, const char *start_p, const char
 	BOOL is_param_function_pointer_flag = IsParameterFunctionPointer (start_p, end_p);
 
 
-	/* 
+	/*
 		After trimming each end, the param name should start after the final space. It may
 		be preceeded by a dereferencer such as * or &. Or it could be a function pointer
 	*/
@@ -69,14 +69,14 @@ BOOL FillInParameter (struct Parameter *param_p, const char *start_p, const char
 
 	if (is_param_function_pointer_flag)
 		{
-			DB (KPRINTF ("%s %ld - \"%s\" is a function pointer\n", __FILE__, __LINE__, start_p));		
+			DB (KPRINTF ("%s %ld - \"%s\" is a function pointer\n", __FILE__, __LINE__, start_p));
 
 		}
 	else
 		{
 			/* scroll to the end of the name */
 			end_p = ScrollPastWhitespace (end_p, start_p, NULL, TRUE);
-			
+
 			if (end_p)
 				{
 					/* now grab the name */
@@ -92,18 +92,18 @@ BOOL FillInParameter (struct Parameter *param_p, const char *start_p, const char
 										{
 											if (SetParameterName (param_p, name_start_p, end_p))
 												{
-													DB (KPRINTF ("%s %ld - param type: \"%s\" name: \"%s\" \n", __FILE__, __LINE__, param_p -> pa_type_s, param_p -> pa_name_s));		
-								
+													DB (KPRINTF ("%s %ld - param type: \"%s\" name: \"%s\" \n", __FILE__, __LINE__, param_p -> pa_type_s, param_p -> pa_name_s));
+
 													success_flag = TRUE;
 												}		/* if (SetParameterName (param_p, name_start_p, end_p)) */
 
 										}		/* if (SetParameterType (param_p, start_p, type_end_p)) */
 
 								}		/* if (type_end_p) */
-						
+
 						}		/* if (name_start_p) */
-				
-				}		/* if (end_p) */	
+
+				}		/* if (end_p) */
 
 		}		/* if (is_param_function_pointer_flag) else */
 
@@ -114,7 +114,7 @@ BOOL FillInParameter (struct Parameter *param_p, const char *start_p, const char
 struct FunctionDefinition *AllocateFunctionDefinition (int num_params)
 {
 	struct FunctionDefinition *fd_p = (struct FunctionDefinition *) AllocMemory (sizeof (struct FunctionDefinition));
-	
+
 	if (fd_p)
 		{
 			struct ParameterArray *params_p = AllocateParameterArray (num_params);
@@ -130,7 +130,7 @@ struct FunctionDefinition *AllocateFunctionDefinition (int num_params)
 
 							return fd_p;
 						}
-					
+
 					FreeParameterArray (params_p);
 				}
 
@@ -144,53 +144,52 @@ struct FunctionDefinition *AllocateFunctionDefinition (int num_params)
 void FreeFunctionDefinition (struct FunctionDefinition *fd_p)
 {
 	FreeParameter (fd_p -> fd_definition_p);
-	FreeParameterArray (fd_p -> fd_args_p);
+	FreeParameterList (fd_p -> fd_args_p);
 
 	FreeMemory (fd_p);
 }
 
 
-struct ParameterArray *AllocateParameterArray (int num_params)
+void FreeParameterList (struct List *params_p)
 {
-	struct Parameter *params_p = (struct Parameter *) AllocMemory (num_params * sizeof (struct Parameter));
+	struct ParameterNode *curr_node_p = (struct ParameterNode *) IExec->GetHead (params_p);
+	struct ParameterNode *next_node_p = NULL;
 
-	if (params_p)
+	while (curr_node_p)
 		{
-			struct ParameterArray *pa_p = (struct ParameterArray *) AllocMemory (sizeof (struct ParameterArray));
+			next_node_p = (struct ParameterNode *) IExec -> GetSucc (curr_node_p);
 
-			if (pa_p)
-				{
-					int i;
+			FreeParameterNode (curr_node_p);
 
-					pa_p -> pa_params_p = params_p;
-					pa_p -> pa_num_params = num_params;
+			curr_node_p = next_node_p;
+		}
+}
 
-					for (i = num_params; i > 0; -- i, ++ params_p)
-						{
-							params_p -> pa_name_s = NULL;
-							params_p -> pa_type_s = NULL;							 
-						}
+void FreeParameterNode (struct ParameterNode *node_p)
+{
+	if (node_p -> pn_param_p)
+		{
+			FreeParameter (node_p -> pn_param_p);
+		}
 
-					return pa_p;
-				}		/* if (pa_p) */
-			
-			FreeMemory (params_p);
-		}		/* if (params_p) */
+	IExec->FreeSysObjectTaga (ASO_NODE, node_p);
+}
+
+
+struct ParameterNode *AllocateParameterNode (struct Parameter *param_p)
+{
+	struct ParameterNode *node_p = IExec->AllocSysObjectTaga (ASO_NODE, TAG_DONE);
+
+	if (node_p)
+		{
+			node_p -> pn_param_p = param_p;
+
+			return node_p;
+		}
 
 	return NULL;
 }
 
-
-void FreeParameterArray (struct ParameterArray *params_p)
-{
-	int i = params_p -> pa_num_params;
-	struct Parameter *param_p = params_p -> pa_params_p;
-
-	for ( ; i > 0; -- i, ++ param_p)
-		{
-			ClearParameter (param_p);
-		}
-}
 
 
 struct Parameter *AllocateParameter (const char *name_s, const char *type_s)
@@ -228,7 +227,7 @@ struct Parameter *AllocateParameter (const char *name_s, const char *type_s)
 				{
 					return param_p;
 				}
-			
+
 			FreeParameter (param_p);
 		}
 
@@ -289,38 +288,38 @@ static BOOL SetParameterValue (char **param_value_ss, const char *start_p, const
 		{
 			++ start_p;
 			-- l;
-		} 
-		
+		}
+
 	if (start_p != end_p)
 		{
 			while ((start_p != end_p) && (isspace (*end_p)))
 				{
 					-- end_p;
 					-- l;
-				} 	
+				}
 		}
-		
+
 	if (start_p != end_p)
 		{
 			copy_s = (char *) AllocMemory (l + 1);
-		
+
 			if (copy_s)
 				{
 					if (*param_value_ss)
 						{
 							FreeMemory (*param_value_ss);
 						}
-		
+
 					strncpy (copy_s, start_p, l);
 					* (copy_s + l) = '\0';
-		
-					DB (KPRINTF ("%s %ld -  setting param value to: \"%s\"\n", __FILE__, __LINE__, copy_s));	
-		
+
+					DB (KPRINTF ("%s %ld -  setting param value to: \"%s\"\n", __FILE__, __LINE__, copy_s));
+
 					*param_value_ss = copy_s;
-		
+
 					success_flag = TRUE;
-				}		
-		
+				}
+
 		}		/* f (start_p != end_p) */
 
 	return success_flag;
@@ -359,7 +358,7 @@ BOOL PrintParameterArray (FILE *out_f, const struct ParameterArray * const param
 {
 	int i = params_p -> pa_num_params;
 	const struct Parameter *param_p = params_p -> pa_params_p;
-	
+
 	fprintf (out_f, "%d: ", i);
 
 	for ( ; i > 0; -- i, ++ param_p)
@@ -372,7 +371,7 @@ BOOL PrintParameterArray (FILE *out_f, const struct ParameterArray * const param
 				{
 					return FALSE;
 				}
-		} 
+		}
 
 	return TRUE;
 }
