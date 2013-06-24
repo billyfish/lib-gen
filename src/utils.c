@@ -104,22 +104,19 @@ static char PeekNextChar (const char *text_s, BOOL ignore_whitespace_flag)
 
 
 */
-struct List *TokenizeFunctionPrototype (const char *prototype_s)
+struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 {
-	struct List *tokens_p = AllocateStringList ();
+	struct FunctionDefinition *fd_p = AllocateFunctionDefinition ();
 
-	if (tokens_p)
+	if (fd_p)
 		{
 			const char *opening_bracket_p = strchr (prototype_s, '(');
 
 			if (opening_bracket_p)
 				{
-					char *function_name_s = NULL;
-					char *function_type_s = NULL;
-
 					/* scroll to the end of the function name */
 					const char *name_end_p = ScrollPastWhitespace (opening_bracket_p, prototype_s, NULL, TRUE);
-
+					
 					if (name_end_p)
 						{
 							/* scroll to the start of the function name */
@@ -128,16 +125,21 @@ struct List *TokenizeFunctionPrototype (const char *prototype_s)
 
 							if (name_start_p)
 								{
-									function_name_s = CopyToNewString (name_start_p, name_end_p, FALSE);
+									char *function_name_s = CopyToNewString (name_start_p, name_end_p, FALSE);
 
 									if (function_name_s)
 										{
-											function_type_s = CopyToNewString (prototype_s, name_start_p - 1, TRUE);
+											char *function_type_s = CopyToNewString (prototype_s, name_start_p - 1, TRUE);
 
 											if (function_type_s)
 												{
 													/* now get each of the parameters */
+													struct Parameter *param_p = AllocateParameter (function_type_s, function_name_s);
 													
+													if (param_p)
+														{
+															fd_p -> fd_definition_p = param_p;
+														}			
 													
 												}
 										}

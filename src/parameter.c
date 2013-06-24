@@ -1,6 +1,8 @@
 #include <ctype.h>
 #include <string.h>
 
+#include <proto/exec.h>
+
 #include "debugging_utils.h"
 
 #include "memory.h"
@@ -111,27 +113,22 @@ BOOL FillInParameter (struct Parameter *param_p, const char *start_p, const char
 }
 
 
-struct FunctionDefinition *AllocateFunctionDefinition (int num_params)
+struct FunctionDefinition *AllocateFunctionDefinition (void)
 {
 	struct FunctionDefinition *fd_p = (struct FunctionDefinition *) AllocMemory (sizeof (struct FunctionDefinition));
 
 	if (fd_p)
 		{
-			struct ParameterArray *params_p = AllocateParameterArray (num_params);
+			struct List *params_p = (struct List *) IExec->AllocSysObjectTags (ASOT_LIST, 
+				ASOLIST_Type, PT_PARAMETER,
+				TAG_DONE);
 
 			if (params_p)
 				{
-					struct Parameter *param_p = AllocateParameter (NULL, NULL);
+					fd_p -> fd_definition_p = NULL;
+					fd_p -> fd_args_p = params_p;
 
-					if (param_p)
-						{
-							fd_p -> fd_definition_p = param_p;
-							fd_p -> fd_args_p = params_p;
-
-							return fd_p;
-						}
-
-					FreeParameterArray (params_p);
+					return fd_p;
 				}
 
 			FreeMemory (fd_p);
@@ -143,7 +140,11 @@ struct FunctionDefinition *AllocateFunctionDefinition (int num_params)
 
 void FreeFunctionDefinition (struct FunctionDefinition *fd_p)
 {
-	FreeParameter (fd_p -> fd_definition_p);
+	if (fd_p -> fd_definition_p)
+		{
+			FreeParameter (fd_p -> fd_definition_p);
+		}
+		
 	FreeParameterList (fd_p -> fd_args_p);
 
 	FreeMemory (fd_p);
@@ -157,13 +158,26 @@ void FreeParameterList (struct List *params_p)
 
 	while (curr_node_p)
 		{
-			next_node_p = (struct ParameterNode *) IExec -> GetSucc (curr_node_p);
+			next_node_p = (struct ParameterNode *) IExec -> GetSucc (& (curr_node_p -> pn_node));
 
 			FreeParameterNode (curr_node_p);
 
 			curr_node_p = next_node_p;
 		}
+		
+	IExec->FreeSysObject (ASOT_LIST, params_p);
 }
+
+
+struct List *AllocateParameterList (void)
+{
+	struct List *params_p = (struct List *) IExec->AllocSysObjectTags (ASOT_LIST, 
+		ASOLIST_Type, PT_PARAMETER,
+		TAG_DONE);
+
+	return params_p;
+}
+
 
 void FreeParameterNode (struct ParameterNode *node_p)
 {
@@ -172,13 +186,15 @@ void FreeParameterNode (struct ParameterNode *node_p)
 			FreeParameter (node_p -> pn_param_p);
 		}
 
-	IExec->FreeSysObjectTaga (ASO_NODE, node_p);
+	IExec->FreeSysObject (ASOT_NODE, node_p);
 }
 
 
 struct ParameterNode *AllocateParameterNode (struct Parameter *param_p)
 {
-	struct ParameterNode *node_p = IExec->AllocSysObjectTaga (ASO_NODE, TAG_DONE);
+	struct ParameterNode *node_p = IExec->AllocSysObjectTags (ASOT_NODE, 
+		ASONODE_Type, PT_PARAMETER,
+		TAG_DONE);
 
 	if (node_p)
 		{
@@ -192,7 +208,7 @@ struct ParameterNode *AllocateParameterNode (struct Parameter *param_p)
 
 
 
-struct Parameter *AllocateParameter (const char *name_s, const char *type_s)
+struct Parameter *AllocateParameter (const char *type_s, const char *name_s)
 {
 	struct Parameter *param_p = (struct Parameter *) AllocMemory (sizeof (struct Parameter));
 
@@ -354,24 +370,31 @@ BOOL PrintParameter (FILE *out_f, const struct Parameter * const param_p)
 	return success_flag;
 }
 
-BOOL PrintParameterArray (FILE *out_f, const struct ParameterArray * const params_p)
+BOOL PrintParameterList (FILE *out_f, struct List * const params_p)
 {
-	int i = params_p -> pa_num_params;
-	const struct Parameter *param_p = params_p -> pa_params_p;
-
-	fprintf (out_f, "%d: ", i);
-
-	for ( ; i > 0; -- i, ++ param_p)
+	struct ParameterNode *curr_node_p = (struct ParameterNode *) IExec->GetHead (params_p);
+	struct ParameterNode *next_node_p = NULL;
+	uint32 i = 0;
+	
+	while (curr_node_p)
 		{
-			if (PrintParameter (out_f, param_p))
+			next_node_p = (struct ParameterNode *) IExec -> GetSucc (& (curr_node_p -> pn_node));
+
+			fprintf (out_f, "%lu: ", i);
+			if (PrintParameter (out_f, curr_node_p -> pn_param_p))
 				{
 					fprintf (out_f, " ");
+					++ i;
 				}
 			else
 				{
 					return FALSE;
 				}
+
+			curr_node_p = next_node_p;
 		}
+
+
 
 	return TRUE;
 }
@@ -382,7 +405,7 @@ BOOL PrintFunctionDefinition (FILE *out_f, const struct FunctionDefinition * con
 
 	if (success_flag)
 		{
-			success_flag = PrintParameterArray (out_f, fn_p -> fd_args_p);
+			success_flag = PrintParameterList (out_f, fn_p -> fd_args_p);
 		}
 
 	return success_flag;

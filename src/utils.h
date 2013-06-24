@@ -12,7 +12,8 @@ char *CopyToNewString (const char *start_p, const char *end_p, const BOOL trim_f
 
 const char *ScrollPastWhitespace (const char *text_p, const char * const bounds_p, const char * const delimiters_s, const BOOL space_flag);
 
-struct List *TokenizeFunctionPrototype (const char *prototype_s);
+
+struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s);
 
 #ifdef __cplusplus
 }

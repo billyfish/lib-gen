@@ -53,11 +53,11 @@ int main (int argc, char *argv [])
 
 void UnitTest (const char * const prototype_s, FILE *out_f)
 {
-	struct List *tokens_p = TokenizeFunctionPrototype (prototype_s);
+	struct FunctionDefinition *fd_p = TokenizeFunctionPrototype (prototype_s);
 
-	if (tokens_p)
+	if (fd_p)
 		{
-			FreeStringList (tokens_p);
+			FreeFunctionDefinition (fd_p);
 		}
 }
 
@@ -136,7 +136,7 @@ struct FunctionDefinition *GetFunctionArguments (const char *function_s)
 	/* Have we matched the final closing bracket */
 	if (num_open_backets == 0)
 		{
-			struct FunctionDefinition *fd_p = AllocateFunctionDefinition (num_params);
+			struct FunctionDefinition *fd_p = AllocateFunctionDefinition ();
 
 			if (fd_p)
 				{
@@ -144,60 +144,6 @@ struct FunctionDefinition *GetFunctionArguments (const char *function_s)
 
 					if (end_p)
 						{
-							/* Get the function name and return type */
-							if (FillInParameter (fd_p -> fd_definition_p, function_s, end_p))
-								{
-									/* fill in the args */
-									struct Parameter *param_p = fd_p -> fd_args_p -> pa_params_p;
-									const char *start_p = opening_bracket_p;
-									BOOL success_flag = TRUE;
-
-									end_p = strchr (start_p, ',');
-							
-									DB (KPRINTF ("%s %ld -  start: \"%s\"\n", __FILE__, __LINE__, start_p));
-									DB (KPRINTF ("%s %ld -  end: \"%s\"\n", __FILE__, __LINE__, end_p));		
-					
-									while ((end_p != NULL) && (success_flag == TRUE))
-										{
-											if (FillInParameter (param_p, start_p + 1, end_p))
-												{
-													printf (">>> param: ");
-													PrintParameter (stdout, param_p);
-													printf ("\n");
-									
-													++ param_p;
-													start_p = end_p + 1;
-
-													while (start_p && isspace (*start_p))
-														{
-															++ start_p;
-														}
-
-													if (start_p)
-														{
-															end_p = strchr (start_p, ',');
-														}
-													else
-														{
-															end_p = NULL;
-														}
-												}
-											else
-												{
-													success_flag = FALSE;
-												}
-										}
-
-									if (success_flag)
-										{
-											/* now we have the final param left to do */
-											end_p = closing_bracket_p;
-											success_flag = FillInParameter (param_p, start_p, end_p);
-
-											return fd_p;
-										}
-						
-								}		/* if (FillInParameter (fd_p -> fd_definition_p, function_s, opening_bracket_p)) */					
 
 						}
 
