@@ -287,11 +287,11 @@ BOOL SetParameterType (struct Parameter *param_p, const char *start_p, const cha
 
 BOOL AddParameterAtFront (struct FunctionDefinition *fd_p, struct Parameter *param_p)
 {
-	ParameterNode *node_p = AllocateParameterNode (param_p);
+	struct ParameterNode *node_p = AllocateParameterNode (param_p);
 
 	if (node_p)
 		{
-			IExec->AddHead (fd_p -> fd_args_p, (struct Node *) node_p;
+			IExec->AddHead (fd_p -> fd_args_p, (struct Node *) node_p);
 
 			return TRUE;
 		}
@@ -302,11 +302,11 @@ BOOL AddParameterAtFront (struct FunctionDefinition *fd_p, struct Parameter *par
 
 BOOL AddParameterAtBack (struct FunctionDefinition *fd_p, struct Parameter *param_p)
 {
-	ParameterNode *node_p = AllocateParameterNode (param_p);
+	struct ParameterNode *node_p = AllocateParameterNode (param_p);
 
 	if (node_p)
 		{
-			IExec->AddTail (fd_p -> fd_args_p, (struct Node *) node_p;
+			IExec->AddTail (fd_p -> fd_args_p, (struct Node *) node_p);
 
 			return TRUE;
 		}
@@ -320,6 +320,8 @@ static BOOL SetParameterValue (char **param_value_ss, const char *start_p, const
 	BOOL success_flag = FALSE;
 	size_t l;
 	char *copy_s = NULL;
+
+DB (KPRINTF ("%s %ld -  setting param value to: \"%s\" - \"%s\"\n", __FILE__, __LINE__, start_p ? start_p : "NULL", end_p ? end_p : "NULL"));
 
 	if (end_p)
 		{
@@ -336,15 +338,18 @@ static BOOL SetParameterValue (char **param_value_ss, const char *start_p, const
 			-- l;
 		}
 
-	if (start_p != end_p)
+	if (end_p)
 		{
-			while ((start_p != end_p) && (isspace (*end_p)))
+			if (start_p != end_p)
 				{
-					-- end_p;
-					-- l;
+					while ((start_p != end_p) && (isspace (*end_p)))
+						{
+							-- end_p;
+							-- l;
+						}
 				}
 		}
-
+		
 	if (start_p != end_p)
 		{
 			copy_s = (char *) AllocMemory (l + 1);
@@ -413,7 +418,7 @@ BOOL PrintParameterList (FILE *out_f, struct List * const params_p)
 			fprintf (out_f, "%lu: ", i);
 			if (PrintParameter (out_f, curr_node_p -> pn_param_p))
 				{
-					fprintf (out_f, " ");
+					fprintf (out_f, ", ");
 					++ i;
 				}
 			else

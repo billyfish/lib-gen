@@ -8,6 +8,8 @@
 #include "parameter.h"
 
 
+static struct Parameter *GetNextParameter (const char *start_p, const char **end_pp);
+
 /**
  * Copy a string to a newly created string.
  *
@@ -49,10 +51,15 @@ char *CopyToNewString (const char *start_p, const char *end_p, const BOOL trim_f
 				}
 		}
 
-	if (start_p != end_p)
+	DB (KPRINTF ("%s %ld - Copying \"%s\" - \"%s\" to a new string\n", __FILE__, __LINE__, start_p ? start_p : "NULL", end_p ? end_p : "NULL"));
+
+	if (start_p < end_p)
 		{
-			size_t len = end_p - start_p;
+			size_t len = end_p - start_p + 1;
+						
 			char *dest_p = (char *) AllocMemory (len + 1);
+
+			DB (KPRINTF ("%s %ld - len %ld\n", __FILE__, __LINE__, len));
 
 			if (dest_p)
 				{
@@ -61,6 +68,10 @@ char *CopyToNewString (const char *start_p, const char *end_p, const BOOL trim_f
 
 					return dest_p;
 				}
+		}
+	else
+		{
+			DB (KPRINTF ("%s %ld - ERROR: \"%s\" is after \"%s\"\n", __FILE__, __LINE__, start_p ? start_p : "NULL", end_p ? end_p : "NULL"));
 		}
 
 	return NULL;
@@ -108,32 +119,40 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 {
 	struct FunctionDefinition *fd_p = AllocateFunctionDefinition ();
 
+	DB (KPRINTF ("%s %ld - Tokenizing \"%s\"\n", __FILE__, __LINE__, prototype_s));
+
 	if (fd_p)
 		{
 			const char *opening_bracket_p = strchr (prototype_s, '(');
+			DB (KPRINTF ("%s %ld - opening_bracket \"%s\"\n", __FILE__, __LINE__, opening_bracket_p ? opening_bracket_p : "NULL"));
 
 			if (opening_bracket_p)
 				{
 					/* scroll to the end of the function name */
-					const char *name_end_p = ScrollPastWhitespace (opening_bracket_p, prototype_s, NULL, TRUE);
+					const char *name_end_p = ScrollPastWhitespace (opening_bracket_p - 1, prototype_s, NULL, TRUE);
+					DB (KPRINTF ("%s %ld - name_end \"%s\"\n", __FILE__, __LINE__, name_end_p ? name_end_p : "NULL"));
 
 					if (name_end_p)
 						{
 							/* scroll to the start of the function name */
 							const char * const delimiters_s = "*[]";
-							const char *name_start_p = ScrollPastWhitespace (opening_bracket_p, prototype_s, delimiters_s, FALSE);
-
+							const char *name_start_p = ScrollPastWhitespace (name_end_p, prototype_s, delimiters_s, FALSE);
+							DB (KPRINTF ("%s %ld - name_start \"%s\"\n", __FILE__, __LINE__, name_start_p ? name_start_p : "NULL"));
+							
+							
 							if (name_start_p)
 								{
 									char *function_name_s = CopyToNewString (name_start_p, name_end_p, FALSE);
-
+									DB (KPRINTF ("%s %ld - function name \"%s\"\n", __FILE__, __LINE__, function_name_s ? function_name_s : "NULL"));
+									/*
 									if (function_name_s)
 										{
 											char *function_type_s = CopyToNewString (prototype_s, name_start_p - 1, TRUE);
+											DB (KPRINTF ("%s %ld - function_type_s \"%s\"\n", __FILE__, __LINE__, function_type_s ? function_type_s : "NULL"));											
 
 											if (function_type_s)
 												{
-													struct Parameter *param_p = AllocateParameter (function_type_s, function_name_s);
+													struct Parameter *param_p = AllocateParameter (function_type_s, function_name_s);													
 
 													if (param_p)
 														{
@@ -145,16 +164,23 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 																{
 																	BOOL loop_flag = TRUE;
 
-																	/* Move to the character directly after the opening bracket */
+																	// Move to the characters directly within the brackets 
 																	++ opening_bracket_p;
+																	-- end_p;
 
-																	/* now get each of the parameters */
+																	DB (KPRINTF ("%s %ld - opening_bracket_p \"%s\" end_p \"%s\"\n", __FILE__, __LINE__, opening_bracket_p, end_p));
+
+																	// now get each of the parameters 
 																	while (loop_flag)
 																		{
 																			param_p = GetNextParameter (opening_bracket_p, &end_p);
 
+																			DB (KPRINTF ("%s %ld - end_p \"%s\"\n", __FILE__, __LINE__, end_p ? end_p : "NULL"));
+
 																			if (param_p)
 																				{
+																					DB (KPRINTF ("%s %ld - param type \"%s\" name \"%s\"\n", __FILE__, __LINE__, param_p -> pa_type_s, param_p -> pa_name_s));
+																				
 																					if (AddParameterAtFront (fd_p, param_p))
 																						{
 																							loop_flag = end_p > opening_bracket_p;
@@ -173,7 +199,7 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 																}
 														}
 												}
-										}
+										} */
 
 								}		/* if (name_end_p) */
 
@@ -196,7 +222,7 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
  * to start building the next parameter from.
  * @return A new parameter or NULL if one could not be created.
  */
-struct Parameter *GetNextParameter (const char *start_p, const char **end_pp)
+static struct Parameter *GetNextParameter (const char *start_p, const char **end_pp)
 {
 	char *name_s = NULL;
 	char *type_s = NULL;
@@ -210,16 +236,18 @@ struct Parameter *GetNextParameter (const char *start_p, const char **end_pp)
 			const char *name_start_p = ScrollPastWhitespace (name_end_p, start_p, "*[]", FALSE);
 
 			/* TODO - Check for function pointer */
-
+			DB (KPRINTF ("%s %ld - name_start_p \"%s\"\n", __FILE__, __LINE__, name_start_p ? name_start_p : "NULL"));
 
 			if (name_start_p)
 				{
 					name_s = CopyToNewString (name_start_p, name_end_p, FALSE);
-
+					DB (KPRINTF ("%s %ld - name_s \"%s\"\n", __FILE__, __LINE__, name_s ? name_s : "NULL"));
+					
 					if (name_s)
 						{
-							const char *type_start_p = ScrollPastWhitespace (name_end_p, start_p, ",", FALSE);
-
+							const char *type_start_p = ScrollPastWhitespace (name_end_p - 1, start_p, ",", FALSE);
+							DB (KPRINTF ("%s %ld - type_start_p \"%s\"\n", __FILE__, __LINE__, type_start_p ? type_start_p : "NULL"));
+							
 							type_s = CopyToNewString (type_start_p, name_start_p - 1, TRUE);
 
 							if (type_s)
@@ -267,28 +295,50 @@ const char *ScrollPastWhitespace (const char *text_p, const char * const bounds_
 	const int inc = (text_p < bounds_p) ? 1 : -1;
 	const char *res_p = NULL;
 
+	DB (KPRINTF ("%s %ld - text \"%s\" bounds \"%s\" delimiters \"%s\" inc %ld space_flag %ld\n", 
+		__FILE__, __LINE__, text_p ? text_p : "NULL", bounds_p ? bounds_p : "NULL", delimiters_s ? delimiters_s : "NULL", inc, space_flag));
+
 	while (loop_flag)
 		{
+			DB (KPRINTF ("%s %ld - text_p \"%s\"\n", __FILE__, __LINE__, text_p ? text_p : "NULL"));		
+			
 			if (text_p == bounds_p)
 				{
 					loop_flag = FALSE;
 				}
-			else if (space_flag == (isspace (*text_p) != 0))
+			else if (space_flag != (isspace (*text_p) != 0))
+				{
+					loop_flag = FALSE;
+				}
+			else if (delimiters_s != NULL)
+				{
+					char *c_p = strchr (delimiters_s, *text_p);
+					
+					DB (KPRINTF ("%s %ld - c_p \"%s\"\n", __FILE__, __LINE__, c_p ? c_p : "NULL"));
+					if (c_p)
+						{	
+							res_p = text_p;
+							loop_flag = FALSE;
+						}
+				}
+				
+			if (loop_flag)
 				{
 					text_p += inc;
 				}
-			else if ((delimiters_s != NULL) && (strchr (delimiters_s, *text_p) != NULL))
-				{
-					res_p = text_p - inc;
-					loop_flag = FALSE;
-				}
 			else
 				{
-					res_p = text_p - inc;
+					res_p = text_p;
 					loop_flag = FALSE;
 				}
 		}
 
+	if (space_flag == 0)
+		{
+			res_p -= inc;
+		}
+
+	DB (KPRINTF ("%s %ld - res_p \"%s\"\n", __FILE__, __LINE__, res_p ? res_p : "NULL"));
 	return res_p;
 }
 
