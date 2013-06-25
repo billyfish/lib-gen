@@ -119,7 +119,7 @@ struct FunctionDefinition *AllocateFunctionDefinition (void)
 
 	if (fd_p)
 		{
-			struct List *params_p = (struct List *) IExec->AllocSysObjectTags (ASOT_LIST, 
+			struct List *params_p = (struct List *) IExec->AllocSysObjectTags (ASOT_LIST,
 				ASOLIST_Type, PT_PARAMETER,
 				TAG_DONE);
 
@@ -144,7 +144,7 @@ void FreeFunctionDefinition (struct FunctionDefinition *fd_p)
 		{
 			FreeParameter (fd_p -> fd_definition_p);
 		}
-		
+
 	FreeParameterList (fd_p -> fd_args_p);
 
 	FreeMemory (fd_p);
@@ -164,14 +164,14 @@ void FreeParameterList (struct List *params_p)
 
 			curr_node_p = next_node_p;
 		}
-		
+
 	IExec->FreeSysObject (ASOT_LIST, params_p);
 }
 
 
 struct List *AllocateParameterList (void)
 {
-	struct List *params_p = (struct List *) IExec->AllocSysObjectTags (ASOT_LIST, 
+	struct List *params_p = (struct List *) IExec->AllocSysObjectTags (ASOT_LIST,
 		ASOLIST_Type, PT_PARAMETER,
 		TAG_DONE);
 
@@ -192,7 +192,7 @@ void FreeParameterNode (struct ParameterNode *node_p)
 
 struct ParameterNode *AllocateParameterNode (struct Parameter *param_p)
 {
-	struct ParameterNode *node_p = IExec->AllocSysObjectTags (ASOT_NODE, 
+	struct ParameterNode *node_p = IExec->AllocSysObjectTags (ASOT_NODE,
 		ASONODE_Type, PT_PARAMETER,
 		TAG_DONE);
 
@@ -282,6 +282,36 @@ BOOL SetParameterName (struct Parameter *param_p, const char *start_p, const cha
 BOOL SetParameterType (struct Parameter *param_p, const char *start_p, const char *end_p)
 {
 	return SetParameterValue (& (param_p -> pa_type_s), start_p, end_p);
+}
+
+
+BOOL AddParameterAtFront (struct FunctionDefinition *fd_p, struct Parameter *param_p)
+{
+	ParameterNode *node_p = AllocateParameterNode (param_p);
+
+	if (node_p)
+		{
+			IExec->AddHead (fd_p -> fd_args_p, (struct Node *) node_p;
+
+			return TRUE;
+		}
+
+	return FALSE;
+}
+
+
+BOOL AddParameterAtBack (struct FunctionDefinition *fd_p, struct Parameter *param_p)
+{
+	ParameterNode *node_p = AllocateParameterNode (param_p);
+
+	if (node_p)
+		{
+			IExec->AddTail (fd_p -> fd_args_p, (struct Node *) node_p;
+
+			return TRUE;
+		}
+
+	return FALSE;
 }
 
 
@@ -375,7 +405,7 @@ BOOL PrintParameterList (FILE *out_f, struct List * const params_p)
 	struct ParameterNode *curr_node_p = (struct ParameterNode *) IExec->GetHead (params_p);
 	struct ParameterNode *next_node_p = NULL;
 	uint32 i = 0;
-	
+
 	while (curr_node_p)
 		{
 			next_node_p = (struct ParameterNode *) IExec -> GetSucc (& (curr_node_p -> pn_node));

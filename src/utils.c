@@ -116,7 +116,7 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 				{
 					/* scroll to the end of the function name */
 					const char *name_end_p = ScrollPastWhitespace (opening_bracket_p, prototype_s, NULL, TRUE);
-					
+
 					if (name_end_p)
 						{
 							/* scroll to the start of the function name */
@@ -134,23 +134,44 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 											if (function_type_s)
 												{
 													struct Parameter *param_p = AllocateParameter (function_type_s, function_name_s);
-													
+
 													if (param_p)
 														{
 															const char *end_p = strrchr (prototype_s, ')');
-															
+
 															fd_p -> fd_definition_p = param_p;
-															
+
 															if (end_p)
 																{
-																	
+																	BOOL loop_flag = TRUE;
+
+																	/* Move to the character directly after the opening bracket */
+																	++ opening_bracket_p;
+
 																	/* now get each of the parameters */
-																	while ((param_p = GetNextParameter (opening_bracket_p + 1, &end_p)) != NULL)
+																	while (loop_flag)
 																		{
-																			AddParameterAtFront (fd_p, param_p);
+																			param_p = GetNextParameter (opening_bracket_p, &end_p);
+
+																			if (param_p)
+																				{
+																					if (AddParameterAtFront (fd_p, param_p))
+																						{
+																							loop_flag = end_p > opening_bracket_p;
+																						}
+																					else
+																						{
+																							loop_flag = FALSE;
+																						}
+																				}
+																			else
+																				{
+																					loop_flag = FALSE;
+																				}
+
 																		}
-																} 
-														}			
+																}
+														}
 												}
 										}
 
@@ -174,7 +195,7 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
  * successfully create the parameter, this will be updated to point to where
  * to start building the next parameter from.
  * @return A new parameter or NULL if one could not be created.
- */ 
+ */
 struct Parameter *GetNextParameter (const char *start_p, const char **end_pp)
 {
 	char *name_s = NULL;
@@ -189,7 +210,7 @@ struct Parameter *GetNextParameter (const char *start_p, const char **end_pp)
 			const char *name_start_p = ScrollPastWhitespace (name_end_p, start_p, "*[]", FALSE);
 
 			/* TODO - Check for function pointer */
-			
+
 
 			if (name_start_p)
 				{
@@ -198,19 +219,19 @@ struct Parameter *GetNextParameter (const char *start_p, const char **end_pp)
 					if (name_s)
 						{
 							const char *type_start_p = ScrollPastWhitespace (name_end_p, start_p, ",", FALSE);
-							
+
 							type_s = CopyToNewString (type_start_p, name_start_p - 1, TRUE);
 
 							if (type_s)
 								{
 									struct Parameter *param_p = AllocateParameter (name_s, type_s);
-									
+
 									if (param_p)
 										{
-											/* 
+											/*
 												update current position and set to NULL if we have reached
 												the start position to signal that we have completed without
-												error. 
+												error.
 										  */
 											if (type_start_p > start_p)
 												{
@@ -219,19 +240,19 @@ struct Parameter *GetNextParameter (const char *start_p, const char **end_pp)
 											else
 												{
 													*end_pp = NULL;
-												}											
-											
+												}
+
 											return param_p;
 										}		/* if (param_p) */
-									
+
 								}		/* if (function_type_s) */
-						
+
 						}		/* if (function_name_s) */
 
 				}		/* if (name_start_p) */
 
-		}		/* if (name_end_p) */	
-		
+		}		/* if (name_end_p) */
+
 	return NULL;
 }
 
