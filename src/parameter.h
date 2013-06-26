@@ -53,7 +53,7 @@ BOOL AddParameterAtFront (struct FunctionDefinition *fd_p, struct Parameter *par
 
 BOOL AddParameterAtBack (struct FunctionDefinition *fd_p, struct Parameter *param_p);
 
-struct Parameter *AllocateParameter (const char *type_s, const char *name_s);
+struct Parameter *AllocateParameter (char *type_s, char *name_s);
 
 void FreeParameter (struct Parameter *param_p);
 

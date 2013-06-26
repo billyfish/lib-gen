@@ -77,16 +77,16 @@ BOOL FillInParameter (struct Parameter *param_p, const char *start_p, const char
 	else
 		{
 			/* scroll to the end of the name */
-			end_p = ScrollPastWhitespace (end_p, start_p, NULL, TRUE);
+			end_p = ScrollPastWhitespace (end_p, start_p, NULL, SB_WHITESPACE);
 
 			if (end_p)
 				{
 					/* now grab the name */
-					const char *name_start_p = ScrollPastWhitespace (end_p, start_p, NULL, FALSE);
+					const char *name_start_p = ScrollPastWhitespace (end_p, start_p, NULL, SB_NON_WHITESPACE);
 
 					if (name_start_p)
 						{
-							const char *type_end_p = ScrollPastWhitespace (name_start_p, start_p, NULL, TRUE);
+							const char *type_end_p = ScrollPastWhitespace (name_start_p, start_p, NULL, SB_WHITESPACE);
 
 							if (type_end_p)
 								{
@@ -193,7 +193,7 @@ void FreeParameterNode (struct ParameterNode *node_p)
 struct ParameterNode *AllocateParameterNode (struct Parameter *param_p)
 {
 	struct ParameterNode *node_p = IExec->AllocSysObjectTags (ASOT_NODE,
-		ASONODE_Type, PT_PARAMETER,
+//		ASONODE_Type, PT_PARAMETER,
 		TAG_DONE);
 
 	if (node_p)
@@ -208,43 +208,16 @@ struct ParameterNode *AllocateParameterNode (struct Parameter *param_p)
 
 
 
-struct Parameter *AllocateParameter (const char *type_s, const char *name_s)
+struct Parameter *AllocateParameter (char *type_s, char *name_s)
 {
 	struct Parameter *param_p = (struct Parameter *) AllocMemory (sizeof (struct Parameter));
 
 	if (param_p)
 		{
-			BOOL success_flag = TRUE;
+			param_p -> pa_name_s = name_s;
+			param_p -> pa_type_s = type_s;
 
-			param_p -> pa_name_s = NULL;
-			param_p -> pa_type_s = NULL;
-
-			if (name_s)
-				{
-					if (!SetParameterName (param_p, name_s, NULL))
-						{
-							success_flag = FALSE;
-						}
-				}
-
-			if (success_flag)
-				{
-					if (type_s)
-						{
-							if (!SetParameterType (param_p, type_s, NULL))
-								{
-									success_flag = FALSE;
-								}
-						}
-
-				}
-
-			if (success_flag)
-				{
-					return param_p;
-				}
-
-			FreeParameter (param_p);
+			return param_p;
 		}
 
 	return NULL;
@@ -297,6 +270,7 @@ BOOL AddParameterAtFront (struct FunctionDefinition *fd_p, struct Parameter *par
 		}
 
 	return FALSE;
+
 }
 
 

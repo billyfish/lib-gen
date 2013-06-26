@@ -8,6 +8,9 @@
 #include "parameter.h"
 
 
+
+
+
 static struct Parameter *GetNextParameter (const char *start_p, const char **end_pp);
 
 /**
@@ -36,17 +39,20 @@ char *CopyToNewString (const char *start_p, const char *end_p, const BOOL trim_f
 						}
 				}
 
-			loop_flag = start_p < end_p;
-			while (loop_flag)
+			if (end_p)
 				{
-					if (isspace (*end_p))
+					loop_flag = start_p < end_p;
+					while (loop_flag)
 						{
-							-- end_p;
-							loop_flag = (start_p < end_p);
-						}
-					else
-						{
-							loop_flag = FALSE;
+							if (isspace (*end_p))
+								{
+									-- end_p;
+									loop_flag = (start_p < end_p);
+								}
+							else
+								{
+									loop_flag = FALSE;
+								}
 						}
 				}
 		}
@@ -129,27 +135,27 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 			if (opening_bracket_p)
 				{
 					/* scroll to the end of the function name */
-					const char *name_end_p = ScrollPastWhitespace (opening_bracket_p - 1, prototype_s, NULL, TRUE);
+					const char *name_end_p = ScrollPastWhitespace (opening_bracket_p - 1, prototype_s, NULL, SB_NON_WHITESPACE);
 					DB (KPRINTF ("%s %ld - name_end \"%s\"\n", __FILE__, __LINE__, name_end_p ? name_end_p : "NULL"));
 
 					if (name_end_p)
 						{
 							/* scroll to the start of the function name */
 							const char * const delimiters_s = "*[]";
-							const char *name_start_p = ScrollPastWhitespace (name_end_p, prototype_s, delimiters_s, FALSE);
+							const char *name_start_p = ScrollPastWhitespace (name_end_p, prototype_s, delimiters_s, SB_WHITESPACE);
 							DB (KPRINTF ("%s %ld - name_start \"%s\"\n", __FILE__, __LINE__, name_start_p ? name_start_p : "NULL"));
 							
 							
 							if (name_start_p)
 								{
-									char *function_name_s = CopyToNewString (name_start_p, name_end_p, FALSE);
+									char *function_name_s = CopyToNewString (name_start_p, name_end_p, TRUE);
 									DB (KPRINTF ("%s %ld - function name \"%s\"\n", __FILE__, __LINE__, function_name_s ? function_name_s : "NULL"));
-									/*
+									
 									if (function_name_s)
 										{
 											char *function_type_s = CopyToNewString (prototype_s, name_start_p - 1, TRUE);
 											DB (KPRINTF ("%s %ld - function_type_s \"%s\"\n", __FILE__, __LINE__, function_type_s ? function_type_s : "NULL"));											
-
+											
 											if (function_type_s)
 												{
 													struct Parameter *param_p = AllocateParameter (function_type_s, function_name_s);													
@@ -195,11 +201,13 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 																					loop_flag = FALSE;
 																				}
 
-																		}
+																		}		/* while (loop_flag) */
+																		
+																	return fd_p;
 																}
 														}
-												}
-										} */
+												} 
+										} 
 
 								}		/* if (name_end_p) */
 
@@ -233,7 +241,7 @@ static struct Parameter *GetNextParameter (const char *start_p, const char **end
 	if (name_end_p)
 		{
 			/* scroll to the start of the function name */
-			const char *name_start_p = ScrollPastWhitespace (name_end_p, start_p, "*[]", FALSE);
+			const char *name_start_p = ScrollPastWhitespace (name_end_p, start_p, "*[]", SB_NON_WHITESPACE);
 
 			/* TODO - Check for function pointer */
 			DB (KPRINTF ("%s %ld - name_start_p \"%s\"\n", __FILE__, __LINE__, name_start_p ? name_start_p : "NULL"));
@@ -245,36 +253,47 @@ static struct Parameter *GetNextParameter (const char *start_p, const char **end
 					
 					if (name_s)
 						{
-							const char *type_start_p = ScrollPastWhitespace (name_end_p - 1, start_p, ",", FALSE);
-							DB (KPRINTF ("%s %ld - type_start_p \"%s\"\n", __FILE__, __LINE__, type_start_p ? type_start_p : "NULL"));
+							const char *type_end_p = ScrollPastWhitespace (name_start_p - 1, start_p, NULL, SB_WHITESPACE);
+							DB (KPRINTF ("%s %ld - type_end_p \"%s\"\n", __FILE__, __LINE__, type_end_p ? type_end_p : "NULL"));
 							
-							type_s = CopyToNewString (type_start_p, name_start_p - 1, TRUE);
-
-							if (type_s)
+							if (type_end_p)
 								{
-									struct Parameter *param_p = AllocateParameter (name_s, type_s);
-
-									if (param_p)
+									const char *type_start_p = ScrollPastWhitespace (type_end_p, start_p, ",", SB_IGNORE);
+									DB (KPRINTF ("%s %ld - type_start_p \"%s\"\n", __FILE__, __LINE__, type_start_p ? type_start_p : "NULL"));
+														
+									if (type_start_p)
 										{
-											/*
-												update current position and set to NULL if we have reached
-												the start position to signal that we have completed without
-												error.
-										  */
-											if (type_start_p > start_p)
+											type_s = CopyToNewString (type_start_p, type_end_p, TRUE);
+				
+											if (type_s)
 												{
-													*end_pp = type_start_p - 1;
-												}
-											else
-												{
-													*end_pp = NULL;
-												}
-
-											return param_p;
-										}		/* if (param_p) */
-
-								}		/* if (function_type_s) */
-
+													struct Parameter *param_p = AllocateParameter (name_s, type_s);
+				
+													if (param_p)
+														{
+															/*
+																update current position and set to NULL if we have reached
+																the start position to signal that we have completed without
+																error.
+														  */
+															if (type_start_p > start_p)
+																{
+																	*end_pp = type_start_p - 1;
+																}
+															else
+																{
+																	*end_pp = NULL;
+																}
+				
+															return param_p;
+														}		/* if (param_p) */
+				
+												}		/* if (type_s) */
+										
+										}		/* if (type_start_p) */
+								
+								}		/* if (type_end_p) */
+							
 						}		/* if (function_name_s) */
 
 				}		/* if (name_start_p) */
@@ -289,14 +308,14 @@ static struct Parameter *GetNextParameter (const char *start_p, const char **end
 //BOOL GetFunctionParameter
 
 
-const char *ScrollPastWhitespace (const char *text_p, const char * const bounds_p, const char * const delimiters_s, const BOOL space_flag)
+const char *ScrollPastWhitespace (const char *text_p, const char * const bounds_p, const char * const delimiters_s, const enum SpaceBehaviour sb)
 {
 	BOOL loop_flag = TRUE;
 	const int inc = (text_p < bounds_p) ? 1 : -1;
 	const char *res_p = NULL;
 
 	DB (KPRINTF ("%s %ld - text \"%s\" bounds \"%s\" delimiters \"%s\" inc %ld space_flag %ld\n", 
-		__FILE__, __LINE__, text_p ? text_p : "NULL", bounds_p ? bounds_p : "NULL", delimiters_s ? delimiters_s : "NULL", inc, space_flag));
+		__FILE__, __LINE__, text_p ? text_p : "NULL", bounds_p ? bounds_p : "NULL", delimiters_s ? delimiters_s : "NULL", inc, sb));
 
 	while (loop_flag)
 		{
@@ -306,11 +325,27 @@ const char *ScrollPastWhitespace (const char *text_p, const char * const bounds_
 				{
 					loop_flag = FALSE;
 				}
-			else if (space_flag != (isspace (*text_p) != 0))
+			else 
 				{
+					switch (sb)
+						{
+							case SB_WHITESPACE:
+							case SB_NON_WHITESPACE:
+								{
+									enum SpaceBehaviour c = isspace (*text_p) ? SB_WHITESPACE : SB_NON_WHITESPACE;
+									loop_flag = (c == sb);
+								}
+								break;
+						
+							case SB_IGNORE:
+							default:
+								break;
+						}
+				
 					loop_flag = FALSE;
 				}
-			else if (delimiters_s != NULL)
+				
+			if ((loop_flag == TRUE) && (delimiters_s != NULL))
 				{
 					char *c_p = strchr (delimiters_s, *text_p);
 					
@@ -333,7 +368,7 @@ const char *ScrollPastWhitespace (const char *text_p, const char * const bounds_
 				}
 		}
 
-	if (space_flag == 0)
+	if (sb == SB_WHITESPACE)
 		{
 			res_p -= inc;
 		}

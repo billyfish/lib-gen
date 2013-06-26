@@ -3,6 +3,16 @@
 
 #include "types.h"
 
+
+enum SpaceBehaviour
+{
+	SB_IGNORE,
+	
+	SB_WHITESPACE,
+	
+	SB_NON_WHITESPACE
+};
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -10,7 +20,7 @@ extern "C" {
 char *CopyToNewString (const char *start_p, const char *end_p, const BOOL trim_flag);
 
 
-const char *ScrollPastWhitespace (const char *text_p, const char * const bounds_p, const char * const delimiters_s, const BOOL space_flag);
+const char *ScrollPastWhitespace (const char *text_p, const char * const bounds_p, const char * const delimiters_s, const enum SpaceBehaviour space_flag);
 
 
 struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s);
