@@ -357,22 +357,22 @@ BOOL PrintParameter (FILE *out_f, const struct Parameter * const param_p)
 
 	if (param_p -> pa_type_s)
 		{
-			success_flag = (fprintf (out_f, "%s - ", param_p -> pa_type_s) == 1);
+			success_flag = (fprintf (out_f, "%s -", param_p -> pa_type_s) == 1);
 		}
 	else
 		{
-			success_flag = (fprintf (out_f, "NULL - ") >= 0);
+			success_flag = (fprintf (out_f, "NULL -") >= 0);
 		}
 
 	if (success_flag)
 		{
 			if (param_p -> pa_name_s)
 				{
-					success_flag = (fprintf (out_f, "%s - ", param_p -> pa_name_s) == 1);
+					success_flag = (fprintf (out_f, " %s", param_p -> pa_name_s) == 1);
 				}
 			else
 				{
-					success_flag = (fprintf (out_f, "NULL") >= 0);
+					success_flag = (fprintf (out_f, " NULL") >= 0);
 				}
 		}
 

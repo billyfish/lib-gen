@@ -55,10 +55,18 @@ int main (int argc, char *argv [])
 void UnitTest (const char * const prototype_s, FILE *out_f)
 {
 	struct FunctionDefinition *fd_p = TokenizeFunctionPrototype (prototype_s);
-
+	return;
+	
 	if (fd_p)
 		{
-			FreeFunctionDefinition (fd_p);
+			fprintf (out_f, "********* BEGIN FD *********\n");
+			PrintFunctionDefinition (out_f, fd_p);						
+			fprintf (out_f, "\n********* END FD *********\n\n");
+		//	FreeFunctionDefinition (fd_p);
+		}
+	else
+		{
+			fprintf (out_f, "No match for \"%s\"\n", prototype_s);
 		}
 }
 

@@ -6,7 +6,7 @@
 
 enum SpaceBehaviour
 {
-	SB_IGNORE,
+	SB_IGNORE = 0,
 	
 	SB_WHITESPACE,
 	

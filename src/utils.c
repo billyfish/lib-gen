@@ -135,26 +135,26 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 			if (opening_bracket_p)
 				{
 					/* scroll to the end of the function name */
-					const char *name_end_p = ScrollPastWhitespace (opening_bracket_p - 1, prototype_s, NULL, SB_NON_WHITESPACE);
+					const char *name_end_p = ScrollPastWhitespace (opening_bracket_p - 1, prototype_s, NULL, SB_WHITESPACE);
 					DB (KPRINTF ("%s %ld - name_end \"%s\"\n", __FILE__, __LINE__, name_end_p ? name_end_p : "NULL"));
 
 					if (name_end_p)
 						{
 							/* scroll to the start of the function name */
 							const char * const delimiters_s = "*[]";
-							const char *name_start_p = ScrollPastWhitespace (name_end_p, prototype_s, delimiters_s, SB_WHITESPACE);
+							const char *name_start_p = ScrollPastWhitespace (name_end_p, prototype_s, delimiters_s, SB_NON_WHITESPACE);
 							DB (KPRINTF ("%s %ld - name_start \"%s\"\n", __FILE__, __LINE__, name_start_p ? name_start_p : "NULL"));
 							
 							
 							if (name_start_p)
 								{
 									char *function_name_s = CopyToNewString (name_start_p, name_end_p, TRUE);
-									DB (KPRINTF ("%s %ld - function name \"%s\"\n", __FILE__, __LINE__, function_name_s ? function_name_s : "NULL"));
+									DB (KPRINTF ("%s %ld - >>>> function name \"%s\"\n", __FILE__, __LINE__, function_name_s ? function_name_s : "NULL"));
 									
 									if (function_name_s)
 										{
 											char *function_type_s = CopyToNewString (prototype_s, name_start_p - 1, TRUE);
-											DB (KPRINTF ("%s %ld - function_type_s \"%s\"\n", __FILE__, __LINE__, function_type_s ? function_type_s : "NULL"));											
+											DB (KPRINTF ("%s %ld - >>>> function_type_s \"%s\"\n", __FILE__, __LINE__, function_type_s ? function_type_s : "NULL"));											
 											
 											if (function_type_s)
 												{
@@ -185,7 +185,7 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 
 																			if (param_p)
 																				{
-																					DB (KPRINTF ("%s %ld - param type \"%s\" name \"%s\"\n", __FILE__, __LINE__, param_p -> pa_type_s, param_p -> pa_name_s));
+																					DB (KPRINTF ("%s %ld - >>>> param type \"%s\" name \"%s\"\n", __FILE__, __LINE__, param_p -> pa_type_s, param_p -> pa_name_s));
 																				
 																					if (AddParameterAtFront (fd_p, param_p))
 																						{
@@ -319,10 +319,11 @@ const char *ScrollPastWhitespace (const char *text_p, const char * const bounds_
 
 	while (loop_flag)
 		{
-			DB (KPRINTF ("%s %ld - text_p \"%s\"\n", __FILE__, __LINE__, text_p ? text_p : "NULL"));		
+			DB (KPRINTF ("%s %ld - text_p '%c' \"%s\"\n", __FILE__, __LINE__, *text_p, text_p ? text_p : "NULL"));		
 			
-			if (text_p == bounds_p)
+			if (text_p < bounds_p)
 				{
+					DB (KPRINTF ("%s %ld - Hit bounds\n", __FILE__, __LINE__));		
 					loop_flag = FALSE;
 				}
 			else 
@@ -332,8 +333,10 @@ const char *ScrollPastWhitespace (const char *text_p, const char * const bounds_
 							case SB_WHITESPACE:
 							case SB_NON_WHITESPACE:
 								{
-									enum SpaceBehaviour c = isspace (*text_p) ? SB_WHITESPACE : SB_NON_WHITESPACE;
+									enum SpaceBehaviour c = (isspace (*text_p) != 0) ? SB_WHITESPACE : SB_NON_WHITESPACE;
 									loop_flag = (c == sb);
+									
+									DB (KPRINTF ("%s %ld - *text_p='%c' c=%ld sb=%ld loop_flag=%ld\n", __FILE__, __LINE__, *text_p, c, sb, loop_flag));
 								}
 								break;
 						
@@ -341,8 +344,6 @@ const char *ScrollPastWhitespace (const char *text_p, const char * const bounds_
 							default:
 								break;
 						}
-				
-					loop_flag = FALSE;
 				}
 				
 			if ((loop_flag == TRUE) && (delimiters_s != NULL))
@@ -368,8 +369,9 @@ const char *ScrollPastWhitespace (const char *text_p, const char * const bounds_
 				}
 		}
 
-	if (sb == SB_WHITESPACE)
+	if (sb != SB_WHITESPACE)
 		{
+			DB (KPRINTF ("%s %ld - retracing res_p\n", __FILE__, __LINE__));
 			res_p -= inc;
 		}
 
