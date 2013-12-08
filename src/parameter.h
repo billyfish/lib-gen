@@ -3,8 +3,7 @@
 
 #include <stdio.h>
 
-#include <exec/lists.h>
-#include <exec/nodes.h>
+#include "lists.h"
 
 #include "types.h"
 

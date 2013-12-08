@@ -76,6 +76,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\linked_list.c" />
     <ClCompile Include="src\main.c" />
     <ClCompile Include="src\memory.c" />
     <ClCompile Include="src\parameter.c" />
@@ -83,6 +84,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\debugging_utils.h" />
+    <ClInclude Include="src\linked_list.h" />
+    <ClInclude Include="src\lists.h" />
     <ClInclude Include="src\memory.h" />
     <ClInclude Include="src\parameter.h" />
     <ClInclude Include="src\string_list.h" />

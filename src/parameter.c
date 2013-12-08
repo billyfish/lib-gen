@@ -1,7 +1,9 @@
 #include <ctype.h>
 #include <string.h>
 
+#ifdef AMIGA
 #include <proto/exec.h>
+#endif
 
 #include "debugging_utils.h"
 
@@ -77,16 +79,16 @@ BOOL FillInParameter (struct Parameter *param_p, const char *start_p, const char
 	else
 		{
 			/* scroll to the end of the name */
-			end_p = ScrollPastWhitespace (end_p, start_p, NULL, SB_WHITESPACE);
+			end_p = ScrollPastWhitespace (end_p, start_p, NULL, SB_WHITESPACE, FALSE);
 
 			if (end_p)
 				{
 					/* now grab the name */
-					const char *name_start_p = ScrollPastWhitespace (end_p, start_p, NULL, SB_NON_WHITESPACE);
+					const char *name_start_p = ScrollPastWhitespace (end_p, start_p, NULL, SB_NON_WHITESPACE, FALSE);
 
 					if (name_start_p)
 						{
-							const char *type_end_p = ScrollPastWhitespace (name_start_p, start_p, NULL, SB_WHITESPACE);
+							const char *type_end_p = ScrollPastWhitespace (name_start_p, start_p, NULL, SB_WHITESPACE, FALSE);
 
 							if (type_end_p)
 								{
@@ -119,9 +121,13 @@ struct FunctionDefinition *AllocateFunctionDefinition (void)
 
 	if (fd_p)
 		{
+			#ifdef AMIGA
 			struct List *params_p = (struct List *) IExec->AllocSysObjectTags (ASOT_LIST,
 				ASOLIST_Type, PT_PARAMETER,
 				TAG_DONE);
+			#else
+			struct List *params_p = AllocateParameterList ();
+			#endif
 
 			if (params_p)
 				{
@@ -153,28 +159,37 @@ void FreeFunctionDefinition (struct FunctionDefinition *fd_p)
 
 void FreeParameterList (struct List *params_p)
 {
-	struct ParameterNode *curr_node_p = (struct ParameterNode *) IExec->GetHead (params_p);
+	struct ParameterNode *curr_node_p = (struct ParameterNode *) GET_HEAD (params_p);
 	struct ParameterNode *next_node_p = NULL;
 
 	while (curr_node_p)
 		{
-			next_node_p = (struct ParameterNode *) IExec -> GetSucc (& (curr_node_p -> pn_node));
+			next_node_p = (struct ParameterNode *) GET_SUCC (& (curr_node_p -> pn_node));
 
 			FreeParameterNode (curr_node_p);
 
 			curr_node_p = next_node_p;
 		}
 
+#ifdef AMIGA
 	IExec->FreeSysObject (ASOT_LIST, params_p);
+#else
+	FreeList (params_p);
+#endif
+	
 }
 
 
 struct List *AllocateParameterList (void)
 {
+#ifdef AMIGA
 	struct List *params_p = (struct List *) IExec->AllocSysObjectTags (ASOT_LIST,
 		ASOLIST_Type, PT_PARAMETER,
 		TAG_DONE);
-
+#else
+	struct List *params_p = AllocateList (NULL);
+#endif
+	
 	return params_p;
 }
 
@@ -186,16 +201,24 @@ void FreeParameterNode (struct ParameterNode *node_p)
 			FreeParameter (node_p -> pn_param_p);
 		}
 
+#ifdef AMIGA
 	IExec->FreeSysObject (ASOT_NODE, node_p);
+#else
+	FreeMemory (node_p);
+#endif
 }
 
 
 struct ParameterNode *AllocateParameterNode (struct Parameter *param_p)
 {
+#ifdef AMIGA
 	struct ParameterNode *node_p = IExec->AllocSysObjectTags (ASOT_NODE,
 //		ASONODE_Type, PT_PARAMETER,
 		TAG_DONE);
-
+#else
+	struct ParameterNode *node_p = (struct ParameterNode *) AllocMemory (sizeof (struct ParameterNode));
+#endif
+	
 	if (node_p)
 		{
 			node_p -> pn_param_p = param_p;
@@ -264,7 +287,7 @@ BOOL AddParameterAtFront (struct FunctionDefinition *fd_p, struct Parameter *par
 
 	if (node_p)
 		{
-			IExec->AddHead (fd_p -> fd_args_p, (struct Node *) node_p);
+			ADD_HEAD (fd_p -> fd_args_p, (struct Node *) node_p);
 
 			return TRUE;
 		}
@@ -280,7 +303,7 @@ BOOL AddParameterAtBack (struct FunctionDefinition *fd_p, struct Parameter *para
 
 	if (node_p)
 		{
-			IExec->AddTail (fd_p -> fd_args_p, (struct Node *) node_p);
+			ADD_TAIL (fd_p -> fd_args_p, (struct Node *) node_p);
 
 			return TRUE;
 		}
@@ -381,13 +404,13 @@ BOOL PrintParameter (FILE *out_f, const struct Parameter * const param_p)
 
 BOOL PrintParameterList (FILE *out_f, struct List * const params_p)
 {
-	struct ParameterNode *curr_node_p = (struct ParameterNode *) IExec->GetHead (params_p);
+	struct ParameterNode *curr_node_p = (struct ParameterNode *) GET_HEAD (params_p);
 	struct ParameterNode *next_node_p = NULL;
 	uint32 i = 0;
 
 	while (curr_node_p)
 		{
-			next_node_p = (struct ParameterNode *) IExec -> GetSucc (& (curr_node_p -> pn_node));
+			next_node_p = (struct ParameterNode *) GET_SUCC (& (curr_node_p -> pn_node));
 
 			fprintf (out_f, "%lu: ", i);
 			if (PrintParameter (out_f, curr_node_p -> pn_param_p))

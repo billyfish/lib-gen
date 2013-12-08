@@ -1,11 +1,8 @@
 #ifndef STRING_LISTNODE_H
 #define STRING_LISTNODE_H
 
-#include <dos/dos.h>
-
-#include <exec/lists.h>
-#include <exec/nodes.h>
-#include <exec/types.h>
+#include "lists.h"
+#include "types.h"
 
 enum FdNodeTypes
 {
@@ -33,6 +30,7 @@ void FreeStringListNode (struct Node *node_p);
 struct List *AllocateStringList (void);
 
 void FreeStringList (struct List *list_p);
+
 
 void PrintNodeNameToFileHandle (BPTR file_p, struct Node *node_p);
 

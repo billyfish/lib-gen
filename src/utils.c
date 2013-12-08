@@ -135,14 +135,14 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 			if (opening_bracket_p)
 				{
 					/* scroll to the end of the function name */
-					const char *name_end_p = ScrollPastWhitespace (opening_bracket_p - 1, prototype_s, NULL, SB_WHITESPACE);
+					const char *name_end_p = ScrollPastWhitespace (opening_bracket_p - 1, prototype_s, NULL, SB_WHITESPACE, FALSE);
 					DB (KPRINTF ("%s %ld - name_end \"%s\"\n", __FILE__, __LINE__, name_end_p ? name_end_p : "NULL"));
 
 					if (name_end_p)
 						{
 							/* scroll to the start of the function name */
 							const char * const delimiters_s = "*[]";
-							const char *name_start_p = ScrollPastWhitespace (name_end_p, prototype_s, delimiters_s, SB_NON_WHITESPACE);
+							const char *name_start_p = ScrollPastWhitespace (name_end_p, prototype_s, delimiters_s, SB_NON_WHITESPACE, FALSE);
 							DB (KPRINTF ("%s %ld - name_start \"%s\"\n", __FILE__, __LINE__, name_start_p ? name_start_p : "NULL"));
 							
 							
@@ -162,23 +162,69 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 
 													if (param_p)
 														{
-															const char *end_p = strrchr (prototype_s, ')');
+															const char *closing_bracket_p = strrchr (prototype_s, ')');
 
 															fd_p -> fd_definition_p = param_p;
 
-															if (end_p)
+															if (closing_bracket_p)
 																{
 																	BOOL loop_flag = TRUE;
 
 																	// Move to the characters directly within the brackets 
 																	++ opening_bracket_p;
-																	-- end_p;
+																	-- closing_bracket_p;
 
-																	DB (KPRINTF ("%s %ld - opening_bracket_p \"%s\" end_p \"%s\"\n", __FILE__, __LINE__, opening_bracket_p, end_p));
+																	DB (KPRINTF ("%s %ld - opening_bracket_p \"%s\" end_p \"%s\"\n", __FILE__, __LINE__, opening_bracket_p, closing_bracket_p));
 
 																	// now get each of the parameters 
 																	while (loop_flag)
 																		{
+																			/* Are there any intermediate brackets? */
+																			const char *c_p = strchr (opening_bracket_p, '(');
+
+																			if (c_p) 
+																				{
+
+																				}
+																			else
+																				{
+																					/* 
+																						No brackets so we can split the string on commas to
+																						get each parameter
+																					*/
+
+																					const char *start_p = opening_bracket_p;										
+																					const char *comma_p = strchr (start_p, ',');
+																					BOOL param_loop_flag = (start_p < closing_bracket_p) && (comma_p != NULL);
+
+																					while (param_loop_flag)
+																						{
+																							/* work back from the comma past any whitespace */
+																							const char *param_name_end_p = ScrollPastWhitespace (comma_p, start_p, NULL, SB_NON_WHITESPACE, FALSE);
+																							if (param_name_end_p)
+																								{
+																									const char *param_name_start_p = ScrollPastWhitespace (param_name_end_p - 1, start_p, "[]*", SB_WHITESPACE, TRUE);
+
+																									if (param_name_start_p)
+																										{
+																											const char *param_type_end_p = ScrollPastWhitespace (param_name_start_p - 1, start_p, NULL, SB_WHITESPACE, TRUE);
+																										
+																											if (param_type_end_p)
+																												{
+																													
+																												}
+																										}
+
+																								}
+
+																							start_p = comma_p + 1;										
+																							comma_p = strchr (start_p, ',');
+
+																							param_loop_flag = (start_p < closing_bracket_p) && (comma_p != NULL);
+																						}
+
+																				}
+
 																			param_p = GetNextParameter (opening_bracket_p, &end_p);
 
 																			DB (KPRINTF ("%s %ld - end_p \"%s\"\n", __FILE__, __LINE__, end_p ? end_p : "NULL"));
@@ -236,12 +282,12 @@ static struct Parameter *GetNextParameter (const char *start_p, const char **end
 	char *type_s = NULL;
 
 	/* scroll to the end of the function name */
-	const char *name_end_p = ScrollPastWhitespace (*end_pp, start_p, NULL, TRUE);
+	const char *name_end_p = ScrollPastWhitespace (*end_pp, start_p, NULL, SB_WHITESPACE, FALSE);
 
 	if (name_end_p)
 		{
 			/* scroll to the start of the function name */
-			const char *name_start_p = ScrollPastWhitespace (name_end_p, start_p, "*[]", SB_NON_WHITESPACE);
+			const char *name_start_p = ScrollPastWhitespace (name_end_p, start_p, "*[]", SB_NON_WHITESPACE, FALSE);
 
 			/* TODO - Check for function pointer */
 			DB (KPRINTF ("%s %ld - name_start_p \"%s\"\n", __FILE__, __LINE__, name_start_p ? name_start_p : "NULL"));
@@ -253,12 +299,13 @@ static struct Parameter *GetNextParameter (const char *start_p, const char **end
 					
 					if (name_s)
 						{
-							const char *type_end_p = ScrollPastWhitespace (name_start_p - 1, start_p, NULL, SB_WHITESPACE);
+							const char * const delimiters_s = "*[]";						
+							const char *type_end_p = ScrollPastWhitespace (name_start_p - 1, start_p, delimiters_s, SB_NON_WHITESPACE, FALSE);
 							DB (KPRINTF ("%s %ld - type_end_p \"%s\"\n", __FILE__, __LINE__, type_end_p ? type_end_p : "NULL"));
 							
 							if (type_end_p)
 								{
-									const char *type_start_p = ScrollPastWhitespace (type_end_p, start_p, ",", SB_IGNORE);
+									const char *type_start_p = ScrollPastWhitespace (type_end_p, start_p, ",", SB_IGNORE, FALSE);
 									DB (KPRINTF ("%s %ld - type_start_p \"%s\"\n", __FILE__, __LINE__, type_start_p ? type_start_p : "NULL"));
 														
 									if (type_start_p)
@@ -308,7 +355,7 @@ static struct Parameter *GetNextParameter (const char *start_p, const char **end
 //BOOL GetFunctionParameter
 
 
-const char *ScrollPastWhitespace (const char *text_p, const char * const bounds_p, const char * const delimiters_s, const enum SpaceBehaviour sb)
+const char *ScrollPastWhitespace (const char *text_p, const char * const bounds_p, const char * const delimiters_s, const enum SpaceBehaviour sb, const BOOL stop_on_delimiters_flag)
 {
 	BOOL loop_flag = TRUE;
 	const int inc = (text_p < bounds_p) ? 1 : -1;
@@ -348,10 +395,10 @@ const char *ScrollPastWhitespace (const char *text_p, const char * const bounds_
 				
 			if ((loop_flag == TRUE) && (delimiters_s != NULL))
 				{
-					char *c_p = strchr (delimiters_s, *text_p);
+					const char *c_p = strchr (delimiters_s, (int) *text_p);
 					
 					DB (KPRINTF ("%s %ld - c_p \"%s\"\n", __FILE__, __LINE__, c_p ? c_p : "NULL"));
-					if (c_p)
+					if (c_p && stop_on_delimiters_flag)
 						{	
 							res_p = text_p;
 							loop_flag = FALSE;

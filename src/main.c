@@ -149,7 +149,7 @@ struct FunctionDefinition *GetFunctionArguments (const char *function_s)
 
 			if (fd_p)
 				{
-					const char *end_p = ScrollPastWhitespace (opening_bracket_p - 1, function_s, NULL, TRUE);
+					const char *end_p = ScrollPastWhitespace (opening_bracket_p - 1, function_s, NULL, SB_WHITESPACE, FALSE);
 
 					if (end_p)
 						{
