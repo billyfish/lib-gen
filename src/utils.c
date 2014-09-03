@@ -181,10 +181,10 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 																		{
 																			/* Are there any intermediate brackets? */
 																			const char *c_p = strchr (opening_bracket_p, '(');
+																			char *end_p;
 
 																			if (c_p) 
 																				{
-
 																				}
 																			else
 																				{
@@ -195,15 +195,16 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 
 																					const char *start_p = opening_bracket_p;										
 																					const char *comma_p = strchr (start_p, ',');
-																					BOOL param_loop_flag = (start_p < closing_bracket_p) && (comma_p != NULL);
+																					
+																					loop_flag = (start_p < closing_bracket_p) && (comma_p != NULL);
 
-																					while (param_loop_flag)
+																					while (loop_flag)
 																						{
 																							/* work back from the comma past any whitespace */
-																							const char *param_name_end_p = ScrollPastWhitespace (comma_p, start_p, NULL, SB_NON_WHITESPACE, FALSE);
+																							const char *param_name_end_p = ScrollPastWhitespace (comma_p - 1, start_p, NULL, SB_WHITESPACE, FALSE);
 																							if (param_name_end_p)
 																								{
-																									const char *param_name_start_p = ScrollPastWhitespace (param_name_end_p - 1, start_p, "[]*", SB_WHITESPACE, TRUE);
+																									const char *param_name_start_p = ScrollPastWhitespace (param_name_end_p - 1, start_p, "[]*", SB_NON_WHITESPACE, TRUE);
 
 																									if (param_name_start_p)
 																										{
@@ -211,6 +212,33 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 																										
 																											if (param_type_end_p)
 																												{
+																													const char *param_type_start_p = ScrollPastWhitespace (param_type_end_p - 1, start_p, NULL, SB_NON_WHITESPACE, TRUE);
+																										
+																													if (param_type_start_p)
+																														{
+																															char *param_name_s = CopyToNewString (param_name_start_p, param_name_end_p, TRUE);
+																															DB (KPRINTF ("%s %ld - >>>> function name \"%s\"\n", __FILE__, __LINE__, param_name_s ? param_name_s : "NULL"));
+									
+																															if (param_name_s)
+																																{
+																																	char *param_type_s = CopyToNewString (param_type_start_p, param_type_end_p, TRUE);
+
+																																	if (param_type_s)
+																																		{
+																																			struct Parameter *new_param_p = AllocateParameter (param_type_s, param_name_s);
+
+																																			if (new_param_p)
+																																				{
+																																					AddParameterAtFront (fd_p, new_param_p);
+																																				}
+
+																																		}
+																																	else
+																																		{
+																																			// free param_name_s
+																																		}
+																																}
+																														}
 																													
 																												}
 																										}
@@ -220,31 +248,9 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 																							start_p = comma_p + 1;										
 																							comma_p = strchr (start_p, ',');
 
-																							param_loop_flag = (start_p < closing_bracket_p) && (comma_p != NULL);
+																							loop_flag = (start_p < closing_bracket_p) && (comma_p != NULL);
 																						}
 
-																				}
-
-																			param_p = GetNextParameter (opening_bracket_p, &end_p);
-
-																			DB (KPRINTF ("%s %ld - end_p \"%s\"\n", __FILE__, __LINE__, end_p ? end_p : "NULL"));
-
-																			if (param_p)
-																				{
-																					DB (KPRINTF ("%s %ld - >>>> param type \"%s\" name \"%s\"\n", __FILE__, __LINE__, param_p -> pa_type_s, param_p -> pa_name_s));
-																				
-																					if (AddParameterAtFront (fd_p, param_p))
-																						{
-																							loop_flag = end_p > opening_bracket_p;
-																						}
-																					else
-																						{
-																							loop_flag = FALSE;
-																						}
-																				}
-																			else
-																				{
-																					loop_flag = FALSE;
 																				}
 
 																		}		/* while (loop_flag) */
@@ -265,6 +271,10 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 
 	return NULL;
 }
+
+
+
+
 
 /**
  * Scroll backwards from the given end point and return a parameter if one

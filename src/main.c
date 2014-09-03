@@ -41,12 +41,12 @@ int main (int argc, char *argv [])
 	FILE *out_f = stdout;
 
 	UnitTest ("int main (int argc, char **argv);", out_f);
-/*
+
 	UnitTest ("int				*GetAddress (const int **ptr, const int num);", out_f);
 	UnitTest ("struct Test *GetTest (void);", out_f);
 	UnitTest ("void SetTest (struct Test *test_p, int num);", out_f);
-	UnitTest ("void SetFunction (int (*test_fn) (int num));", out_f);
-*/
+//	UnitTest ("void SetFunction (int (*test_fn) (int num));", out_f);
+
 	return 0;
 }
 
@@ -55,7 +55,6 @@ int main (int argc, char *argv [])
 void UnitTest (const char * const prototype_s, FILE *out_f)
 {
 	struct FunctionDefinition *fd_p = TokenizeFunctionPrototype (prototype_s);
-	return;
 	
 	if (fd_p)
 		{
