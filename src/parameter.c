@@ -54,65 +54,283 @@ static BOOL IsParameterFunctionPointer (const char *start_p, const char *end_p)
 }
 
 
-
-
-
-BOOL FillInParameter (struct Parameter *param_p, const char *start_p, const char *end_p)
+struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 {
-	BOOL success_flag = FALSE;
-
-	BOOL is_param_function_pointer_flag = IsParameterFunctionPointer (start_p, end_p);
-
+	struct Parameter *param_p = NULL;
+	const char *type_start_p = NULL;
+	const char *type_end_p = NULL;
+	const char *name_start_p = NULL;
+	const char *name_end_p = end_p;
+	uint8 array_count = 0;
+	uint8 pointer_count = 0;
+	uint8 loop_flag = TRUE;
+	BOOL matched_flag = FALSE;
 
 	/*
-		After trimming each end, the param name should start after the final space. It may
-		be preceeded by a dereferencer such as * or &. Or it could be a function pointer
+		Start from the end and work backwards
 	*/
-
-
-
-	if (is_param_function_pointer_flag)
+	while (loop_flag && !matched_flag)
 		{
-			DB (KPRINTF ("%s %ld - \"%s\" is a function pointer\n", __FILE__, __LINE__, start_p));
+			const char c = *name_end_p;
+
+			if (isspace (c))
+				{
+
+				}
+			else if (c == ']')
+				{
+					/* find the opening array bracket */
+					BOOL matched_flag = FALSE;
+
+					while (loop_flag && !matched_flag)
+						{
+							-- name_end_p;
+
+							if (*name_end_p == '[')
+								{
+									++ array_count;
+									matched_flag = TRUE;
+								}
+							else
+								{
+									loop_flag = (start_p < name_end_p);
+								}
+						}
+
+					if (matched_flag)
+						{
+							/* reset the matched flag */
+							matched_flag = FALSE;
+						}
+					else
+						{
+							// error;
+						}
+				}
+			else if (isalnum (c))
+				{
+					matched_flag = TRUE;
+				}
+
+			if (!matched_flag)
+				{
+					-- name_end_p;
+					loop_flag = (start_p < name_end_p);
+				}
+		}
+
+	/* Have we found the end of the name? */
+	if (matched_flag)
+		{
+			/* Now scroll to the start of the name */
+			name_start_p = name_end_p - 1;
+			matched_flag = FALSE;
+			loop_flag = TRUE;
+
+			while (loop_flag && !matched_flag)
+				{
+					const char c = *name_start_p;
+
+					if (isspace (c) || (c == '*'))
+						{
+							matched_flag = TRUE;
+							++ name_start_p;
+						}
+					else
+						{
+							-- name_start_p;
+							loop_flag = (start_p < name_start_p);
+						}
+				}
+
+			/* Have we found the start of the name? */
+			if (matched_flag)
+				{
+					/* scroll to the end of the type*/
+					type_end_p = name_start_p - 1;
+					matched_flag = FALSE;
+					loop_flag = (type_end_p > start_p);
+
+					while (loop_flag && !matched_flag)
+						{
+							const char c = *type_end_p;
+
+							if (isspace (c))
+								{
+									-- type_end_p;
+									loop_flag = (type_end_p > start_p);
+								}
+							else
+								{
+									matched_flag = TRUE;
+								}
+						}
+
+
+					if (matched_flag)
+						{
+							/* scroll to the start of the type*/
+							type_start_p = start_p;
+							matched_flag = FALSE;
+							loop_flag = (type_start_p < type_end_p);
+
+							while (loop_flag && !matched_flag)
+								{
+									const char c = *type_start_p;
+
+									if (isspace (c))
+										{
+											++ type_start_p;
+											loop_flag = (type_start_p < type_end_p);
+										}
+									else
+										{
+											matched_flag = TRUE;
+										}
+								}
+
+							if (matched_flag)
+								{
+									// success;
+									char *name_s = CopyToNewString (name_start_p, name_end_p, FALSE);
+
+									if (name_s)
+										{
+											char *type_s = CopyToNewString (type_start_p, type_end_p, FALSE);
+
+											if (type_s)
+												{
+													param_p = AllocateParameter (type_s, name_s);
+												}
+
+										}
+								}
+						}
+
+
+
+				}
+		}
+
+	return param_p;
+
+}
+
+
+
+/*
+	<type> <function> (<type> <name>, ....);
+
+ function can have dereferences before it thast should be stored
+ as part of the type. Param Types can be function pointers when
+
+ first bracket separates the function from its parameters.
+ Each string should be trimmed of whitepace where possible.
+
+
+ 1. find opening bracket and split the string on it.
+ 2. find the start and end of the function name
+
+
+*/
+struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
+{
+	BOOL success_flag = FALSE;
+	struct FunctionDefinition *fd_p = AllocateFunctionDefinition ();
+
+	DB (KPRINTF ("%s %ld - Tokenizing \"%s\"\n", __FILE__, __LINE__, prototype_s));
+
+	if (fd_p)
+		{
+			const char *opening_bracket_p = strchr (prototype_s, '(');
+			DB (KPRINTF ("%s %ld - opening_bracket \"%s\"\n", __FILE__, __LINE__, opening_bracket_p ? opening_bracket_p : "NULL"));
+
+			if (opening_bracket_p)
+				{
+					struct Parameter *param_p = ParseParameter (prototype_s, opening_bracket_p - 1);
+
+					if (param_p)
+						{
+							const char *start_p = opening_bracket_p + 1;
+							const char *end_p = strchr (start_p, ',');
+							BOOL loop_flag = (end_p != NULL);
+
+							fd_p -> fd_definition_p = param_p;
+
+							success_flag = TRUE;
+
+							/* Get all of the parameters before each comma */
+							while (loop_flag && success_flag)
+								{
+									param_p = ParseParameter (start_p, end_p);
+
+									if (param_p)
+										{
+											if (AddParameterAtBack (fd_p, param_p))
+												{
+													start_p = end_p + 1;
+
+													if (start_p < prototype_s)
+														{
+															end_p = strchr (start_p, ',');
+															loop_flag = (end_p != NULL);
+														}
+													else
+														{
+															loop_flag = FALSE;
+														}
+												}
+											else
+												{
+													success_flag = FALSE;
+												}
+										}
+									else
+										{
+											success_flag = FALSE;
+										}
+								}
+
+
+							if (success_flag)
+								{
+									const char *start_p = (end_p != NULL) ? end_p + 1 : opening_bracket_p + 1;
+									const char *end_p = strchr (start_p, ')');
+
+									/* Get the final parameter before the closing braacket */
+									if (end_p)
+										{
+											param_p = ParseParameter (start_p, end_p);
+
+											if (param_p)
+												{
+													success_flag = AddParameterAtBack (fd_p, param_p);
+												}
+											else
+												{
+													success_flag = FALSE;
+												}
+										}
+									else
+										{
+											success_flag = FALSE;
+										}
+								}
+						}
+
+				}		/* if (opening_bracket_p) */
 
 		}
-	else
+
+	if (!success_flag)
 		{
-			/* scroll to the end of the name */
-			end_p = ScrollPastWhitespace (end_p, start_p, NULL, SB_WHITESPACE, FALSE);
+			FreeFunctionDefinition (fd_p);
+			fd_p = NULL;
+		}
 
-			if (end_p)
-				{
-					/* now grab the name */
-					const char *name_start_p = ScrollPastWhitespace (end_p, start_p, NULL, SB_NON_WHITESPACE, FALSE);
-
-					if (name_start_p)
-						{
-							const char *type_end_p = ScrollPastWhitespace (name_start_p, start_p, NULL, SB_WHITESPACE, FALSE);
-
-							if (type_end_p)
-								{
-									if (SetParameterType (param_p, start_p, type_end_p))
-										{
-											if (SetParameterName (param_p, name_start_p, end_p))
-												{
-													DB (KPRINTF ("%s %ld - param type: \"%s\" name: \"%s\" \n", __FILE__, __LINE__, param_p -> pa_type_s, param_p -> pa_name_s));
-
-													success_flag = TRUE;
-												}		/* if (SetParameterName (param_p, name_start_p, end_p)) */
-
-										}		/* if (SetParameterType (param_p, start_p, type_end_p)) */
-
-								}		/* if (type_end_p) */
-
-						}		/* if (name_start_p) */
-
-				}		/* if (end_p) */
-
-		}		/* if (is_param_function_pointer_flag) else */
-
-	return success_flag;
+	return fd_p;
 }
+
 
 
 struct FunctionDefinition *AllocateFunctionDefinition (void)
@@ -380,7 +598,7 @@ BOOL PrintParameter (FILE *out_f, const struct Parameter * const param_p)
 
 	if (param_p -> pa_type_s)
 		{
-			success_flag = (fprintf (out_f, "%s -", param_p -> pa_type_s) == 1);
+			success_flag = (fprintf (out_f, "%s -", param_p -> pa_type_s) >= 0);
 		}
 	else
 		{
@@ -391,7 +609,7 @@ BOOL PrintParameter (FILE *out_f, const struct Parameter * const param_p)
 		{
 			if (param_p -> pa_name_s)
 				{
-					success_flag = (fprintf (out_f, " %s", param_p -> pa_name_s) == 1);
+					success_flag = (fprintf (out_f, " %s", param_p -> pa_name_s) >= 0);
 				}
 			else
 				{
@@ -412,10 +630,10 @@ BOOL PrintParameterList (FILE *out_f, struct List * const params_p)
 		{
 			next_node_p = (struct ParameterNode *) GET_SUCC (& (curr_node_p -> pn_node));
 
-			fprintf (out_f, "%lu: ", i);
+			fprintf (out_f, " %lu: ", i);
 			if (PrintParameter (out_f, curr_node_p -> pn_param_p))
 				{
-					fprintf (out_f, ", ");
+					fprintf (out_f, "\n");
 					++ i;
 				}
 			else
@@ -433,11 +651,17 @@ BOOL PrintParameterList (FILE *out_f, struct List * const params_p)
 
 BOOL PrintFunctionDefinition (FILE *out_f, const struct FunctionDefinition * const fn_p)
 {
-	BOOL success_flag = PrintParameter (out_f, fn_p -> fd_definition_p);
+	BOOL success_flag = FALSE;
 
-	if (success_flag)
+	if (fprintf (out_f, "FUNCTION:\n") >= 0)
 		{
-			success_flag = PrintParameterList (out_f, fn_p -> fd_args_p);
+			if (PrintParameter (out_f, fn_p -> fd_definition_p))
+				{
+					if (fprintf (out_f, "\nPARAMS:\n") >= 0)
+						{
+							success_flag = PrintParameterList (out_f, fn_p -> fd_args_p);
+						}
+				}
 		}
 
 	return success_flag;

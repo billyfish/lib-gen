@@ -57,6 +57,10 @@ struct Parameter *AllocateParameter (char *type_s, char *name_s);
 void FreeParameter (struct Parameter *param_p);
 
 
+struct Parameter *ParseParameter (const char *start_p, const char *end_p);
+
+struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s);
+
 struct ParameterNode *AllocateParameterNode (struct Parameter *param_p);
 
 void FreeParameterNode (struct ParameterNode *node_p);

@@ -45,7 +45,7 @@ int main (int argc, char *argv [])
 	UnitTest ("int				*GetAddress (const int **ptr, const int num);", out_f);
 	UnitTest ("struct Test *GetTest (void);", out_f);
 	UnitTest ("void SetTest (struct Test *test_p, int num);", out_f);
-//	UnitTest ("void SetFunction (int (*test_fn) (int num));", out_f);
+	UnitTest ("void SetFunction (int (*test_fn) (int num));", out_f);
 
 	return 0;
 }
@@ -55,11 +55,11 @@ int main (int argc, char *argv [])
 void UnitTest (const char * const prototype_s, FILE *out_f)
 {
 	struct FunctionDefinition *fd_p = TokenizeFunctionPrototype (prototype_s);
-	
+
 	if (fd_p)
 		{
-			fprintf (out_f, "********* BEGIN FD *********\n");
-			PrintFunctionDefinition (out_f, fd_p);						
+			fprintf (out_f, "********* BEGIN FD for \"%s\" *********\n", prototype_s);
+			PrintFunctionDefinition (out_f, fd_p);
 			fprintf (out_f, "\n********* END FD *********\n\n");
 		//	FreeFunctionDefinition (fd_p);
 		}
@@ -80,7 +80,7 @@ void UnitTest2 (const char * const prototype_s, FILE *out_f)
 	if (fd_p)
 		{
 			fprintf (out_f, "********* BEGIN FD *********\n");
-			PrintFunctionDefinition (out_f, fd_p);						
+			PrintFunctionDefinition (out_f, fd_p);
 			fprintf (out_f, "\n********* END FD *********\n\n");
 			FreeFunctionDefinition (fd_p);
 		}
@@ -148,13 +148,6 @@ struct FunctionDefinition *GetFunctionArguments (const char *function_s)
 
 			if (fd_p)
 				{
-					const char *end_p = ScrollPastWhitespace (opening_bracket_p - 1, function_s, NULL, SB_WHITESPACE, FALSE);
-
-					if (end_p)
-						{
-
-						}
-
 					FreeFunctionDefinition (fd_p);
 				}		/* if (fd_p) */
 
