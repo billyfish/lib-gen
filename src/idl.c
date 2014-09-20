@@ -16,7 +16,7 @@ Writer *AllocateIDLWriter (void)
 
 	if (idl_p)
 		{
-			idl_p -> iw_base_writer.wr_write_header_fn = WriteIDL;
+			idl_p -> iw_base_writer.wr_write_function_definitions_fn = WriteIDL;
 		}
 
 	return ((Writer *) idl_p);

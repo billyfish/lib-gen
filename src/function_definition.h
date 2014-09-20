@@ -43,6 +43,12 @@ extern "C" {
 #endif
 
 
+struct List *AllocateFunctionDefinitionsList (void);
+
+void FreeFunctionDefinitionsList (struct List *fds_p);
+
+BOOL AddFunctionDefinitionToList (struct List *list_p, struct FunctionDefinition *fd_p);
+
 struct FunctionDefinition *AllocateFunctionDefinition (void);
 
 void FreeFunctionDefinition (struct FunctionDefinition *fd_p);
@@ -53,7 +59,7 @@ BOOL AddParameterAtBack (struct FunctionDefinition *fd_p, struct Parameter *para
 
 struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s);
 
-struct ParameterNode *AllocateParameterNode (struct Parameter *param_p);
+
 
 
 BOOL PrintFunctionDefinition (FILE *out_f, const struct FunctionDefinition * const fn_p);

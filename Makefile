@@ -4,7 +4,7 @@
 #
 # Project: libgen
 #
-# Created on: 20-09-2014 23:05:52
+# Created on: 21-09-2014 00:10:33
 #
 #
 
@@ -12,7 +12,7 @@ CC = SDK:gcc/bin/gcc
 OBJ = \
 	 src/idl.o src/memory.o src/main.o \
 	 src/utils.o src/parameter.o src/string_list.o \
-	 src/function_definition.o
+	 src/function_definition.o src/writer.o
 
 BIN = libgen
 
@@ -50,7 +50,7 @@ src/idl.o: src/idl.c src/types.h src/idl_writer.h src/writer.h src/memory.h src/
 src/memory.o: src/memory.c src/memory.h
 	$(CC) -c src/memory.c -o src/memory.o $(CFLAGS)
 
-src/main.o: src/main.c src/memory.h src/parameter.h src/types.h src/function_definition.h src/utils.h src/string_list.h src/debugging_utils.h
+src/main.o: src/main.c src/memory.h src/parameter.h src/types.h src/function_definition.h src/utils.h src/string_list.h src/debugging_utils.h src/idl_writer.h src/writer.h
 	$(CC) -c src/main.c -o src/main.o $(CFLAGS)
 
 src/utils.o: src/utils.c src/debugging_utils.h src/memory.h src/string_list.h src/types.h src/utils.h src/parameter.h
@@ -62,6 +62,9 @@ src/parameter.o: src/parameter.c src/debugging_utils.h src/memory.h src/paramete
 src/string_list.o: src/string_list.c src/memory.h src/string_list.h src/types.h src/utils.h
 	$(CC) -c src/string_list.c -o src/string_list.o $(CFLAGS)
 
-src/function_definition.o: src/function_definition.c src/function_definition.h src/parameter.h src/types.h src/debugging_utils.h src/memory.h
+src/function_definition.o: src/function_definition.c src/function_definition.h src/parameter.h src/debugging_utils.h src/memory.h
 	$(CC) -c src/function_definition.c -o src/function_definition.o $(CFLAGS)
+
+src/writer.o: src/writer.c src/writer.h
+	$(CC) -c src/writer.c -o src/writer.o $(CFLAGS)
 

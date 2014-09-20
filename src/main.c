@@ -9,6 +9,7 @@
 #include "utils.h"
 #include "string_list.h"
 #include "debugging_utils.h"
+#include "idl_writer.h"
 
 /**************************************/
 /************ PROTOTYPES **************/
@@ -16,7 +17,7 @@
 
 struct FunctionDefinition *GetFunctionArguments (const char *function_s);
 
-void UnitTest (const char * const prototype_s, FILE *out_f);
+int32 UnitTest (const char * const prototype_s, struct List *fds_p, FILE *out_f);
 
 /************************************************/
 
@@ -40,37 +41,59 @@ int main (int argc, char *argv [])
 {
 //	struct ParameterArray *params_p = NULL;
 	FILE *out_f = stdout;
-	
+	struct List *fds_p = AllocateFunctionDefinitionsList ();
 
-	UnitTest ("int main (int argc, char **argv);", out_f);
-
-	UnitTest ("int				*GetAddress (const int **ptr, const int num);", out_f);
-	UnitTest ("struct Test *GetTest (void);", out_f);
-	UnitTest ("void SetTest (struct Test *test_p, int num);", out_f);
-//	UnitTest ("void SetFunction (int (*test_fn) (int num));", out_f);
-
-	
+	if (fds_p)
+		{
+			UnitTest ("int main (int argc, char *argv []);", fds_p, out_f);	
+			UnitTest ("int				*GetAddress (const int **ptr, const int num);", fds_p, out_f);	
+			UnitTest ("struct Test *GetTest (void);", fds_p, out_f);
+			UnitTest ("void SetTest (struct Test *test_p, int num);", fds_p, out_f);	
+			
+			if (!IsListEmpty (fds_p))
+				{
+					Writer *writer_p = AllocateIDLWriter ();
+					
+					if (writer_p)
+						{
+							
+							FreeIDLWriter (writer_p);
+						}
+				}
+			
+			FreeFunctionDefinitionsList (fds_p);
+		}
 
 	return 0;
 }
 
 
 
-void UnitTest (const char * const prototype_s, FILE *out_f)
+int32 UnitTest (const char * const prototype_s, struct List *fds_p, FILE *out_f)
 {
+	int32 res = 0;
 	struct FunctionDefinition *fd_p = TokenizeFunctionPrototype (prototype_s);
 
 	if (fd_p)
 		{
 			fprintf (out_f, "********* BEGIN FD for \"%s\" *********\n", prototype_s);
 			PrintFunctionDefinition (out_f, fd_p);
+			
+			if (!AddFunctionDefinitionToList (fds_p, fd_p))
+				{
+					FreeFunctionDefinition (fd_p);
+					res = -2;
+				}			
+			
 			fprintf (out_f, "\n********* END FD *********\n\n");
-			FreeFunctionDefinition (fd_p);
 		}
 	else
 		{
 			fprintf (out_f, "No match for \"%s\"\n", prototype_s);
+			res = -1;
 		}
+		
+	return res;
 }
 
 

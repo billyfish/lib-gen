@@ -232,25 +232,16 @@ void FreeParameterList (struct List *params_p)
 			curr_node_p = next_node_p;
 		}
 
-#ifdef AMIGA
 	IExec->FreeSysObject (ASOT_LIST, params_p);
-#else
-	FreeList (params_p);
-#endif
-	
 }
 
 
 struct List *AllocateParameterList (void)
 {
-#ifdef AMIGA
 	struct List *params_p = (struct List *) IExec->AllocSysObjectTags (ASOT_LIST,
 		ASOLIST_Type, PT_PARAMETER,
-		TAG_DONE);
-#else
-	struct List *params_p = AllocateList (NULL);
-#endif
-	
+		TAG_DONE);	
+
 	return params_p;
 }
 
@@ -262,23 +253,16 @@ void FreeParameterNode (struct ParameterNode *node_p)
 			FreeParameter (node_p -> pn_param_p);
 		}
 
-#ifdef AMIGA
 	IExec->FreeSysObject (ASOT_NODE, node_p);
-#else
-	FreeMemory (node_p);
-#endif
 }
 
 
 struct ParameterNode *AllocateParameterNode (struct Parameter *param_p)
 {
-#ifdef AMIGA
 	struct ParameterNode *node_p = IExec->AllocSysObjectTags (ASOT_NODE,
-//		ASONODE_Type, PT_PARAMETER,
+		ASONODE_Size, sizeof (struct ParameterNode),
 		TAG_DONE);
-#else
-	struct ParameterNode *node_p = (struct ParameterNode *) AllocMemory (sizeof (struct ParameterNode));
-#endif
+
 	
 	if (node_p)
 		{

@@ -138,19 +138,50 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 
 
 
+struct List *AllocateFunctionDefinitionsList (void)
+{
+	struct List *fds_p = (struct List *) IExec->AllocSysObjectTags (ASOT_LIST,
+		TAG_DONE);	
+
+	return fds_p;
+}
+
+
+void FreeFunctionDefinitionsList (struct List *fds_p)
+{
+
+}
+
+
+BOOL AddFunctionDefinitionToList (struct List *list_p, struct FunctionDefinition *fd_p)
+{
+	BOOL success_flag = FALSE;
+	
+	struct FunctionDefinitionNode *node_p = IExec->AllocSysObjectTags (ASOT_NODE,
+		ASONODE_Size, sizeof (struct FunctionDefinitionNode),
+		TAG_DONE);
+	
+	if (node_p)
+		{
+			node_p -> fdn_function_def_p = fd_p;
+			
+			IExec->AddTail (list_p, (struct Node *) node_p);
+			success_flag = TRUE;
+		}
+	
+	return success_flag;
+}
+
+
 struct FunctionDefinition *AllocateFunctionDefinition (void)
 {
 	struct FunctionDefinition *fd_p = (struct FunctionDefinition *) AllocMemory (sizeof (struct FunctionDefinition));
 
 	if (fd_p)
 		{
-			#ifdef AMIGA
 			struct List *params_p = (struct List *) IExec->AllocSysObjectTags (ASOT_LIST,
 				ASOLIST_Type, PT_PARAMETER,
 				TAG_DONE);
-			#else
-			struct List *params_p = AllocateParameterList ();
-			#endif
 
 			if (params_p)
 				{
