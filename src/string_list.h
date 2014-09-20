@@ -1,6 +1,8 @@
 #ifndef STRING_LISTNODE_H
 #define STRING_LISTNODE_H
 
+#include <dos/dos.h>
+
 #include "lists.h"
 #include "types.h"
 
@@ -47,4 +49,5 @@ BOOL AddStringNode (struct List *tokens_p, CONST_STRPTR start_p, CONST_STRPTR en
 
 
 #endif		/* #ifndef STRING_LISTNODE_H */
+
 

@@ -594,7 +594,11 @@ DB (KPRINTF ("%s %ld -  setting param value to: \"%s\" - \"%s\"\n", __FILE__, __
 
 BOOL PrintParameter (FILE *out_f, const struct Parameter * const param_p)
 {
-	BOOL success_flag;
+	BOOL success_flag = TRUE;
+
+	if (param_p)
+		{
+		
 
 	if (param_p -> pa_type_s)
 		{
@@ -616,20 +620,21 @@ BOOL PrintParameter (FILE *out_f, const struct Parameter * const param_p)
 					success_flag = (fprintf (out_f, " NULL") >= 0);
 				}
 		}
+		
+		
+		}
 
 	return success_flag;
 }
 
 BOOL PrintParameterList (FILE *out_f, struct List * const params_p)
 {
-	struct ParameterNode *curr_node_p = (struct ParameterNode *) GET_HEAD (params_p);
+	struct ParameterNode *curr_node_p = (struct ParameterNode *) IExec->GetHead (params_p);
 	struct ParameterNode *next_node_p = NULL;
 	uint32 i = 0;
 
-	while (curr_node_p)
+	while ((next_node_p = (struct ParameterNode *) (curr_node_p -> pn_node.ln_Succ)) != NULL)
 		{
-			next_node_p = (struct ParameterNode *) GET_SUCC (& (curr_node_p -> pn_node));
-
 			fprintf (out_f, " %lu: ", i);
 			if (PrintParameter (out_f, curr_node_p -> pn_param_p))
 				{

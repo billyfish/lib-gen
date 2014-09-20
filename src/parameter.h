@@ -38,6 +38,13 @@ struct FunctionDefinition
 	struct List *fd_args_p;
 };
 
+
+struct FunctionDefinitionNode
+{
+	struct Node fdn_node;
+	struct FunctionDefinition *fdn_function_def_p;
+};
+
 #ifdef __cplusplus
 extern "C" {
 #endif

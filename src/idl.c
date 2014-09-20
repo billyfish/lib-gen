@@ -1,6 +1,44 @@
+#include <proto/exec.h>
+
+#include "types.h"
+#include "idl_writer.h"
+#include "memory.h"
+#include "parameter.h"
+
+static BOOL WriteIDL (struct Writer *writer_p, struct List *function_definitions_p, FILE *out_f);
 
 
-BOOL WriteIDLHeader (FILE *out_f, const char * const name_s, const char * const basename_s, const char * const name_s, const char * const struct_name_s, const char * const prefix_s)
+Writer *AllocateIDLWriter (void)
+{
+	IDLWriter *idl_p = (IDLWriter *) AllocMemory (sizeof (IDLWriter));
+
+	if (idl_p)
+		{
+			idl_p -> iw_base_writer.wr_write_header_fn = WriteIDL;
+		}
+
+	return ((Writer *) idl_p);
+}
+
+
+void FreeIDLWriter (Writer *writer_p)
+{
+	IDLWriter *idl_p = (IDLWriter *) writer_p;
+	
+	FreeMemory (idl_p);
+}
+
+
+static BOOL WriteIDL (struct Writer *writer_p, struct List *function_definitions_p, FILE *out_f)
+{
+	BOOL success_flag = FALSE;
+	
+	return success_flag;
+}
+
+
+
+BOOL WriteIDLHeader (FILE *out_f, const char * const name_s, const char * const basename_s, const char * const struct_name_s, const char * const prefix_s)
 {
 	BOOL success_flag = FALSE;
 
@@ -28,7 +66,7 @@ BOOL WriteIDLFunction (FILE *out_f, const struct FunctionDefinition * const fd_p
 
 	if (fprintf (out_f, "\t<method name=\"%s\" result=\"%s\">\n", fd_p -> fd_definition_p -> pa_name_s, fd_p -> fd_definition_p -> pa_type_s) >= 0)
 		{
-			ParameterNode *node_p = (ParameterNode *) GET_HEAD (fd_p -> fd_args_p);
+			struct ParameterNode *node_p = (struct ParameterNode *) GET_HEAD (fd_p -> fd_args_p);
 
 			success_flag = TRUE;
 
@@ -66,7 +104,7 @@ BOOL WriteIDLDefaultFunctions (FILE *out_f)
 
 
 
-BOOL WriteIDLIncludes (FILE *out_f, const char * const name_s, const char * const basename_s, const char * const name_s, const char * const struct_name_s, const char * const prefix_s)
+BOOL WriteIDLIncludes (FILE *out_f, const char * const name_s, const char * const basename_s, const char * const struct_name_s, const char * const prefix_s)
 {
 	BOOL success_flag = TRUE;
 
