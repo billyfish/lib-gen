@@ -8,11 +8,6 @@
 #include "parameter.h"
 
 
-
-
-
-static struct Parameter *GetNextParameter (const char *start_p, const char **end_pp);
-
 /**
  * Copy a string to a newly created string.
  *

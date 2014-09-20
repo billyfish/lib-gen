@@ -4,6 +4,8 @@
 #include "idl_writer.h"
 #include "memory.h"
 #include "parameter.h"
+#include "function_definition.h"
+
 
 static BOOL WriteIDL (struct Writer *writer_p, struct List *function_definitions_p, FILE *out_f);
 
@@ -66,7 +68,7 @@ BOOL WriteIDLFunction (FILE *out_f, const struct FunctionDefinition * const fd_p
 
 	if (fprintf (out_f, "\t<method name=\"%s\" result=\"%s\">\n", fd_p -> fd_definition_p -> pa_name_s, fd_p -> fd_definition_p -> pa_type_s) >= 0)
 		{
-			struct ParameterNode *node_p = (struct ParameterNode *) GET_HEAD (fd_p -> fd_args_p);
+			struct ParameterNode *node_p = (struct ParameterNode *) IExec->GetHead (fd_p -> fd_args_p);
 
 			success_flag = TRUE;
 

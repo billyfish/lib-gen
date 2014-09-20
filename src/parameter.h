@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-#include "lists.h"
+#include <exec/lists.h>
 
 #include "types.h"
 
@@ -32,32 +32,12 @@ struct ParameterNode
 };
 
 
-struct FunctionDefinition
-{
-	struct Parameter *fd_definition_p;
-	struct List *fd_args_p;
-};
 
-
-struct FunctionDefinitionNode
-{
-	struct Node fdn_node;
-	struct FunctionDefinition *fdn_function_def_p;
-};
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-
-struct FunctionDefinition *AllocateFunctionDefinition (void);
-
-void FreeFunctionDefinition (struct FunctionDefinition *fd_p);
-
-
-BOOL AddParameterAtFront (struct FunctionDefinition *fd_p, struct Parameter *param_p);
-
-BOOL AddParameterAtBack (struct FunctionDefinition *fd_p, struct Parameter *param_p);
 
 struct Parameter *AllocateParameter (char *type_s, char *name_s);
 
@@ -66,12 +46,9 @@ void FreeParameter (struct Parameter *param_p);
 
 struct Parameter *ParseParameter (const char *start_p, const char *end_p);
 
-struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s);
-
 struct ParameterNode *AllocateParameterNode (struct Parameter *param_p);
 
 void FreeParameterNode (struct ParameterNode *node_p);
-
 
 void FreeParameterList (struct List *params_p);
 
@@ -83,15 +60,12 @@ BOOL SetParameterName (struct Parameter *param_p, const char *start_p, const cha
 
 BOOL SetParameterType (struct Parameter *param_p, const char *start_p, const char *end_p);
 
-
-
 void ClearParameter (struct Parameter *param_p);
 
 BOOL PrintParameter (FILE *out_f, const struct Parameter * const param_p);
 
 BOOL PrintParameterList (FILE *out_f, struct List * const params_p);
 
-BOOL PrintFunctionDefinition (FILE *out_f, const struct FunctionDefinition * const fn_p);
 
 #ifdef __cplusplus
 }

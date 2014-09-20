@@ -3,7 +3,8 @@
 
 #include <dos/dos.h>
 
-#include "lists.h"
+#include <exec/lists.h>
+
 #include "types.h"
 
 enum FdNodeTypes
