@@ -17,7 +17,7 @@
 #include "writer.h"
 
 
-BOOL WriteFunctionDefinitions (struct Writer *writer_p, struct List *function_definitions_p, FILE *out_f)
+BOOL WriteFunctionDefinitions (struct Writer *writer_p, const struct List *function_definitions_p, FILE *out_f)
 {
 	return (writer_p -> wr_write_function_definitions_fn (writer_p, function_definitions_p, out_f));
 }

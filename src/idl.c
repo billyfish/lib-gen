@@ -7,7 +7,18 @@
 #include "function_definition.h"
 
 
-static BOOL WriteIDL (struct Writer *writer_p, struct List *function_definitions_p, FILE *out_f);
+static BOOL WriteIDL (struct Writer *writer_p, const struct List *function_definitions_p, FILE *out_f);
+static BOOL WriteIDLHeader (FILE *out_f, const char * const name_s, const char * const basename_s, const char * const struct_name_s, const char * const prefix_s);
+static BOOL WriteIDLFunctions (FILE *out_f, const struct List * const fds_list_p);
+
+static BOOL WriteIDLFunction (FILE *out_f, const struct FunctionDefinition * const fd_p);
+
+static BOOL WriteIDLDefaultFunctions (FILE *out_f);
+static BOOL WriteIDLIncludes (FILE *out_f, const char * const name_s, const char * const basename_s, const char * const struct_name_s, const char * const prefix_s);
+static BOOL WriteIDLFooter (FILE *out_f);
+
+
+
 
 
 Writer *AllocateIDLWriter (void)
@@ -31,16 +42,33 @@ void FreeIDLWriter (Writer *writer_p)
 }
 
 
-static BOOL WriteIDL (struct Writer *writer_p, struct List *function_definitions_p, FILE *out_f)
+static BOOL WriteIDL (struct Writer *writer_p, const struct List *function_definitions_p, FILE *out_f)
 {
 	BOOL success_flag = FALSE;
+	const char * const name_s = NULL;
+	const char * const basename_s = NULL;
+	const char * const struct_name_s = NULL;
+	const char * const prefix_s = NULL;
+	
+	if (WriteIDLHeader (out_f, name_s, basename_s, struct_name_s, prefix_s))
+		{
+			if (WriteIDLDefaultFunctions (out_f))
+				{
+					if (WriteIDLFunctions (out_f, function_definitions_p))
+						{
+							success_flag = TRUE;
+						}
+						
+				}
+				
+		}		/* if (WriteIDLHeader (name_s, basename_s, struct_name_s, prefix_s)) */
 	
 	return success_flag;
 }
 
 
 
-BOOL WriteIDLHeader (FILE *out_f, const char * const name_s, const char * const basename_s, const char * const struct_name_s, const char * const prefix_s)
+static BOOL WriteIDLHeader (FILE *out_f, const char * const name_s, const char * const basename_s, const char * const struct_name_s, const char * const prefix_s)
 {
 	BOOL success_flag = FALSE;
 
@@ -62,7 +90,25 @@ BOOL WriteIDLHeader (FILE *out_f, const char * const name_s, const char * const 
 }
 
 
-BOOL WriteIDLFunction (FILE *out_f, const struct FunctionDefinition * const fd_p)
+
+static BOOL WriteIDLFunctions (FILE *out_f, const struct List * const fds_list_p)
+{
+	BOOL success_flag = TRUE;
+	const struct FunctionDefinitionNode *curr_node_p = (const struct FunctionDefinitionNode *) IExec->GetHead (fds_list_p);
+	const struct FunctionDefinitionNode *next_node_p = NULL;
+	
+	while (((next_node_p = (struct FunctionDefinitionNode *) (curr_node_p -> fdn_node.ln_Succ)) != NULL) && success_flag)
+		{
+			success_flag = WriteIDLFunction (out_f, curr_node_p -> fdn_function_def_p);
+		}
+	 
+
+	return success_flag;
+}
+
+
+
+static BOOL WriteIDLFunction (FILE *out_f, const struct FunctionDefinition * const fd_p)
 {
 	BOOL success_flag = FALSE;
 
@@ -74,7 +120,7 @@ BOOL WriteIDLFunction (FILE *out_f, const struct FunctionDefinition * const fd_p
 
 			while (success_flag)
 				{
-
+					
 				}
 
 		}
@@ -83,7 +129,7 @@ BOOL WriteIDLFunction (FILE *out_f, const struct FunctionDefinition * const fd_p
 }
 
 
-BOOL WriteIDLDefaultFunctions (FILE *out_f)
+static BOOL WriteIDLDefaultFunctions (FILE *out_f)
 {
 	BOOL success_flag = FALSE;
 
@@ -106,7 +152,7 @@ BOOL WriteIDLDefaultFunctions (FILE *out_f)
 
 
 
-BOOL WriteIDLIncludes (FILE *out_f, const char * const name_s, const char * const basename_s, const char * const struct_name_s, const char * const prefix_s)
+static BOOL WriteIDLIncludes (FILE *out_f, const char * const name_s, const char * const basename_s, const char * const struct_name_s, const char * const prefix_s)
 {
 	BOOL success_flag = TRUE;
 
@@ -116,7 +162,7 @@ BOOL WriteIDLIncludes (FILE *out_f, const char * const name_s, const char * cons
 
 
 
-BOOL WriteIDLFooter (FILE *out_f)
+static BOOL WriteIDLFooter (FILE *out_f)
 {
 	return (fprintf (out_f, "</library>\n") >= 0);
 }

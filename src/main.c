@@ -56,6 +56,7 @@ int main (int argc, char *argv [])
 					
 					if (writer_p)
 						{
+							BOOL success_flag = WriteFunctionDefinitions (writer_p, fds_p, out_f);
 							
 							FreeIDLWriter (writer_p);
 						}
