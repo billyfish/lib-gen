@@ -68,6 +68,41 @@ int main (int argc, char *argv [])
 }
 
 
+BOOL GeneratePrototypesList (CONST STRPTR root_path_s, CONST_STRPTR function_pattern_s)
+{
+	BOOL success_flag = FALSE;
+	struct List headers_list;
+
+	IExec->NewList (&headers_list);
+
+	if (RecursiveScan (root_path_s, &headers_list))
+		{
+			struct List function_definitions_listl
+			StringNode *curr_filename_node_p = (StringNode *) IExec->GetHead (&headers_list);
+			StringNode *next_filename_node_p = NULL;
+
+			IExec->NewList (&function_definitions_listl);
+
+			/* Open each of the matched filenames in turn */
+			while ((next_filename_node_p = (struct ParameterNode *) (curr_filename_node_p -> pn_node.ln_Succ)) != NULL)
+				{
+					CONST STRPTR filename_s = curr_filenamee_node_p -> sn_string_s;
+
+					if (ParseFiles (function_pattern_s, filename_s))
+						{
+
+						}
+
+					curr_filename_node_p = next_filename_node_p;
+				}
+
+		}
+
+	return success_flag;
+}
+
+
+
 
 BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, const size_t pattern_length, struct FReadLineData *line_p)
 {
@@ -176,7 +211,7 @@ static BOOL OpenLib (struct Library **library_pp, CONST_STRPTR lib_name_s, const
 		{
 			printf ("failed to open library \"%s\" version %lu\n", lib_name_s, lib_version);
 		}
-		
+
 	return FALSE;
 }
 
@@ -185,9 +220,9 @@ static void CloseLib (struct Library *library_p, struct Interface *interface_p)
 {
 	if (interface_p)
 		{
-			IExec->DropInterface (interface_p); 
+			IExec->DropInterface (interface_p);
 		}
-		
+
 	if (library_p)
 		{
 			IExec->CloseLibrary (library_p);

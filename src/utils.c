@@ -120,27 +120,17 @@ int32 RecursiveScan (STRPTR name_s, struct List *matching_files_list_p)
 {
 	int32 success = FALSE;
 	APTR context_p = IDOS->ObtainDirContextTags (EX_StringNameInput, name_s,
-	                        EX_DoCurrentDir, TRUE, /* for relative cd lock */
-	                        EX_DataFields, (EXF_NAME | EXF_LINK | EXF_TYPE),
-	                        TAG_END);
+		EX_DoCurrentDir, TRUE, /* for relative cd lock */
+		EX_DataFields, (EXF_NAME | EXF_LINK | EXF_TYPE),
+		TAG_END);
+
 	if (context_p)
 		{
 			struct ExamineData *dat_p;
 
 			while ((dat_p = IDOS->ExamineDir (context_p)))
 				{
-					if (EXD_IS_LINK (dat_p)) /* all link types - check first ! */
-						{
-							if (EXD_IS_SOFTLINK (dat_p))
-								{
-									IDOS->Printf ("softlink=%s points to %s\n", dat_p -> Name, dat_p -> Link);
-								}
-							else   /* a hardlink or alt link */
-								{
-									IDOS->Printf ("hardlink=%s points to %s\n", dat_p -> Name, dat_p -> Link);
-								}
-						}
-					else if (EXD_IS_FILE (dat_p))
+					if (EXD_IS_FILE (dat_p))
 						{
 							IDOS->Printf ("filename=%s\n", dat_p -> Name);
 						}
