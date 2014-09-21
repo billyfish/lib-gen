@@ -21,7 +21,7 @@
 /************ PROTOTYPES **************/
 /**************************************/
 
-static int32 FunctioDefinitionUnitTest (const char * const prototype_s, struct List *fds_p)l;
+static int32 FunctionDefinitionUnitTest (const char * const prototype_s, struct List *fds_p);
 
 /************************************************/
 
@@ -41,9 +41,9 @@ static int32 FunctioDefinitionUnitTest (const char * const prototype_s, struct L
 
 */
 
-int UnitTest (STRPTR output_name_s)
+int UnitTest (CONST_STRPTR output_name_s)
 {
-	BPTR out_p = FOpen (v, MODE_NEWFILE, 1024);
+	BPTR out_p = IDOS->FOpen (output_name_s, MODE_NEWFILE, 1024);
 
 	if (out_p)
 		{
@@ -51,10 +51,10 @@ int UnitTest (STRPTR output_name_s)
 
 			if (fds_p)
 				{
-					UnitTest ("int main (int argc, char *argv []);", fds_p);
-					UnitTest ("int				*GetAddress (const int **ptr, const int num);", fds_p);
-					UnitTest ("struct Test *GetTest (void);", fds_p);
-					UnitTest ("void SetTest (struct Test *test_p, int num);", fds_p);
+					FunctionDefinitionUnitTest ("int main (int argc, char *argv []);", fds_p);
+					FunctionDefinitionUnitTest ("int				*GetAddress (const int **ptr, const int num);", fds_p);
+					FunctionDefinitionUnitTest ("struct Test *GetTest (void);", fds_p);
+					FunctionDefinitionUnitTest ("void SetTest (struct Test *test_p, int num);", fds_p);
 
 					if (!IsListEmpty (fds_p))
 						{
@@ -71,7 +71,7 @@ int UnitTest (STRPTR output_name_s)
 					FreeFunctionDefinitionsList (fds_p);
 				}
 
-			FClose (out_p);
+			IDOS->FClose (out_p);
 		}
 
 	return 0;
@@ -79,15 +79,16 @@ int UnitTest (STRPTR output_name_s)
 
 
 
-static int32 FunctioDefinitionUnitTest (const char * const prototype_s, struct List *fds_p)
+static int32 FunctionDefinitionUnitTest (const char * const prototype_s, struct List *fds_p)
 {
 	int32 res = 0;
 	struct FunctionDefinition *fd_p = TokenizeFunctionPrototype (prototype_s);
-
+	BPTR out_p = IDOS->Output ();
+			
 	if (fd_p)
 		{
-			fprintf (out_f, "********* BEGIN FD for \"%s\" *********\n", prototype_s);
-			PrintFunctionDefinition (out_f, fd_p);
+			IDOS->FPrintf (out_p, "********* BEGIN FD for \"%s\" *********\n", prototype_s);
+			PrintFunctionDefinition (out_p, fd_p);
 
 			if (!AddFunctionDefinitionToList (fds_p, fd_p))
 				{
@@ -95,11 +96,11 @@ static int32 FunctioDefinitionUnitTest (const char * const prototype_s, struct L
 					res = -2;
 				}
 
-			fprintf (out_f, "\n********* END FD *********\n\n");
+			IDOS->FPrintf (out_p, "\n********* END FD *********\n\n");
 		}
 	else
 		{
-			fprintf (out_f, "No match for \"%s\"\n", prototype_s);
+			IDOS->FPrintf (out_p, "No match for \"%s\"\n", prototype_s);
 			res = -1;
 		}
 

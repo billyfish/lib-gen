@@ -1,8 +1,7 @@
 #ifndef PARAMETER_H
 #define PARAMETER_H
 
-#include <stdio.h>
-
+#include <dos/dos.h>
 #include <exec/lists.h>
 
 #include "types.h"
@@ -69,9 +68,9 @@ BOOL SetParameterType (struct Parameter *param_p, const char *start_p, const cha
 
 void ClearParameter (struct Parameter *param_p);
 
-BOOL PrintParameter (FILE *out_f, const struct Parameter * const param_p);
+BOOL PrintParameter (BPTR out_p, const struct Parameter * const param_p);
 
-BOOL PrintParameterList (FILE *out_f, struct List * const params_p);
+BOOL PrintParameterList (BPTR out_p, struct List * const params_p);
 
 
 #ifdef __cplusplus

@@ -32,6 +32,10 @@
 static BOOL OpenLibs (void);
 static void CloseLibs (void);
 
+static BOOL OpenLib (struct Library **library_pp, CONST_STRPTR lib_name_s, const uint32 lib_version, struct Interface **interface_pp, CONST_STRPTR interface_name_s, const uint32 interface_version);
+
+static void CloseLib (struct Library *library_p, struct Interface *interface_p);
+
 BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, const size_t pattern_length, struct FReadLineData *line_p);
 BOOL ParseFiles (CONST_STRPTR pattern_s, CONST_STRPTR filename_s);
 
@@ -46,7 +50,7 @@ int main (int argc, char *argv [])
 				}
 			else if ((argc == 2) && (strcmp ("test", argv [1]) == 0))
 				{
-					UnitTest ();
+					UnitTest ("unit_test_out.xml");
 				}
 			else
 				{
@@ -152,4 +156,42 @@ static void CloseLibs (void)
 	CloseLib (UtilityBase, (struct Interface *) IUtility);
 	CloseLib (DOSBase, (struct Interface *) IDOS);
 }
+
+
+static BOOL OpenLib (struct Library **library_pp, CONST_STRPTR lib_name_s, const uint32 lib_version, struct Interface **interface_pp, CONST_STRPTR interface_name_s, const uint32 interface_version)
+{
+	if ((*library_pp = IExec->OpenLibrary (lib_name_s, lib_version)) != NULL)
+		{
+			if ((*interface_pp = IExec->GetInterface (*library_pp, interface_name_s, interface_version, NULL)) != NULL)
+				{
+					return TRUE;
+				}
+			else
+				{
+					printf ("failed to open interface \"%s\" version %lu from \"%s\"\n", interface_name_s, interface_version, lib_name_s);
+				}
+			IExec->CloseLibrary (*library_pp);
+		}
+	else
+		{
+			printf ("failed to open library \"%s\" version %lu\n", lib_name_s, lib_version);
+		}
+		
+	return FALSE;
+}
+
+
+static void CloseLib (struct Library *library_p, struct Interface *interface_p)
+{
+	if (interface_p)
+		{
+			IExec->DropInterface (interface_p); 
+		}
+		
+	if (library_p)
+		{
+			IExec->CloseLibrary (library_p);
+		}
+}
+
 

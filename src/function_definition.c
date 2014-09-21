@@ -17,6 +17,7 @@
 #include <string.h>
 
 #include <proto/exec.h>
+#include <proto/dos.h>
 
 #include "function_definition.h"
 #include "debugging_utils.h"
@@ -243,17 +244,17 @@ BOOL AddParameterAtBack (struct FunctionDefinition *fd_p, struct Parameter *para
 }
 
 
-BOOL PrintFunctionDefinition (FILE *out_f, const struct FunctionDefinition * const fn_p)
+BOOL PrintFunctionDefinition (BPTR out_p, const struct FunctionDefinition * const fn_p)
 {
 	BOOL success_flag = FALSE;
 
-	if (fprintf (out_f, "FUNCTION:\n") >= 0)
+	if (IDOS->FPrintf (out_p, "FUNCTION:\n") >= 0)
 		{
-			if (PrintParameter (out_f, fn_p -> fd_definition_p))
+			if (PrintParameter (out_p, fn_p -> fd_definition_p))
 				{
-					if (fprintf (out_f, "\nPARAMS:\n") >= 0)
+					if (IDOS->FPrintf (out_p, "\nPARAMS:\n") >= 0)
 						{
-							success_flag = PrintParameterList (out_f, fn_p -> fd_args_p);
+							success_flag = PrintParameterList (out_p, fn_p -> fd_args_p);
 						}
 				}
 		}

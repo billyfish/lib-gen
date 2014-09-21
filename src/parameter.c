@@ -2,6 +2,7 @@
 #include <string.h>
 
 #ifdef AMIGA
+#include <proto/dos.h>
 #include <proto/exec.h>
 #endif
 
@@ -390,7 +391,7 @@ DB (KPRINTF ("%s %ld -  setting param value to: \"%s\" - \"%s\"\n", __FILE__, __
 }
 
 
-BOOL PrintParameter (FILE *out_f, const struct Parameter * const param_p)
+BOOL PrintParameter (BPTR out_p, const struct Parameter * const param_p)
 {
 	BOOL success_flag = TRUE;
 
@@ -400,22 +401,22 @@ BOOL PrintParameter (FILE *out_f, const struct Parameter * const param_p)
 
 	if (param_p -> pa_type_s)
 		{
-			success_flag = (fprintf (out_f, "%s -", param_p -> pa_type_s) >= 0);
+			success_flag = (IDOS->FPrintf (out_p, "%s -", param_p -> pa_type_s) >= 0);
 		}
 	else
 		{
-			success_flag = (fprintf (out_f, "NULL -") >= 0);
+			success_flag = (IDOS->FPrintf (out_p, "NULL -") >= 0);
 		}
 
 	if (success_flag)
 		{
 			if (param_p -> pa_name_s)
 				{
-					success_flag = (fprintf (out_f, " %s", param_p -> pa_name_s) >= 0);
+					success_flag = (IDOS->FPrintf (out_p, " %s", param_p -> pa_name_s) >= 0);
 				}
 			else
 				{
-					success_flag = (fprintf (out_f, " NULL") >= 0);
+					success_flag = (IDOS->FPrintf (out_p, " NULL") >= 0);
 				}
 		}
 		
@@ -425,7 +426,7 @@ BOOL PrintParameter (FILE *out_f, const struct Parameter * const param_p)
 	return success_flag;
 }
 
-BOOL PrintParameterList (FILE *out_f, struct List * const params_p)
+BOOL PrintParameterList (BPTR out_p, struct List * const params_p)
 {
 	struct ParameterNode *curr_node_p = (struct ParameterNode *) IExec->GetHead (params_p);
 	struct ParameterNode *next_node_p = NULL;
@@ -433,10 +434,10 @@ BOOL PrintParameterList (FILE *out_f, struct List * const params_p)
 
 	while ((next_node_p = (struct ParameterNode *) (curr_node_p -> pn_node.ln_Succ)) != NULL)
 		{
-			fprintf (out_f, " %lu: ", i);
-			if (PrintParameter (out_f, curr_node_p -> pn_param_p))
+			IDOS->FPrintf (out_p, " %lu: ", i);
+			if (PrintParameter (out_p, curr_node_p -> pn_param_p))
 				{
-					fprintf (out_f, "\n");
+					IDOS->FPrintf (out_p, "\n");
 					++ i;
 				}
 			else

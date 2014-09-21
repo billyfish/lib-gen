@@ -17,6 +17,7 @@
 #ifndef FUNCTION_DEFINITION_H
 #define FUNCTION_DEFINITION_H
 
+#include <dos/dos.h>
 #include <exec/lists.h>
 
 #include "parameter.h"
@@ -60,7 +61,7 @@ BOOL AddParameterAtBack (struct FunctionDefinition *fd_p, struct Parameter *para
 struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s);
 
 
-BOOL PrintFunctionDefinition (FILE *out_f, const struct FunctionDefinition * const fn_p);
+BOOL PrintFunctionDefinition (BPTR out_p, const struct FunctionDefinition * const fn_p);
 
 
 
