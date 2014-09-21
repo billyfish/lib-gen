@@ -79,4 +79,98 @@ char *CopyToNewString (const char *start_p, const char *end_p, const BOOL trim_f
 }
 
 
+BOOL AddFullHeaderPathToList (struct List *headers_p, CONST STRPTR dir_s, CONST STRPTR name_s)
+{
+	BOOL success_flag = FALSE;
+	STRPTR full_path_s = NULL;
+	size_t l = 2;		/* terminating NULL and path separtor */
+	const size_t dir_length = strlen (dir_s);
+
+	l += dir_s;
+	l += name_s;
+
+	full_path_s = (STRPTR) IExec->AllocVecTags (l, TAG_END);
+
+	if (full_path_s)
+		{
+			IUtility->Strlcpy (full_path_s, dir_s, dir_length);
+
+			if (IDOS->AddPart (full_path_s, name_s, l) != 0)
+				{
+					StringNode *node_p = AllocazteStringNode (full_path_s);
+
+					if (node_p)
+						{
+							IExec->AddTail (headers_p, (struct Node *) node_p);
+							success_flag = TRUE;
+						}
+				}
+
+			if (!success_flag)
+				{
+					IExec->FreeVec (full_path_s);
+				}
+		}
+
+	return success_flag;
+}
+
+
+int32 RecursiveScan (STRPTR name_s, struct List *matching_files_list_p)
+{
+	int32 success = FALSE;
+	APTR context_p = IDOS->ObtainDirContextTags (EX_StringNameInput, name_s,
+	                        EX_DoCurrentDir, TRUE, /* for relative cd lock */
+	                        EX_DataFields, (EXF_NAME | EXF_LINK | EXF_TYPE),
+	                        TAG_END);
+	if (context_p)
+		{
+			struct ExamineData *dat_p;
+
+			while ((dat_p = IDOS->ExamineDir (context_p)))
+				{
+					if (EXD_IS_LINK (dat_p)) /* all link types - check first ! */
+						{
+							if (EXD_IS_SOFTLINK (dat_p))
+								{
+									IDOS->Printf ("softlink=%s points to %s\n", dat_p -> Name, dat_p -> Link);
+								}
+							else   /* a hardlink or alt link */
+								{
+									IDOS->Printf ("hardlink=%s points to %s\n", dat_p -> Name, dat_p -> Link);
+								}
+						}
+					else if (EXD_IS_FILE (dat_p))
+						{
+							IDOS->Printf ("filename=%s\n", dat_p -> Name);
+						}
+					else if (EXD_IS_DIRECTORY (dat_p))
+						{
+							IDOS->Printf ("dirname=%s\n",  dat_p -> Name);
+
+							if (!RecursiveScan (dat_p -> Name))  /* recurse */
+								{
+									break;
+								}
+						}
+				}
+
+			if (ERROR_NO_MORE_ENTRIES == IDOS->IoErr ())
+				{
+					success = TRUE;           /* normal exit */
+				}
+			else
+				{
+					IDOS->PrintFault (IDOS->IoErr (), NULL); /* failure - why ? */
+				}
+		}
+	else
+		{
+			IDOS->PrintFault (IDOS->IoErr (), NULL);  /* no context - why ? */
+		}
+
+	IDOS->ReleaseDirContext (context_p);          /* NULL safe */
+	return success;
+}
+
 
