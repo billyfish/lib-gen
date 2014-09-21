@@ -16,6 +16,14 @@
 extern "C" {
 #endif
 
+typedef enum
+{
+	MF_DEEP_COPY,
+	MF_SHALLOW_COPY,
+	MF_SHADOW_USE,
+	MF_ALREADY_FREED
+} MEM_FLAG;
+
 void *AllocMemory (size_t size);
 
 void FreeMemory (void *mem_p);

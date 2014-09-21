@@ -14,11 +14,12 @@ struct StringNode
 };
 
 
-StringNode *AllocateStringNode (STRPTR value_s, MEM_FLAG mf);
+struct StringNode *AllocateStringNode (STRPTR value_s, MEM_FLAG mf);
 
 BOOL AddStringToStringList (struct List *list_p, STRPTR str_p, const MEM_FLAG mem_flag);
 
-void FreeStringNode (StringNode *node_p);
+void FreeStringNode (struct StringNode *node_p);
+
 
 
 #endif		/* #ifndef STRING_LIST_H */

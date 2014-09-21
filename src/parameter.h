@@ -4,7 +4,7 @@
 #include <dos/dos.h>
 #include <exec/lists.h>
 
-#include "types.h"
+#include <exec/types.h>
 
 enum ParameterTypes
 {

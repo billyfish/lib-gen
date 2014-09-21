@@ -6,7 +6,7 @@
 BOOL AddStringToStringList (struct List *list_p, STRPTR str_p, const MEM_FLAG mem_flag)
 {
 	BOOL success_flag = FALSE;
-	StringNode *node_p = AllocateStringNode (str_p, mem_flag);
+	struct StringNode *node_p = AllocateStringNode (str_p, mem_flag);
 
 	if (node_p)
 		{
@@ -18,9 +18,9 @@ BOOL AddStringToStringList (struct List *list_p, STRPTR str_p, const MEM_FLAG me
 }
 
 
-StringListNode *AllocateStringNode (STRPTR str_p, const MEM_FLAG mem_flag)
+struct StringNode *AllocateStringNode (STRPTR str_p, const MEM_FLAG mem_flag)
 {
-	StringNode *node_p = (StringNode *) IExec->AllocVecTags (sizeof (StringListNode), TAG_END);
+	struct StringNode *node_p = (struct StringNode *) IExec->AllocVecTags (sizeof (struct StringNode), TAG_END);
 
 	if (node_p)
 		{
@@ -33,7 +33,7 @@ StringListNode *AllocateStringNode (STRPTR str_p, const MEM_FLAG mem_flag)
 
 						if (dest_p)
 							{
-								node_p -> sln_string_p = dest_p;
+								node_p -> sn_value_s = dest_p;
 							}
 						else
 							{
@@ -44,13 +44,13 @@ StringListNode *AllocateStringNode (STRPTR str_p, const MEM_FLAG mem_flag)
 
 					case MF_SHALLOW_COPY:
 					case MF_SHADOW_USE:
-						node_p -> sln_string_p = STRPTR str_p;
+						node_p -> sn_value_s = str_p;
 						break;
 				}
 
 			if (node_p)
 				{
-					node_p -> sln_string_flag = mem_flag;
+					node_p -> sn_mem = mem_flag;
 				}
 		}
 
@@ -58,15 +58,13 @@ StringListNode *AllocateStringNode (STRPTR str_p, const MEM_FLAG mem_flag)
 }
 
 
-void FreeStringNode (ListNode * const node_p)
+void FreeStringNode (struct StringNode * const str_node_p)
 {
-	StringNode * const str_node_p = (StringNode * const) node_p;
-
-	switch (str_node_p -> sln_string_flag)
+	switch (str_node_p -> sn_mem)
 		{
 			case MF_DEEP_COPY:
 			case MF_SHALLOW_COPY:
-				IExec->FreeVec (str_node_p -> sln_string_p);
+				IExec->FreeVec (str_node_p -> sn_value_s);
 				break;
 
 			case MF_SHADOW_USE:

@@ -4,15 +4,15 @@
 #
 # Project: libgen
 #
-# Created on: 21-09-2014 12:46:24
+# Created on: 21-09-2014 21:30:14
 #
 #
 
 CC = SDK:gcc/bin/gcc
 OBJ = \
-	 src/idl_writer.o src/unit_test.o src/memory.o \
-	 src/main.o src/utils.o src/parameter.o \
-	 src/string_list.o src/function_definition.o src/writer.o \
+	 src/unit_test.o src/string_list.o src/idl_writer.o \
+	 src/memory.o src/main.o src/utils.o \
+	 src/parameter.o src/function_definition.o src/writer.o \
 	
 
 BIN = libgen
@@ -45,11 +45,14 @@ $(BIN): $(OBJ)
 	$(CC) -o $(BIN).debug $(OBJ) $(LDFLAGS) $(LIBS)
 	strip $(BIN).debug -o $(BIN)
 
-src/idl_writer.o: src/idl_writer.c src/types.h src/idl_writer.h src/writer.h src/function_definition.h src/memory.h src/parameter.h
-	$(CC) -c src/idl_writer.c -o src/idl_writer.o $(CFLAGS)
-
-src/unit_test.o: src/unit_test.c src/memory.h src/parameter.h src/types.h src/function_definition.h src/utils.h src/string_list.h src/debugging_utils.h src/idl_writer.h src/writer.h
+src/unit_test.o: src/unit_test.c src/memory.h src/parameter.h src/function_definition.h src/utils.h src/string_list.h src/debugging_utils.h src/idl_writer.h src/writer.h
 	$(CC) -c src/unit_test.c -o src/unit_test.o $(CFLAGS)
+
+src/string_list.o: src/string_list.c src/string_list.h src/memory.h
+	$(CC) -c src/string_list.c -o src/string_list.o $(CFLAGS)
+
+src/idl_writer.o: src/idl_writer.c src/idl_writer.h src/writer.h src/function_definition.h src/memory.h src/parameter.h
+	$(CC) -c src/idl_writer.c -o src/idl_writer.o $(CFLAGS)
 
 src/memory.o: src/memory.c src/memory.h
 	$(CC) -c src/memory.c -o src/memory.o $(CFLAGS)
@@ -57,16 +60,13 @@ src/memory.o: src/memory.c src/memory.h
 src/main.o: src/main.c src/unit_test.h
 	$(CC) -c src/main.c -o src/main.o $(CFLAGS)
 
-src/utils.o: src/utils.c src/debugging_utils.h src/memory.h src/string_list.h src/types.h src/utils.h src/parameter.h
+src/utils.o: src/utils.c src/debugging_utils.h src/memory.h src/string_list.h src/utils.h src/parameter.h
 	$(CC) -c src/utils.c -o src/utils.o $(CFLAGS)
 
-src/parameter.o: src/parameter.c src/debugging_utils.h src/memory.h src/parameter.h src/types.h src/utils.h
+src/parameter.o: src/parameter.c src/debugging_utils.h src/memory.h src/parameter.h src/utils.h
 	$(CC) -c src/parameter.c -o src/parameter.o $(CFLAGS)
 
-src/string_list.o: src/string_list.c src/memory.h src/string_list.h src/types.h src/utils.h
-	$(CC) -c src/string_list.c -o src/string_list.o $(CFLAGS)
-
-src/function_definition.o: src/function_definition.c src/function_definition.h src/parameter.h src/types.h src/debugging_utils.h src/memory.h
+src/function_definition.o: src/function_definition.c src/function_definition.h src/parameter.h src/debugging_utils.h src/memory.h
 	$(CC) -c src/function_definition.c -o src/function_definition.o $(CFLAGS)
 
 src/writer.o: src/writer.c src/writer.h src/function_definition.h src/parameter.h

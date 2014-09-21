@@ -28,6 +28,7 @@
 #include <proto/utility.h>
 
 #include "unit_test.h"
+#include "string_list.h"
 
 static BOOL OpenLibs (void);
 static void CloseLibs (void);
@@ -36,8 +37,8 @@ static BOOL OpenLib (struct Library **library_pp, CONST_STRPTR lib_name_s, const
 
 static void CloseLib (struct Library *library_p, struct Interface *interface_p);
 
-BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, const size_t pattern_length, struct FReadLineData *line_p);
-BOOL ParseFiles (CONST_STRPTR pattern_s, CONST_STRPTR filename_s);
+BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, const size_t pattern_length, struct FReadLineData *line_p, struct List *prototypes_list_p);
+BOOL ParseFiles (CONST_STRPTR pattern_s, CONST_STRPTR filename_s, struct List *prototypes_p);
 
 
 int main (int argc, char *argv [])
@@ -77,16 +78,16 @@ BOOL GeneratePrototypesList (CONST STRPTR root_path_s, CONST_STRPTR function_pat
 
 	if (RecursiveScan (root_path_s, &headers_list))
 		{
-			struct List function_definitions_listl
-			StringNode *curr_filename_node_p = (StringNode *) IExec->GetHead (&headers_list);
-			StringNode *next_filename_node_p = NULL;
+			struct List function_definitions_list;
+			struct StringNode *curr_filename_node_p = (struct StringNode *) IExec->GetHead (&headers_list);
+			struct StringNode *next_filename_node_p = NULL;
 
-			IExec->NewList (&function_definitions_listl);
+			IExec->NewList (&function_definitions_list);
 
 			/* Open each of the matched filenames in turn */
-			while ((next_filename_node_p = (struct ParameterNode *) (curr_filename_node_p -> pn_node.ln_Succ)) != NULL)
+			while ((next_filename_node_p = (struct ParameterNode *) (curr_filename_node_p -> sn_node.ln_Succ)) != NULL)
 				{
-					CONST STRPTR filename_s = curr_filenamee_node_p -> sn_string_s;
+					CONST STRPTR filename_s = curr_filename_node_p -> sn_value_s;
 
 					if (ParseFiles (function_pattern_s, filename_s))
 						{
@@ -141,7 +142,7 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, con
 
 
 
-BOOL ParseFiles (CONST_STRPTR pattern_s, CONST_STRPTR filename_s)
+BOOL ParseFiles (CONST_STRPTR pattern_s, CONST_STRPTR filename_s, struct List *prototypes_p)
 {
 	struct FReadLineData *line_data_p = IDOS->AllocDosObject (DOS_FREADLINEDATA, 0);
 	BOOL success_flag = FALSE;
@@ -151,7 +152,7 @@ BOOL ParseFiles (CONST_STRPTR pattern_s, CONST_STRPTR filename_s)
 			BOOL read_file_flag;
 			const size_t pattern_length = strlen (pattern_s);
 
-			read_file_flag = GetMatchingPrototypes (filename_s, pattern_s, pattern_length, line_data_p);
+			read_file_flag = GetMatchingPrototypes (filename_s, pattern_s, pattern_length, line_data_p, prototypes_p);
 
 			if (read_file_flag)
 				{
