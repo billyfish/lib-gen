@@ -104,7 +104,7 @@ BOOL GeneratePrototypesList (CONST STRPTR root_path_s, CONST_STRPTR function_pat
 
 
 
-BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, const size_t pattern_length, struct FReadLineData *line_p)
+BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, const size_t pattern_length, struct FReadLineData *line_p, struct List *prototypes_list_p)
 {
 	BOOL success_flag = FALSE;
 	BPTR handle_p = IDOS->FOpen (filename_s, MODE_OLDFILE, 0);
@@ -118,6 +118,7 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, con
 					if (IUtility->Strnicmp (pattern_s, line_p -> frld_Line, pattern_length) == 0)
 						{
 							IDOS->Printf (">>> matched line:= %s", line_p -> frld_Line);
+
 						}
 					else
 						{

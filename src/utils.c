@@ -97,13 +97,7 @@ BOOL AddFullHeaderPathToList (struct List *headers_p, CONST STRPTR dir_s, CONST 
 
 			if (IDOS->AddPart (full_path_s, name_s, l) != 0)
 				{
-					StringNode *node_p = AllocazteStringNode (full_path_s);
-
-					if (node_p)
-						{
-							IExec->AddTail (headers_p, (struct Node *) node_p);
-							success_flag = TRUE;
-						}
+					success_flag = AddStringToStringList (headers_p, full_path_s);
 				}
 
 			if (!success_flag)
