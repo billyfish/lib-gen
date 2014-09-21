@@ -1,68 +1,63 @@
-#include <ctype.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "memory.h"
-#include "parameter.h"
-#include "function_definition.h"
-#include "utils.h"
-#include "string_list.h"
-#include "debugging_utils.h"
-#include "idl_writer.h"
-
-/**************************************/
-/************ PROTOTYPES **************/
-/**************************************/
-
-struct FunctionDefinition *GetFunctionArguments (const char *function_s);
-
-int32 UnitTest (const char * const prototype_s, struct List *fds_p, FILE *out_f);
-
-/************************************************/
-
-
 /*
 
-1. Mark the first "(" and the ");" wrap the parameters which are delimited by commas
-2. Extract this substring and split into a list by splitting at the commas.
-3. For each string on this list
-	a. Trim at both ends to remove trailing whitespace
-	b. Find the final space which should delimit the parameter name
-	c. Check for any dereferencing characters at the start of the param name
-	d. Does the name have an array ([]) specification
-		i. TO DO
-	e. The text prior to this space denotes the parameter type.
-
+************************************************************
+**
+** Created by: CodeBench 0.23 (17.09.2011)
+**
+** Project: LibraryGenerator
+**
+** File:
+**
+** Date: 16-06-2013 14:13:11
+**
+************************************************************
 
 */
 
+#include <stdio.h>
+#include <string.h>
+
+#include <dos/dos.h>
+
+#include <exec/types.h>
+#include <exec/exectags.h>
+#include <exec/lists.h>
+
+#include <proto/dos.h>
+#include <proto/exec.h>
+#include <proto/utility.h>
+
+#include "unit_test.h"
+
+static BOOL OpenLibs (void);
+static void CloseLibs (void);
+
+BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, const size_t pattern_length, struct FReadLineData *line_p);
+BOOL ParseFiles (CONST_STRPTR pattern_s, CONST_STRPTR filename_s);
+
+
 int main (int argc, char *argv [])
 {
-//	struct ParameterArray *params_p = NULL;
-	FILE *out_f = stdout;
-	struct List *fds_p = AllocateFunctionDefinitionsList ();
-
-	if (fds_p)
+	if (OpenLibs ())
 		{
-			UnitTest ("int main (int argc, char *argv []);", fds_p, out_f);	
-			UnitTest ("int				*GetAddress (const int **ptr, const int num);", fds_p, out_f);	
-			UnitTest ("struct Test *GetTest (void);", fds_p, out_f);
-			UnitTest ("void SetTest (struct Test *test_p, int num);", fds_p, out_f);	
-			
-			if (!IsListEmpty (fds_p))
+			if (argc > 2)
 				{
-					Writer *writer_p = AllocateIDLWriter ();
-					
-					if (writer_p)
-						{
-							BOOL success_flag = WriteFunctionDefinitions (writer_p, fds_p, out_f);
-							
-							FreeIDLWriter (writer_p);
-						}
+					ParseFiles (argv [1], argv [2]);
 				}
-			
-			FreeFunctionDefinitionsList (fds_p);
+			else if ((argc == 2) && (strcmp ("test", argv [1]) == 0))
+				{
+					UnitTest ();
+				}
+			else
+				{
+					IDOS->Printf ("LibraryGenerator <pattern> <filename>\n");
+				}
+
+			CloseLibs ();
+		}
+	else
+		{
+			printf ("no libs\n");
 		}
 
 	return 0;
@@ -70,123 +65,91 @@ int main (int argc, char *argv [])
 
 
 
-int32 UnitTest (const char * const prototype_s, struct List *fds_p, FILE *out_f)
+BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, const size_t pattern_length, struct FReadLineData *line_p)
 {
-	int32 res = 0;
-	struct FunctionDefinition *fd_p = TokenizeFunctionPrototype (prototype_s);
+	BOOL success_flag = FALSE;
+	BPTR handle_p = IDOS->FOpen (filename_s, MODE_OLDFILE, 0);
 
-	if (fd_p)
+	if (handle_p)
 		{
-			fprintf (out_f, "********* BEGIN FD for \"%s\" *********\n", prototype_s);
-			PrintFunctionDefinition (out_f, fd_p);
-			
-			if (!AddFunctionDefinitionToList (fds_p, fd_p))
+			int32 count;
+
+			while ((count = IDOS->FReadLine (handle_p, line_p)) > 0)
 				{
-					FreeFunctionDefinition (fd_p);
-					res = -2;
-				}			
-			
-			fprintf (out_f, "\n********* END FD *********\n\n");
-		}
-	else
-		{
-			fprintf (out_f, "No match for \"%s\"\n", prototype_s);
-			res = -1;
-		}
-		
-	return res;
-}
-
-
-
-
-
-void UnitTest2 (const char * const prototype_s, FILE *out_f)
-{
-	struct FunctionDefinition *fd_p = GetFunctionArguments (prototype_s);
-
-	if (fd_p)
-		{
-			fprintf (out_f, "********* BEGIN FD *********\n");
-			PrintFunctionDefinition (out_f, fd_p);
-			fprintf (out_f, "\n********* END FD *********\n\n");
-			FreeFunctionDefinition (fd_p);
-		}
-	else
-		{
-			fprintf (out_f, "No match for \"%s\"\n", prototype_s);
-		}
-}
-
-
-struct FunctionDefinition *GetFunctionArguments (const char *function_s)
-{
-	/* find the end of method */
-	const char *closing_bracket_p = strstr (function_s, ");");
-
-	/*
-		Now count backwards through the string until we
-		find the matching opening bracket
-	*/
-
-	/* We start at 1 since we have the closing bracket */
-	int num_open_backets = 1;
-	int num_params = 1;
-
-	const char *opening_bracket_p = closing_bracket_p - 1;
-
-	BOOL loop_flag = opening_bracket_p > function_s;
-
-	while (loop_flag)
-		{
-			switch (*opening_bracket_p)
-				{
-					case '(':
-						-- num_open_backets;
-						break;
-
-					case ')':
-						++ num_open_backets;
-						break;
-
-					case ',':
-						++ num_params;
-						break;
-
-					default:
-						break;
+					if (IUtility->Strnicmp (pattern_s, line_p -> frld_Line, pattern_length) == 0)
+						{
+							IDOS->Printf (">>> matched line:= %s", line_p -> frld_Line);
+						}
+					else
+						{
+							IDOS->Printf ("line:= %s", line_p -> frld_Line);
+						}
 				}
 
-			if (num_open_backets == 0)
+			success_flag = (count == 0);
+
+			IDOS->FClose (handle_p);
+		}		/* if (handle_p) */
+	else
+		{
+			IDOS->Printf ("No handle for %s\n", filename_s);
+		}
+
+	return success_flag;
+}
+
+
+
+
+BOOL ParseFiles (CONST_STRPTR pattern_s, CONST_STRPTR filename_s)
+{
+	struct FReadLineData *line_data_p = IDOS->AllocDosObject (DOS_FREADLINEDATA, 0);
+	BOOL success_flag = FALSE;
+
+	if (line_data_p)
+		{
+			BOOL read_file_flag;
+			const size_t pattern_length = strlen (pattern_s);
+
+			read_file_flag = GetMatchingPrototypes (filename_s, pattern_s, pattern_length, line_data_p);
+
+			if (read_file_flag)
 				{
-					loop_flag = FALSE;
+					IDOS->Printf ("read \"%s\" successfully\n", filename_s);
 				}
 			else
 				{
-					-- opening_bracket_p;
-					loop_flag = opening_bracket_p > function_s;
+					IDOS->Printf ("failed to read \"%s\"\n", filename_s);
 				}
 
-		}		/* while (loop_flag) */
 
-	/* Have we matched the final closing bracket */
-	if (num_open_backets == 0)
-		{
-			struct FunctionDefinition *fd_p = AllocateFunctionDefinition ();
+			IDOS->FreeDosObject (DOS_FREADLINEDATA, line_data_p);
+		}		/* if (line_data_p) */
 
-			if (fd_p)
-				{
-					FreeFunctionDefinition (fd_p);
-				}		/* if (fd_p) */
-
-		}		/* if (num_open_backets == 0) */
-
-	return NULL;
+	return success_flag;
 }
 
 
 
 
+static BOOL OpenLibs (void)
+{
+	if (OpenLib (&DOSBase, "dos.library", 52L, (struct Interface **) &IDOS, "main", 1))
+		{
+			if (OpenLib (&UtilityBase, "utility.library", 52L, (struct Interface **) &IUtility, "main", 1))
+				{
+					return TRUE;
+				}
 
+			CloseLib (DOSBase, (struct Interface *) IDOS);
+		}
 
+	return FALSE;
+}
+
+static void CloseLibs (void)
+{
+	CloseLib (UtilityBase, (struct Interface *) IUtility);
+	CloseLib (DOSBase, (struct Interface *) IDOS);
+}
 

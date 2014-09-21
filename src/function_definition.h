@@ -6,7 +6,7 @@
 **
 ** Project: libgen
 **
-** File: 
+** File:
 **
 ** Date: 20-09-2014 22:57:05
 **
@@ -60,9 +60,10 @@ BOOL AddParameterAtBack (struct FunctionDefinition *fd_p, struct Parameter *para
 struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s);
 
 
-
-
 BOOL PrintFunctionDefinition (FILE *out_f, const struct FunctionDefinition * const fn_p);
+
+
+
 
 #ifdef __cplusplus
 }
