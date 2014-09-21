@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include <proto/exec.h>
 
 #include "string_list.h"
@@ -45,6 +47,11 @@ struct StringNode *AllocateStringNode (STRPTR str_p, const MEM_FLAG mem_flag)
 					case MF_SHALLOW_COPY:
 					case MF_SHADOW_USE:
 						node_p -> sn_value_s = str_p;
+						break;
+						
+					case MF_ALREADY_FREED:
+					default:
+						node_p -> sn_value_s = NULL;
 						break;
 				}
 

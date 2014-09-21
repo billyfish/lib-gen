@@ -1,6 +1,9 @@
 #include <ctype.h>
 #include <string.h>
 
+#include <proto/dos.h>
+#include <proto/utility.h>
+
 #include "debugging_utils.h"
 #include "memory.h"
 #include "string_list.h"
@@ -86,8 +89,8 @@ BOOL AddFullHeaderPathToList (struct List *headers_p, CONST STRPTR dir_s, CONST 
 	size_t l = 2;		/* terminating NULL and path separtor */
 	const size_t dir_length = strlen (dir_s);
 
-	l += dir_s;
-	l += name_s;
+	l += dir_length;
+	l += strlen (name_s);
 
 	full_path_s = (STRPTR) IExec->AllocVecTags (l, TAG_END);
 
@@ -97,7 +100,7 @@ BOOL AddFullHeaderPathToList (struct List *headers_p, CONST STRPTR dir_s, CONST 
 
 			if (IDOS->AddPart (full_path_s, name_s, l) != 0)
 				{
-					success_flag = AddStringToStringList (headers_p, full_path_s);
+					success_flag = AddStringToStringList (headers_p, full_path_s, MF_SHALLOW_COPY);
 				}
 
 			if (!success_flag)
@@ -110,7 +113,7 @@ BOOL AddFullHeaderPathToList (struct List *headers_p, CONST STRPTR dir_s, CONST 
 }
 
 
-int32 RecursiveScan (STRPTR name_s, struct List *matching_files_list_p)
+int32 RecursiveScan (CONST_STRPTR name_s, struct List *matching_files_list_p)
 {
 	int32 success = FALSE;
 	APTR context_p = IDOS->ObtainDirContextTags (EX_StringNameInput, name_s,
@@ -132,7 +135,7 @@ int32 RecursiveScan (STRPTR name_s, struct List *matching_files_list_p)
 						{
 							IDOS->Printf ("dirname=%s\n",  dat_p -> Name);
 
-							if (!RecursiveScan (dat_p -> Name))  /* recurse */
+							if (!RecursiveScan (dat_p -> Name, matching_files_list_p))  /* recurse */
 								{
 									break;
 								}

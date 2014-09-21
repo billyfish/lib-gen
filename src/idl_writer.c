@@ -172,5 +172,5 @@ static BOOL WriteIDLIncludes (BPTR out_p, const char * const name_s, const char 
 
 static BOOL WriteIDLFooter (BPTR out_p)
 {
-	return (FPrintf (out_p, "</library>\n") >= 0);
+	return (IDOS->FPrintf (out_p, "</library>\n") >= 0);
 }

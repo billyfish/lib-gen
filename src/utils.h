@@ -2,7 +2,7 @@
 #define UTILS_H
 
 #include <exec/types.h>
-
+#include <exec/lists.h>
 
 enum SpaceBehaviour
 {
@@ -24,6 +24,9 @@ const char *ScrollPastWhitespace (const char *text_p, const char * const bounds_
 
 
 struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s);
+
+int32 RecursiveScan (CONST_STRPTR name_s, struct List *matching_files_list_p);
+
 
 #ifdef __cplusplus
 }

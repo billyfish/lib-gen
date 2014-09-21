@@ -29,6 +29,8 @@
 
 #include "unit_test.h"
 #include "string_list.h"
+#include "utils.h"
+
 
 static BOOL OpenLibs (void);
 static void CloseLibs (void);
@@ -39,12 +41,69 @@ static void CloseLib (struct Library *library_p, struct Interface *interface_p);
 
 BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, const size_t pattern_length, struct FReadLineData *line_p, struct List *prototypes_list_p);
 BOOL ParseFiles (CONST_STRPTR pattern_s, CONST_STRPTR filename_s, struct List *prototypes_p);
+BOOL GeneratePrototypesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR function_pattern_s);
+
+enum Args
+{
+	AR_INPUT_DIR,
+	AR_RECURSE,
+	AR_OUTPUT_DIR,
+	AR_INPUT_FILE_PATTERN,
+	AR_PROTOTYPE_PATTERN,
+	AR_NUM_ARGS
+};
 
 
 int main (int argc, char *argv [])
 {
+	
 	if (OpenLibs ())
 		{
+			CONST_STRPTR input_dir_s = NULL;
+			CONST_STRPTR output_dir_s = NULL;
+			CONST_STRPTR filename_pattern_s = "#?.h";
+			CONST_STRPTR prototype_pattern_s = NULL;
+			
+			BOOL recurse_flag = FALSE;
+			int32 args [AR_NUM_ARGS];
+			struct RDArgs *args_p = IDOS->ReadArgs ("I=Input/A,R=Recurse/S,O=Output/A,IP=InputPattern/K,PP=PrototypePattern/K", args, NULL);
+			
+			if (args_p != NULL)
+				{
+					input_dir_s = (CONST_STRPTR) args [AR_INPUT_DIR];
+					output_dir_s = (CONST_STRPTR) args [AR_OUTPUT_DIR];
+					
+					if (args [AR_RECURSE])
+						{
+							recurse_flag = TRUE;
+						}
+					
+					if (args [AR_INPUT_FILE_PATTERN])
+						{
+							filename_pattern_s = (CONST_STRPTR) args [AR_INPUT_FILE_PATTERN];
+						}					
+
+					
+					if (args [AR_PROTOTYPE_PATTERN])
+						{
+							prototype_pattern_s = (CONST_STRPTR) args [AR_PROTOTYPE_PATTERN];
+						}					
+
+					IDOS->Printf ("Input Dir = \"%s\"\n", input_dir_s);
+					IDOS->Printf ("Output Dir = \"%s\"\n", output_dir_s);
+					IDOS->Printf ("Filename Pattern = \"%s\"\n", filename_pattern_s);
+					IDOS->Printf ("Recurse = \"%s\"\n", recurse_flag ? "TRUE" : "FALSE");
+					IDOS->Printf ("PrototypePattern = \"%s\"\n", prototype_pattern_s);					
+					
+					IDOS->FreeArgs (args_p);
+				} 
+			else
+				{
+					IDOS->PrintFault (IDOS->IoErr (), "Unable to parse command-line args");
+				}
+			
+			
+			/*
 			if (argc > 2)
 				{
 					ParseFiles (argv [1], argv [2]);
@@ -57,7 +116,8 @@ int main (int argc, char *argv [])
 				{
 					IDOS->Printf ("LibraryGenerator <pattern> <filename>\n");
 				}
-
+			*/
+			
 			CloseLibs ();
 		}
 	else
@@ -69,7 +129,7 @@ int main (int argc, char *argv [])
 }
 
 
-BOOL GeneratePrototypesList (CONST STRPTR root_path_s, CONST_STRPTR function_pattern_s)
+BOOL GeneratePrototypesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR function_pattern_s)
 {
 	BOOL success_flag = FALSE;
 	struct List headers_list;
@@ -85,11 +145,11 @@ BOOL GeneratePrototypesList (CONST STRPTR root_path_s, CONST_STRPTR function_pat
 			IExec->NewList (&function_definitions_list);
 
 			/* Open each of the matched filenames in turn */
-			while ((next_filename_node_p = (struct ParameterNode *) (curr_filename_node_p -> sn_node.ln_Succ)) != NULL)
+			while ((next_filename_node_p = (struct StringNode *) (curr_filename_node_p -> sn_node.ln_Succ)) != NULL)
 				{
 					CONST STRPTR filename_s = curr_filename_node_p -> sn_value_s;
 
-					if (ParseFiles (function_pattern_s, filename_s))
+					if (ParseFiles (function_pattern_s, filename_s, &function_definitions_list))
 						{
 
 						}
