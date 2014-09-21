@@ -66,7 +66,11 @@ int main (int argc, char *argv [])
 			
 			BOOL recurse_flag = FALSE;
 			int32 args [AR_NUM_ARGS];
-			struct RDArgs *args_p = IDOS->ReadArgs ("I=Input/A,R=Recurse/S,O=Output/A,IP=InputPattern/K,PP=PrototypePattern/K", args, NULL);
+			struct RDArgs *args_p = NULL;
+			
+			memset (args, 0, AR_NUM_ARGS * sizeof (int32));
+			
+			args_p = IDOS->ReadArgs ("I=Input/A,R=Recurse/S,O=Output/A,IP=InputPattern/K,PP=PrototypePattern/K", args, NULL);
 			
 			if (args_p != NULL)
 				{
