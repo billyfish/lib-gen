@@ -37,11 +37,36 @@ struct FunctionDefinitionNode
 };
 
 
+/**
+ * All of the functions defined in a given header file.
+ */
+struct HeaderDefinitions
+{
+	/** The name of the file. */
+	STRPTR hd_filename_s;
+	
+	/** 
+	 * List of FunctionDefinitionNodes from this file.
+	 */
+	struct List hd_function_definitions;
+};
+
+struct HeaderDefinitionsNode 
+{
+	struct Node hdn_node;
+	struct HeaderDefinitions *hdn_defs_p;
+};
+
 
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+
+struct HeaderDefinitions *AllocateHeaderDefinitions (STRPTR filename_s);
+
+void FreeHeaderDefinitions (struct HeaderDefinitions *header_defs_p);
 
 
 struct List *AllocateFunctionDefinitionsList (void);
