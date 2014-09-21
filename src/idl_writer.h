@@ -1,36 +1,23 @@
-/*
-
-************************************************************
-**
-** Created by: CodeBench 0.23 (17.09.2011)
-**
-** Project: libgen
-**
-** File: 
-**
-** Date: 20-09-2014 20:01:12
-**
-************************************************************
-
-*/
-
-
 #ifndef IDL_WRITER_H
-#define IDLWRITER_H
+#define IDL_WRITER_H
 
-#include "writer.h"
+#include "typedefs.h"
 
-
-typedef struct IDLWriter
-{
-	Writer iw_base_writer;
-} IDLWriter;
-
-
-Writer *AllocateIDLWriter (void);
+Writer *AllocateIDLWriter ();
 
 void FreeIDLWriter (Writer *writer_p);
 
+BOOL WriteIDLHeader (FILE *out_f, const char * const name_s, const char * const basename_s, const char * const name_s, const char * const struct_name_s, const char * const prefix_s);
 
-#endif		/* #ifndef IDL_WRITER_H */
- 
+BOOL WriteIDLFunction (FILE *out_f, const struct FunctionDefinition * const fd_p);
+
+BOOL WriteIDLDefaultFunctions (FILE *out_f);
+
+
+BOOL WriteIDLIncludes (FILE *out_f, const char * const name_s, const char * const basename_s, const char * const name_s, const char * const struct_name_s, const char * const prefix_s);
+
+
+BOOL WriteIDLFooter (FILE *out_f);
+
+
+#endif
