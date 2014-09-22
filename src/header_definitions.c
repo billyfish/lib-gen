@@ -37,7 +37,7 @@ void FreeHeaderDefinitions (struct HeaderDefinitions *header_defs_p)
 }
 
 
-struct HeaderDefinitionsNode *AllocateHeaderDefinitionsNode (HeaderDefinitions *hdr_defs_p)
+struct HeaderDefinitionsNode *AllocateHeaderDefinitionsNode (struct HeaderDefinitions *hdr_defs_p)
 {
 	struct HeaderDefinitionsNode *node_p = (struct HeaderDefinitionsNode *) IExec->AllocVecTags (sizeof (struct HeaderDefinitionsNode), TAG_END);
 	
@@ -55,3 +55,24 @@ void FreeHeaderDefinitionsNode (struct HeaderDefinitionsNode *node_p)
 	FreeHeaderDefinitions (node_p -> hdn_defs_p);
 	IExec->FreeVec (node_p);
 }
+
+
+BOOL AddFunctionDefinitionToList (struct HeaderDefinitions *header_defs_p, struct FunctionDefinition *fd_p)
+{
+	BOOL success_flag = FALSE;
+	
+	struct FunctionDefinitionNode *node_p = IExec->AllocSysObjectTags (ASOT_NODE,
+		ASONODE_Size, sizeof (struct FunctionDefinitionNode),
+		TAG_DONE);
+	
+	if (node_p)
+		{
+			node_p -> fdn_function_def_p = fd_p;
+			
+			IExec->AddTail (& (header_defs_p -> hd_function_definitions), (struct Node *) node_p);
+			success_flag = TRUE;
+		}
+	
+	return success_flag;
+}
+

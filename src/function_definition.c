@@ -154,24 +154,6 @@ void FreeFunctionDefinitionsList (struct List *fds_p)
 }
 
 
-BOOL AddFunctionDefinitionToList (struct List *list_p, struct FunctionDefinition *fd_p)
-{
-	BOOL success_flag = FALSE;
-	
-	struct FunctionDefinitionNode *node_p = IExec->AllocSysObjectTags (ASOT_NODE,
-		ASONODE_Size, sizeof (struct FunctionDefinitionNode),
-		TAG_DONE);
-	
-	if (node_p)
-		{
-			node_p -> fdn_function_def_p = fd_p;
-			
-			IExec->AddTail (list_p, (struct Node *) node_p);
-			success_flag = TRUE;
-		}
-	
-	return success_flag;
-}
 
 
 struct FunctionDefinition *AllocateFunctionDefinition (void)

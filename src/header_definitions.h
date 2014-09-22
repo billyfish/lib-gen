@@ -4,6 +4,9 @@
 #include <exec/lists.h>
 #include <exec/types.h>
 
+#include "function_definitions.h"
+
+
 /**
  * All of the functions defined in a given header file.
  */
@@ -30,10 +33,12 @@ struct HeaderDefinitions *AllocateHeaderDefinitions (STRPTR filename_s);
 
 void FreeHeaderDefinitions (struct HeaderDefinitions *header_defs_p);
 
-struct HeaderDefinitionsNode *AllocateHeaderDefinitionsNode (HeaderDefinitions *hdr_defs_p);
+struct HeaderDefinitionsNode *AllocateHeaderDefinitionsNode (struct HeaderDefinitions *hdr_defs_p);
 
 void FreeHeaderDefinitionsNode (struct HeaderDefinitionsNode *node_p);
 
+
+BOOL AddFunctionDefinitionToHeaderDefinitions (struct HeaderDefinitions *header_defs_p, struct FunctionDefinition *fd_p);
 
 
 

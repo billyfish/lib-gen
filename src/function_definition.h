@@ -49,7 +49,6 @@ struct List *AllocateFunctionDefinitionsList (void);
 
 void FreeFunctionDefinitionsList (struct List *fds_p);
 
-BOOL AddFunctionDefinitionToList (struct List *list_p, struct FunctionDefinition *fd_p);
 
 struct FunctionDefinition *AllocateFunctionDefinition (void);
 
