@@ -76,7 +76,7 @@ int UnitTest (CONST_STRPTR output_name_s)
 
 											success_flag = WriteFunctionDefinitions (writer_p, header_defs_p, out_p);
 
-											FreeHeaderDefinitionsList (&hdr_defs_list);
+											ClearHeaderDefinitionsList (&hdr_defs_list);
 										}
 
 									FreeIDLWriter (writer_p);
