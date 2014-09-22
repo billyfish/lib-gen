@@ -100,7 +100,7 @@ static BOOL WriteIDLHeaderDefinitionsList (BPTR out_p, const struct List * const
 	const struct HeaderDefinitionsNode *curr_node_p = (const struct HeaderDefinitionsNode *) IExec->GetHead (fds_list_p);
 	const struct HeaderDefinitionsNode *next_node_p = NULL;
 
-	while (((next_node_p = (struct HeaderDefinitionsNode *) (curr_node_p -> hdn_node.ln_Succ)) != NULL) && success_flag)
+	while (((next_node_p = (struct HeaderDefinitionsNode *) IExec->GetSucc (& (curr_node_p -> hdn_node))) != NULL) && success_flag)
 		{
 			success_flag = WriteIDLHeaderDefinitions (out_p, curr_node_p -> hdn_defs_p);
 		}
@@ -115,13 +115,13 @@ static BOOL WriteIDLHeaderDefinitionsList (BPTR out_p, const struct List * const
 static BOOL WriteIDLHeaderDefinitions (BPTR out_p, const struct HeaderDefinitions * const header_definitions_p)
 {
 	BOOL success_flag = FALSE;
-	
+
 	if (IDOS->FPrintf (out_p, "\t<-- %s -->\n", header_definitions_p -> hd_filename_s) >= 0)
 		{
 			const struct FunctionDefinitionNode *curr_node_p = (const struct FunctionDefinitionNode *) IExec->GetHead (& (header_definitions_p -> hd_function_definitions));
 			const struct FunctionDefinitionNode *next_node_p = NULL;
-		
-			while (((next_node_p = (struct FunctionDefinitionNode *) (curr_node_p -> fdn_node.ln_Succ)) != NULL) && success_flag)
+
+			while (((next_node_p = (struct FunctionDefinitionNode *) IExec->GetSucc (& (curr_node_p -> fdn_node))) != NULL) && success_flag)
 				{
 					success_flag = WriteIDLFunction (out_p, curr_node_p -> fdn_function_def_p);
 				}
@@ -140,7 +140,7 @@ static BOOL WriteIDLFunction (BPTR out_p, const struct FunctionDefinition * cons
 			struct ParameterNode *curr_node_p = (struct ParameterNode *) IExec->GetHead (fd_p -> fd_args_p);
 			struct ParameterNode *next_node_p = NULL;
 
-			while (((next_node_p = (struct ParameterNode *) (curr_node_p -> pn_node.ln_Succ)) != NULL) && success_flag)
+			while (((next_node_p = (struct ParameterNode *) IExec->GetSucc (& (curr_node_p -> pn_node))) != NULL) && success_flag)
 				{
 					success_flag = WriteIDLParameter (out_p, curr_node_p -> pn_param_p);
 				}

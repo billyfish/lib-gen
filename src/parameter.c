@@ -241,7 +241,7 @@ struct List *AllocateParameterList (void)
 {
 	struct List *params_p = (struct List *) IExec->AllocSysObjectTags (ASOT_LIST,
 		ASOLIST_Type, PT_PARAMETER,
-		TAG_DONE);	
+		TAG_DONE);
 
 	return params_p;
 }
@@ -264,7 +264,7 @@ struct ParameterNode *AllocateParameterNode (struct Parameter *param_p)
 		ASONODE_Size, sizeof (struct ParameterNode),
 		TAG_DONE);
 
-	
+
 	if (node_p)
 		{
 			node_p -> pn_param_p = param_p;
@@ -363,7 +363,7 @@ DB (KPRINTF ("%s %ld -  setting param value to: \"%s\" - \"%s\"\n", __FILE__, __
 						}
 				}
 		}
-		
+
 	if (start_p != end_p)
 		{
 			copy_s = (char *) AllocMemory (l + 1);
@@ -397,7 +397,7 @@ BOOL PrintParameter (BPTR out_p, const struct Parameter * const param_p)
 
 	if (param_p)
 		{
-		
+
 
 	if (param_p -> pa_type_s)
 		{
@@ -419,8 +419,8 @@ BOOL PrintParameter (BPTR out_p, const struct Parameter * const param_p)
 					success_flag = (IDOS->FPrintf (out_p, " NULL") >= 0);
 				}
 		}
-		
-		
+
+
 		}
 
 	return success_flag;
@@ -432,7 +432,7 @@ BOOL PrintParameterList (BPTR out_p, struct List * const params_p)
 	struct ParameterNode *next_node_p = NULL;
 	uint32 i = 0;
 
-	while ((next_node_p = (struct ParameterNode *) (curr_node_p -> pn_node.ln_Succ)) != NULL)
+	while ((next_node_p = (struct ParameterNode *) IExec->GetSucc (& (curr_node_p -> pn_node))) != NULL)
 		{
 			IDOS->FPrintf (out_p, " %lu: ", i);
 			if (PrintParameter (out_p, curr_node_p -> pn_param_p))

@@ -13,18 +13,21 @@ struct HeaderDefinitions
 {
 	/** The name of the file. */
 	STRPTR hd_filename_s;
-	
-	/** 
+
+	/**
 	 * List of FunctionDefinitionNodes from this file.
 	 */
 	struct List hd_function_definitions;
 };
 
-struct HeaderDefinitionsNode 
+struct HeaderDefinitionsNode
 {
 	struct Node hdn_node;
 	struct HeaderDefinitions *hdn_defs_p;
 };
+
+
+void ClearHeaderDefinitionsList (struct List *hdr_defs_list_p);
 
 
 BOOL AddHeaderDefintionsToList (struct List *hdr_defs_list_p, struct HeaderDefinitions *hdr_defs_p);

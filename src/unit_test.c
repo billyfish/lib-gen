@@ -65,13 +65,19 @@ int UnitTest (CONST_STRPTR output_name_s)
 							if (writer_p)
 								{
 									struct List hdr_defs_list;
-									
-									IExec->NewList (&hdr_defs_list);
-									
-									
-									
-									
-									BOOL success_flag = WriteFunctionDefinitions (writer_p, header_defs_p, out_p);
+									struct HeaderDefinitionsNode *node_p = AllocateHeaderDefinitionsNode (header_defs_p);
+
+									if (node_p)
+										{
+											BOOL success_flag = FALSE;
+
+											IExec->NewList (&hdr_defs_list);
+											IExec->AddTail (&hdr_defs_list, (struct Node *) node_p);
+
+											success_flag = WriteFunctionDefinitions (writer_p, header_defs_p, out_p);
+
+											FreeHeaderDefinitionsList (&hdr_defs_list);
+										}
 
 									FreeIDLWriter (writer_p);
 								}
@@ -93,7 +99,7 @@ static int32 FunctionDefinitionUnitTest (const char * const prototype_s, struct 
 	int32 res = 0;
 	struct FunctionDefinition *fd_p = TokenizeFunctionPrototype (prototype_s);
 	BPTR out_p = IDOS->Output ();
-			
+
 	if (fd_p)
 		{
 			IDOS->FPrintf (out_p, "********* BEGIN FD for \"%s\" *********\n", prototype_s);
