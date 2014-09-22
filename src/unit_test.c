@@ -16,12 +16,14 @@
 #include "string_list.h"
 #include "debugging_utils.h"
 #include "idl_writer.h"
+#include "header_definitions.h"
+
 
 /**************************************/
 /************ PROTOTYPES **************/
 /**************************************/
 
-static int32 FunctionDefinitionUnitTest (const char * const prototype_s, struct List *fds_p);
+static int32 FunctionDefinitionUnitTest (const char * const prototype_s, struct HeaderDefinitions *headers_def_p);
 
 /************************************************/
 
@@ -47,28 +49,35 @@ int UnitTest (CONST_STRPTR output_name_s)
 
 	if (out_p)
 		{
-			struct List *fds_p = AllocateFunctionDefinitionsList ();
+			struct HeaderDefinitions *header_defs_p = AllocateHeaderDefinitions ("foo.h");
 
-			if (fds_p)
+			if (header_defs_p)
 				{
-					FunctionDefinitionUnitTest ("int main (int argc, char *argv []);", fds_p);
-					FunctionDefinitionUnitTest ("int				*GetAddress (const int **ptr, const int num);", fds_p);
-					FunctionDefinitionUnitTest ("struct Test *GetTest (void);", fds_p);
-					FunctionDefinitionUnitTest ("void SetTest (struct Test *test_p, int num);", fds_p);
+					FunctionDefinitionUnitTest ("int main (int argc, char *argv []);", header_defs_p);
+					FunctionDefinitionUnitTest ("int				*GetAddress (const int **ptr, const int num);", header_defs_p);
+					FunctionDefinitionUnitTest ("struct Test *GetTest (void);", header_defs_p);
+					FunctionDefinitionUnitTest ("void SetTest (struct Test *test_p, int num);", header_defs_p);
 
-					if (!IsListEmpty (fds_p))
+					if (HasHeaderDefinitions (header_defs_p))
 						{
 							Writer *writer_p = AllocateIDLWriter ();
 
 							if (writer_p)
 								{
-									BOOL success_flag = WriteFunctionDefinitions (writer_p, fds_p, out_p);
+									struct List hdr_defs_list;
+									
+									IExec->NewList (&hdr_defs_list);
+									
+									
+									
+									
+									BOOL success_flag = WriteFunctionDefinitions (writer_p, header_defs_p, out_p);
 
 									FreeIDLWriter (writer_p);
 								}
 						}
 
-					FreeFunctionDefinitionsList (fds_p);
+					FreeHeaderDefinitions (header_defs_p);
 				}
 
 			IDOS->FClose (out_p);
@@ -79,7 +88,7 @@ int UnitTest (CONST_STRPTR output_name_s)
 
 
 
-static int32 FunctionDefinitionUnitTest (const char * const prototype_s, struct List *fds_p)
+static int32 FunctionDefinitionUnitTest (const char * const prototype_s, struct HeaderDefinitions *headers_def_p)
 {
 	int32 res = 0;
 	struct FunctionDefinition *fd_p = TokenizeFunctionPrototype (prototype_s);
@@ -90,7 +99,7 @@ static int32 FunctionDefinitionUnitTest (const char * const prototype_s, struct 
 			IDOS->FPrintf (out_p, "********* BEGIN FD for \"%s\" *********\n", prototype_s);
 			PrintFunctionDefinition (out_p, fd_p);
 
-			if (!AddFunctionDefinitionToList (fds_p, fd_p))
+			if (!AddFunctionDefinitionToList (headers_def_p, fd_p))
 				{
 					FreeFunctionDefinition (fd_p);
 					res = -2;

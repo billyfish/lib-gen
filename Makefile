@@ -4,7 +4,7 @@
 #
 # Project: libgen
 #
-# Created on: 21-09-2014 23:38:24
+# Created on: 22-09-2014 18:33:18
 #
 #
 
@@ -57,7 +57,7 @@ src/idl_writer.o: src/idl_writer.c src/idl_writer.h src/writer.h src/function_de
 src/memory.o: src/memory.c src/memory.h
 	$(CC) -c src/memory.c -o src/memory.o $(CFLAGS)
 
-src/main.o: src/main.c src/unit_test.h src/string_list.h src/memory.h
+src/main.o: src/main.c src/unit_test.h src/string_list.h src/memory.h src/utils.h
 	$(CC) -c src/main.c -o src/main.o $(CFLAGS)
 
 src/utils.o: src/utils.c src/debugging_utils.h src/memory.h src/string_list.h src/utils.h src/parameter.h

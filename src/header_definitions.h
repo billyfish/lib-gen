@@ -4,8 +4,7 @@
 #include <exec/lists.h>
 #include <exec/types.h>
 
-#include "function_definitions.h"
-
+#include "function_definition.h"
 
 /**
  * All of the functions defined in a given header file.
@@ -28,6 +27,7 @@ struct HeaderDefinitionsNode
 };
 
 
+BOOL AddHeaderDefintionsToList (struct List *hdr_defs_list_p, struct HeaderDefinitions *hdr_defs_p);
 
 struct HeaderDefinitions *AllocateHeaderDefinitions (STRPTR filename_s);
 
@@ -40,6 +40,7 @@ void FreeHeaderDefinitionsNode (struct HeaderDefinitionsNode *node_p);
 
 BOOL AddFunctionDefinitionToHeaderDefinitions (struct HeaderDefinitions *header_defs_p, struct FunctionDefinition *fd_p);
 
+BOOL HasHeaderDefinitions (const struct HeaderDefinitions *header_defs_p);
 
 
 #endif		/* #ifndef HEADER_DEFINITIONS_H */
