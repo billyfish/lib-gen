@@ -3,7 +3,7 @@
 #include <string.h>
 
 #include "header_definitions.h"
-
+#include "function_definition.h"
 
 struct HeaderDefinitions *AllocateHeaderDefinitions (STRPTR filename_s, MEM_FLAG filename_mem)
 {

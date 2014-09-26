@@ -56,7 +56,7 @@ enum Args
 	AR_PROTOTYPE_PATTERN,
 
 	/** The output format */
-	AR_FORMAT,
+	AR_OUTPUT_FORMAT,
 	AR_NUM_ARGS
 };
 
