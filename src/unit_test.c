@@ -8,6 +8,7 @@
 
 #include <proto/dos.h>
 
+#include "header_definitions.h"
 
 #include "memory.h"
 #include "parameter.h"
@@ -16,7 +17,7 @@
 #include "string_list.h"
 #include "debugging_utils.h"
 #include "idl_writer.h"
-#include "header_definitions.h"
+
 
 
 /**************************************/
@@ -49,7 +50,7 @@ int UnitTest (CONST_STRPTR output_name_s)
 
 	if (out_p)
 		{
-			struct HeaderDefinitions *header_defs_p = AllocateHeaderDefinitions ("foo.h");
+			struct HeaderDefinitions *header_defs_p = AllocateHeaderDefinitions ("foo.h", TRUE);
 
 			if (header_defs_p)
 				{

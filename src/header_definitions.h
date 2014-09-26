@@ -5,6 +5,8 @@
 #include <exec/types.h>
 
 #include "function_definition.h"
+#include "memory.h"
+
 
 /**
  * All of the functions defined in a given header file.
@@ -32,7 +34,7 @@ void ClearHeaderDefinitionsList (struct List *hdr_defs_list_p);
 
 BOOL AddHeaderDefintionsToList (struct List *hdr_defs_list_p, struct HeaderDefinitions *hdr_defs_p);
 
-struct HeaderDefinitions *AllocateHeaderDefinitions (STRPTR filename_s);
+struct HeaderDefinitions *AllocateHeaderDefinitions (STRPTR filename_s, MEM_FLAG filename_mem);
 
 void FreeHeaderDefinitions (struct HeaderDefinitions *header_defs_p);
 

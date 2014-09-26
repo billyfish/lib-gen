@@ -30,6 +30,7 @@
 #include "unit_test.h"
 #include "string_list.h"
 #include "utils.h"
+#include "header_definitions.h"
 
 
 static BOOL OpenLibs (void);
@@ -41,7 +42,10 @@ static void CloseLib (struct Library *library_p, struct Interface *interface_p);
 
 BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, const size_t pattern_length, struct FReadLineData *line_p, struct List *prototypes_list_p);
 BOOL ParseFiles (CONST_STRPTR pattern_s, CONST_STRPTR filename_s, struct List *prototypes_p);
-BOOL GeneratePrototypesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR function_pattern_s);
+BOOL GeneratePrototypesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR function_pattern_s, const BOOL recurse_flag, struct List *header_definitions_p);
+
+int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR output_dir_s, const BOOL recurse_flag);
+
 
 enum Args
 {
@@ -59,6 +63,7 @@ enum Args
 
 int main (int argc, char *argv [])
 {
+	int result = 0;
 
 	if (OpenLibs ())
 		{
@@ -109,6 +114,12 @@ int main (int argc, char *argv [])
 					IDOS->Printf ("PrototypePattern = \"%s\"\n", prototype_pattern_s);
 					IDOS->Printf ("OutputFormat = \"%s\"\n", format_s);
 
+					if (input_dir_s && filename_pattern_s)
+						{
+							result = Run (input_dir_s, filename_pattern_s, prototype_pattern_s, output_dir_s, recurse_flag); 
+						}		/* if (input_dir_s && filename_pattern_s) */
+					
+					
 					IDOS->FreeArgs (args_p);
 				}
 			else
@@ -143,32 +154,49 @@ int main (int argc, char *argv [])
 }
 
 
-BOOL GeneratePrototypesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR function_pattern_s)
+int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR output_dir_s, const BOOL recurse_flag)
 {
-	BOOL success_flag = FALSE;
+	int res = 0;
+	
+	/* List of HeaderDefinitionsNodes */
 	struct List headers_list;
 
 	IExec->NewList (&headers_list);
+	
+	if (GeneratePrototypesList (root_path_s, filename_pattern_s, prototype_pattern_s, recurse_flag, &headers_list))
+		{
+		
+		}
+	
+	
+	
+	return res;
+}
 
-	if (RecursiveScan (root_path_s, &headers_list))
+
+BOOL GeneratePrototypesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR function_pattern_s, const BOOL recurse_flag, struct List *header_definitions_p)
+{
+	BOOL success_flag = FALSE;
+	
+	if (ScanDirectories (root_path_s, header_definitions_p, recurse_flag))
 		{
 			struct List function_definitions_list;
-			struct StringNode *curr_filename_node_p = (struct StringNode *) IExec->GetHead (&headers_list);
-			struct StringNode *next_filename_node_p = NULL;
+			struct HeaderDefinitionsNode *curr_hdr_def_node_p = (struct HeaderDefinitionsNode *) IExec->GetHead (header_definitions_p);
+			struct HeaderDefinitionsNode *next_hdr_def_node_p = NULL;
 
 			IExec->NewList (&function_definitions_list);
 
 			/* Open each of the matched filenames in turn */
-			while ((next_filename_node_p = (struct StringNode *) IExec->GetSucc (& (curr_filename_node_p -> sn_node))) != NULL)
+			while ((next_hdr_def_node_p = (struct HeaderDefinitionsNode *) IExec->GetSucc ((struct Node *) curr_hdr_def_node_p)) != NULL)
 				{
-					CONST STRPTR filename_s = curr_filename_node_p -> sn_value_s;
+					CONST_STRPTR filename_s = curr_hdr_def_node_p -> hdn_defs_p -> hd_filename_s;
 
 					if (ParseFiles (function_pattern_s, filename_s, &function_definitions_list))
 						{
 
 						}
 
-					curr_filename_node_p = next_filename_node_p;
+					curr_hdr_def_node_p = next_hdr_def_node_p;
 				}
 
 		}
@@ -193,6 +221,8 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, con
 					if (IUtility->Strnicmp (pattern_s, line_p -> frld_Line, pattern_length) == 0)
 						{
 							IDOS->Printf (">>> matched line:= %s", line_p -> frld_Line);
+							
+							/* Add the prototype */
 
 						}
 					else

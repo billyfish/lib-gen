@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<CodeBench_Project name="libgen" path="DH4:projects&#047;libgen&#047;libgen.cbp" created="1119285779" lastmodified="1158951116">
+<CodeBench_Project name="libgen" path="DH4:projects&#047;libgen&#047;libgen.cbp" created="1119285779" lastmodified="1159314016">
 	<plugin name="PROGDIR:Plugins&#047;AmigaOS4SDK.CCPlugin" flags="16"/>
 	<label identifier="&#047;&#047;&#047;&#047;"/>
 	<target name="libgen"/>
@@ -13,33 +13,33 @@
 	<builder name="SDK:c&#047;make -f"/>
 	<environment tabsize="2"/>
 	<headers>
-		<file name="src&#047;header_definitions.h" current="0" open="0"/>
+		<file name="src&#047;header_definitions.h" current="0" open="1"/>
 		<file name="src&#047;string_list.h" current="0" open="0"/>
-		<file name="src&#047;unit_test.h" current="0" open="1"/>
+		<file name="src&#047;unit_test.h" current="0" open="0"/>
 		<file name="src&#047;utils.h" current="0" open="1"/>
-		<file name="src&#047;debugging_utils.h" current="0" open="1"/>
+		<file name="src&#047;debugging_utils.h" current="0" open="0"/>
 		<file name="src&#047;parameter.h" current="0" open="1"/>
 		<file name="src&#047;memory.h" current="0" open="0"/>
 		<file name="src&#047;writer.h" current="0" open="1"/>
-		<file name="src&#047;idl_writer.h" current="0" open="1"/>
+		<file name="src&#047;idl_writer.h" current="0" open="0"/>
 		<file name="src&#047;function_definition.h" current="0" open="1"/>
 	</headers>
 	<sources>
-		<file name="src&#047;unit_test.c" current="1" open="1"/>
-		<file name="src&#047;header_definitions.c" current="0" open="0"/>
+		<file name="src&#047;unit_test.c" current="0" open="1"/>
+		<file name="src&#047;header_definitions.c" current="1" open="1"/>
 		<file name="src&#047;string_list.c" current="0" open="0"/>
 		<file name="src&#047;idl_writer.c" current="0" open="0"/>
 		<file name="src&#047;memory.c" current="0" open="0"/>
 		<file name="src&#047;main.c" current="0" open="1"/>
-		<file name="src&#047;utils.c" current="0" open="0"/>
-		<file name="src&#047;parameter.c" current="0" open="1"/>
-		<file name="src&#047;function_definition.c" current="0" open="1"/>
+		<file name="src&#047;utils.c" current="0" open="1"/>
+		<file name="src&#047;parameter.c" current="0" open="0"/>
+		<file name="src&#047;function_definition.c" current="0" open="0"/>
 		<file name="src&#047;writer.c" current="0" open="1"/>
 	</sources>
 	<flags value="4097"/>
-	<buildscript name="Makefile" depth="3" open="0"/>
+	<buildscript name="Makefile" depth="3" open="1" current="0" top="0" left="0" line="1" row="0"/>
 	<projectnotes open="0"/>
 	<buildwindow open="1"/>
 	<logfile name="RAM Disk:Build.log"/>
-	<repository plugin="PROGDIR:plugins&#047;svntool.syncplugin" lastcommit="1158884404" lastupdate="1158949996"/>
+	<repository plugin="PROGDIR:plugins&#047;svntool.syncplugin" lastcommit="1158951169" lastupdate="1158949996"/>
 </CodeBench_Project>

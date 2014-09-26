@@ -9,6 +9,9 @@
 #include "string_list.h"
 #include "utils.h"
 #include "parameter.h"
+#include "header_definitions.h"
+
+
 
 
 /**
@@ -82,7 +85,7 @@ char *CopyToNewString (const char *start_p, const char *end_p, const BOOL trim_f
 }
 
 
-BOOL AddFullHeaderPathToList (struct List *headers_p, CONST STRPTR dir_s, CONST STRPTR name_s)
+BOOL AddFullHeaderPathToList (struct List *header_definitions_p, CONST STRPTR dir_s, CONST STRPTR name_s)
 {
 	BOOL success_flag = FALSE;
 	STRPTR full_path_s = NULL;
@@ -100,10 +103,24 @@ BOOL AddFullHeaderPathToList (struct List *headers_p, CONST STRPTR dir_s, CONST 
 
 			if (IDOS->AddPart (full_path_s, name_s, l) != 0)
 				{
-					success_flag = AddStringToStringList (headers_p, full_path_s, MF_SHALLOW_COPY);
+					struct HeaderDefinitions *hdr_defs_p = AllocateHeaderDefinitions (full_path_s, MF_SHALLOW_COPY);
+					
+					if (hdr_defs_p)
+						{
+							if (AddHeaderDefintionsToList (header_definitions_p, hdr_defs_p))
+								{
+									success_flag = TRUE;
+								}
+							else
+								{
+									FreeHeaderDefinitions (hdr_defs_p);
+									full_path_s = NULL;
+								}
+						}
+					
 				}
 
-			if (!success_flag)
+			if ((!success_flag) && full_path_s)
 				{
 					IExec->FreeVec (full_path_s);
 				}
@@ -113,10 +130,10 @@ BOOL AddFullHeaderPathToList (struct List *headers_p, CONST STRPTR dir_s, CONST 
 }
 
 
-int32 RecursiveScan (CONST_STRPTR name_s, struct List *matching_files_list_p)
+int32 ScanDirectories (CONST_STRPTR dir_s, struct List *header_definitions_p, const BOOL recurse_flag)
 {
 	int32 success = FALSE;
-	APTR context_p = IDOS->ObtainDirContextTags (EX_StringNameInput, name_s,
+	APTR context_p = IDOS->ObtainDirContextTags (EX_StringNameInput, dir_s,
 		EX_DoCurrentDir, TRUE, /* for relative cd lock */
 		EX_DataFields, (EXF_NAME | EXF_LINK | EXF_TYPE),
 		TAG_END);
@@ -130,14 +147,23 @@ int32 RecursiveScan (CONST_STRPTR name_s, struct List *matching_files_list_p)
 					if (EXD_IS_FILE (dat_p))
 						{
 							IDOS->Printf ("filename=%s\n", dat_p -> Name);
+							
+							if (!AddFullHeaderPathToList (header_definitions_p, dir_s, dat_p -> Name))
+								{
+									IDOS->Printf ("failed to add filename=%s to list of headers files\n", dat_p -> Name);
+								}
+							
 						}
 					else if (EXD_IS_DIRECTORY (dat_p))
 						{
 							IDOS->Printf ("dirname=%s\n",  dat_p -> Name);
 
-							if (!RecursiveScan (dat_p -> Name, matching_files_list_p))  /* recurse */
+							if (recurse_flag)
 								{
-									break;
+									if (!ScanDirectories (dat_p -> Name, header_definitions_p, recurse_flag))  /* recurse */
+										{
+											break;
+										}
 								}
 						}
 				}

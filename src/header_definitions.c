@@ -5,14 +5,23 @@
 #include "header_definitions.h"
 
 
-struct HeaderDefinitions *AllocateHeaderDefinitions (STRPTR filename_s)
+struct HeaderDefinitions *AllocateHeaderDefinitions (STRPTR filename_s, MEM_FLAG filename_mem)
 {
 	struct HeaderDefinitions *hdr_defs_p = (struct HeaderDefinitions *) IExec->AllocVecTags (sizeof (struct HeaderDefinitions), TAG_END);
 
 	if (hdr_defs_p)
 		{
-			STRPTR name_s = strdup (filename_s);
+			STRPTR name_s;
 
+			if (filename_mem == MF_DEEP_COPY)
+				{
+					name_s = strdup (filename_s);
+				}
+			else
+				{
+					name_s = filename_s;
+				}
+				
 			if (name_s)
 				{
 					hdr_defs_p -> hd_filename_s = name_s;

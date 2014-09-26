@@ -7,6 +7,7 @@
 #include "memory.h"
 #include "parameter.h"
 #include "function_definition.h"
+#include "header_definitions.h"
 
 
 static BOOL WriteIDL (struct Writer *writer_p, const struct List *header_definitions_list_p, BPTR out_p);
@@ -20,6 +21,10 @@ static BOOL WriteIDLDefaultFunctions (BPTR out_p);
 static BOOL WriteIDLIncludes (BPTR out_p, const char * const name_s, const char * const basename_s, const char * const struct_name_s, const char * const prefix_s);
 static BOOL WriteIDLFooter (BPTR out_p);
 
+
+static BOOL WriteIDLHeaderDefinitionsList (BPTR out_p, const struct List * const header_definitions_list_p);
+
+static BOOL WriteIDLHeaderDefinitions (BPTR out_p, const struct HeaderDefinitions * const header_definitions_p);
 
 
 
@@ -56,7 +61,7 @@ static BOOL WriteIDL (struct Writer *writer_p, const struct List *header_definit
 		{
 			if (WriteIDLDefaultFunctions (out_p))
 				{
-					if (WriteIDLFunctions (out_p, header_definitions_list_p))
+					if (WriteIDLHeaderDefinitionsList (out_p, header_definitions_list_p))
 						{
 							success_flag = TRUE;
 						}
@@ -98,7 +103,7 @@ static BOOL WriteIDLHeader (BPTR out_p, const char * const name_s, const char * 
 static BOOL WriteIDLHeaderDefinitionsList (BPTR out_p, const struct List * const header_definitions_list_p)
 {
 	BOOL success_flag = TRUE;
-	const struct HeaderDefinitionsNode *curr_node_p = (const struct HeaderDefinitionsNode *) IExec->GetHead (fds_list_p);
+	const struct HeaderDefinitionsNode *curr_node_p = (const struct HeaderDefinitionsNode *) IExec->GetHead (header_definitions_list_p);
 	const struct HeaderDefinitionsNode *next_node_p = NULL;
 
 	while (((next_node_p = (struct HeaderDefinitionsNode *) IExec->GetSucc (& (curr_node_p -> hdn_node))) != NULL) && success_flag)
