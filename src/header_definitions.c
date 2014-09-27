@@ -65,6 +65,7 @@ BOOL AddHeaderDefintionsToList (struct List *hdr_defs_list_p, struct HeaderDefin
 	if (node_p)
 		{
 			IExec->AddTail (hdr_defs_list_p, (struct Node *) node_p);
+			success_flag = TRUE;
 		}
 
 	return success_flag;
@@ -90,7 +91,11 @@ void FreeHeaderDefinitionsNode (struct HeaderDefinitionsNode *node_p)
 }
 
 
-BOOL AddFunctionDefinitionToList (struct HeaderDefinitions *header_defs_p, struct FunctionDefinition *fd_p)
+
+
+
+
+BOOL AddFunctionDefinitionToHeaderDefinitions (struct HeaderDefinitions *header_defs_p, struct FunctionDefinition *fd_p)
 {
 	BOOL success_flag = FALSE;
 

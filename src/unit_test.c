@@ -75,7 +75,7 @@ int UnitTest (CONST_STRPTR output_name_s)
 											IExec->NewList (&hdr_defs_list);
 											IExec->AddTail (&hdr_defs_list, (struct Node *) node_p);
 
-											success_flag = WriteFunctionDefinitions (writer_p, header_defs_p, out_p);
+										//	success_flag = WriteFunctionDefinitions (writer_p, header_defs_p, out_p);
 
 											ClearHeaderDefinitionsList (&hdr_defs_list);
 										}
@@ -106,7 +106,7 @@ static int32 FunctionDefinitionUnitTest (const char * const prototype_s, struct 
 			IDOS->FPrintf (out_p, "********* BEGIN FD for \"%s\" *********\n", prototype_s);
 			PrintFunctionDefinition (out_p, fd_p);
 
-			if (!AddFunctionDefinitionToList (headers_def_p, fd_p))
+			if (!AddFunctionDefinitionToHeaderDefinitions (headers_def_p, fd_p))
 				{
 					FreeFunctionDefinition (fd_p);
 					res = -2;

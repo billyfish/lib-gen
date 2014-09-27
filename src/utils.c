@@ -99,11 +99,13 @@ BOOL AddFullHeaderPathToList (struct List *header_definitions_p, CONST STRPTR di
 
 	if (full_path_s)
 		{
-			IUtility->Strlcpy (full_path_s, dir_s, dir_length);
+			IUtility->Strlcpy (full_path_s, dir_s, dir_length + 1);
 
 			if (IDOS->AddPart (full_path_s, name_s, l) != 0)
 				{
 					struct HeaderDefinitions *hdr_defs_p = AllocateHeaderDefinitions (full_path_s, MF_SHALLOW_COPY);
+					
+					DB (KPRINTF ("%s %ld - full_path_s \"%s\" dir \"%s\" name \"%s\"\n", __FILE__, __LINE__, full_path_s, dir_s, name_s));
 					
 					if (hdr_defs_p)
 						{
