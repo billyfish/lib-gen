@@ -42,7 +42,6 @@ struct HeaderDefinitionsNode *AllocateHeaderDefinitionsNode (struct HeaderDefini
 
 void FreeHeaderDefinitionsNode (struct HeaderDefinitionsNode *node_p);
 
-
 BOOL AddFunctionDefinitionToHeaderDefinitions (struct HeaderDefinitions *header_defs_p, struct FunctionDefinition *fd_p);
 
 BOOL HasHeaderDefinitions (const struct HeaderDefinitions *header_defs_p);

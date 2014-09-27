@@ -116,10 +116,10 @@ int main (int argc, char *argv [])
 
 					if (input_dir_s && filename_pattern_s)
 						{
-							result = Run (input_dir_s, filename_pattern_s, prototype_pattern_s, output_dir_s, recurse_flag); 
+							result = Run (input_dir_s, filename_pattern_s, prototype_pattern_s, output_dir_s, recurse_flag);
 						}		/* if (input_dir_s && filename_pattern_s) */
-					
-					
+
+
 					IDOS->FreeArgs (args_p);
 				}
 			else
@@ -157,19 +157,19 @@ int main (int argc, char *argv [])
 int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR output_dir_s, const BOOL recurse_flag)
 {
 	int res = 0;
-	
+
 	/* List of HeaderDefinitionsNodes */
 	struct List headers_list;
 
 	IExec->NewList (&headers_list);
-	
+
 	if (GeneratePrototypesList (root_path_s, filename_pattern_s, prototype_pattern_s, recurse_flag, &headers_list))
 		{
-		
+
 		}
-	
-	
-	
+
+
+
 	return res;
 }
 
@@ -177,21 +177,21 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 BOOL GeneratePrototypesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR function_pattern_s, const BOOL recurse_flag, struct List *header_definitions_p)
 {
 	BOOL success_flag = FALSE;
-	
+
+	/* Get a list of the header filenames */
 	if (ScanDirectories (root_path_s, header_definitions_p, recurse_flag))
 		{
-			struct List function_definitions_list;
 			struct HeaderDefinitionsNode *curr_hdr_def_node_p = (struct HeaderDefinitionsNode *) IExec->GetHead (header_definitions_p);
 			struct HeaderDefinitionsNode *next_hdr_def_node_p = NULL;
-
-			IExec->NewList (&function_definitions_list);
 
 			/* Open each of the matched filenames in turn */
 			while ((next_hdr_def_node_p = (struct HeaderDefinitionsNode *) IExec->GetSucc ((struct Node *) curr_hdr_def_node_p)) != NULL)
 				{
-					CONST_STRPTR filename_s = curr_hdr_def_node_p -> hdn_defs_p -> hd_filename_s;
+					HeaderDefinitions *current_header_defs_p = curr_hdr_def_node_p -> hdn_defs_p;
+					CONST_STRPTR filename_s = current_header_defs_p -> hd_filename_s;
 
-					if (ParseFiles (function_pattern_s, filename_s, &function_definitions_list))
+					/* Get the list of matching prototypes in each file */
+					if (ParseFiles (function_pattern_s, filename_s, & (current_header_defs_p -> hd_function_definitions))
 						{
 
 						}
@@ -207,22 +207,43 @@ BOOL GeneratePrototypesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_pat
 
 
 
-BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, const size_t pattern_length, struct FReadLineData *line_p, struct List *prototypes_list_p)
+
+
+BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, const size_t pattern_length, struct FReadLineData *line_p, struct HeaaderDefinitions *hdr_defs_p)
 {
 	BOOL success_flag = FALSE;
 	BPTR handle_p = IDOS->FOpen (filename_s, MODE_OLDFILE, 0);
 
 	if (handle_p)
-		{
-			int32 count;
+		{			int32 count;
 
 			while ((count = IDOS->FReadLine (handle_p, line_p)) > 0)
 				{
 					if (IUtility->Strnicmp (pattern_s, line_p -> frld_Line, pattern_length) == 0)
 						{
+							char *prototype_s = (line_p -> frld_Line) + pattern_length;
+							struct FunctionDefinition *fn_def_p = NULL;
+
 							IDOS->Printf (">>> matched line:= %s", line_p -> frld_Line);
-							
-							/* Add the prototype */
+
+							fn_def_p = TokenizeFunctionPrototype (prototype_s);
+
+							if (fn_def_p)
+								{
+									/* Add the prototype */
+									if (AddFunctionDefinitionToHeaderDefinitions (header_defs_p, fn_def_p))
+										{
+											IDOS->Printf ("Added function definition for \"%s\"\n", prototype_s);
+										}
+									else
+										{
+											IDOS->Printf ("Failed to add function definition for \"%s\"\n", prototype_s);
+										}
+								}
+							else
+								{
+									IDOS->Printf ("Failed to tokenize \"%s\"\n", prototype_s);
+								}
 
 						}
 					else
