@@ -6,7 +6,6 @@
 
 #include "debugging_utils.h"
 #include "memory.h"
-#include "string_list.h"
 #include "utils.h"
 #include "parameter.h"
 #include "header_definitions.h"

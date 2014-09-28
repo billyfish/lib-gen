@@ -27,8 +27,6 @@
 #include <proto/exec.h>
 #include <proto/utility.h>
 
-#include "unit_test.h"
-#include "string_list.h"
 #include "utils.h"
 #include "header_definitions.h"
 #include "debugging_utils.h"

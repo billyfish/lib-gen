@@ -8,6 +8,13 @@
 #include "memory.h"
 
 
+enum InterfaceFlag
+{
+	IF_PUBLIC,
+	IF_PROTECTED,
+	IF_PRIVATE
+};
+
 /**
  * All of the functions defined in a given header file.
  */

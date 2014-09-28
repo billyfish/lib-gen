@@ -20,7 +20,7 @@ static BOOL WriteIDL (struct Writer *writer_p, struct List *header_definitions_l
 
 static CONST_STRPTR GetIDLWriterFileSuffix (struct Writer *writer_p);
 
-static BOOL WriteIDLHeader (BPTR out_p, const char * const name_s, const char * const struct_name_s, const char * const prefix_s);
+static BOOL WriteIDLHeader (BPTR out_p, CONST CONST_STRPTR library_s, const uint32 version, const enum InterfaceFlag flag);
 
 static BOOL WriteIDLFunction (BPTR out_p, const struct FunctionDefinition * const fd_p);
 static BOOL WriteIDLParameter (BPTR out_p, const struct Parameter * const param_p);
@@ -68,11 +68,10 @@ void FreeIDLWriter (Writer *writer_p)
 static BOOL WriteIDL (struct Writer *writer_p, struct List *header_definitions_list_p, CONST_STRPTR library_s, BPTR out_p)
 {
 	BOOL success_flag = FALSE;
-	const char * const basename_s = "basename";
-	const char * const struct_name_s = "struct_name";
-	const char * const prefix_s = "prefix";
+	uint32 version = 1;
+	enum InterfaceFlag flag = IF_PUBLIC;
 
-	if (WriteIDLHeader (out_p, library_s, struct_name_s, prefix_s))
+	if (WriteIDLHeader (out_p, library_s, version, flag))
 		{
 			if (WriteIDLDefaultFunctions (out_p))
 				{
@@ -115,7 +114,7 @@ static BOOL WriteIDL (struct Writer *writer_p, struct List *header_definitions_l
 
 
 
-static BOOL WriteIDLHeader (BPTR out_p, const char * const library_s, const char * const struct_name_s, const char * const prefix_s)
+static BOOL WriteIDLHeader (BPTR out_p, CONST CONST_STRPTR library_s, const uint32 version, const enum InterfaceFlag flag)
 {
 	BOOL success_flag = FALSE;
 
@@ -133,9 +132,34 @@ static BOOL WriteIDLHeader (BPTR out_p, const char * const library_s, const char
 										{
 											if (IDOS->FPrintf (out_p, "%sBase\">\n", library_s + 1) >= 0)
 												{
-													if (IDOS->FPrintf (out_p, "\t<interface name=\"%s\" version=\"1\" flags=\"protected\" struct=\"%s\" prefix=\"%s\">\n", library_s, struct_name_s, prefix_s) >= 0)
+													CONST_STRPTR flags_s = NULL;
+													
+													switch (flag)
 														{
-															success_flag = TRUE;
+															case IF_PRIVATE:
+																flags_s = "private";
+																break;
+																
+															case IF_PROTECTED:
+																flags_s = "protected";
+																break;
+																
+															case IF_PUBLIC:
+															default:
+																flags_s = "none";
+																break;		
+														}
+													
+												
+													if (IDOS->FPrintf (out_p, "\t<interface name=\"%s\" version=\"%lu.0\" flags=\"%s\" prefix=\"_%s_\" struct=\"", library_s, version, flags_s, library_s) >= 0)
+														{
+															if (IDOS->FPutC (out_p, c) == c)
+																{
+																	if (IDOS->FPrintf (out_p, "%sIFace\">\n", library_s + 1) >= 0)
+																		{
+																			success_flag = TRUE;
+																		}
+																}
 														}
 												}
 										}
@@ -178,7 +202,7 @@ static BOOL WriteIDLHeaderDefinitions (BPTR out_p, struct HeaderDefinitions * co
 	BOOL success_flag = FALSE;
 
 
-	if (IDOS->FPrintf (out_p, "\n\t\t<-- %lu definitions in %s -->\n", GetFunctionDefinitionsListSize (& (header_definitions_p -> hd_function_definitions)), header_definitions_p -> hd_filename_s) >= 0)
+	if (IDOS->FPrintf (out_p, "\n\t\t<!-- %lu definitions in %s -->\n", GetFunctionDefinitionsListSize (& (header_definitions_p -> hd_function_definitions)), header_definitions_p -> hd_filename_s) >= 0)
 		{
 			struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (& (header_definitions_p -> hd_function_definitions));
 			
@@ -232,7 +256,7 @@ static BOOL WriteIDLFunction (BPTR out_p, const struct FunctionDefinition * cons
 
 static BOOL WriteIDLParameter (BPTR out_p, const struct Parameter * const param_p)
 {
-	BOOL success_flag = (IDOS->FPrintf (out_p, "\t\t\t<arg name=\"%s\" type=\"%s\">\n", param_p -> pa_name_s, param_p -> pa_type_s) >= 0);
+	BOOL success_flag = (IDOS->FPrintf (out_p, "\t\t\t<arg name=\"%s\" type=\"%s\" />\n", param_p -> pa_name_s, param_p -> pa_type_s) >= 0);
 
 	return success_flag;
 }

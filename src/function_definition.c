@@ -156,11 +156,6 @@ uint32 GetFunctionDefinitionsListSize (struct List * const list_p)
 }
 
 
-void ClearFunctionDefinitionList (struct List *function_definitions_p)
-{
-
-}
-
 struct FunctionDefinition *AllocateFunctionDefinition (void)
 {
 	struct FunctionDefinition *fd_p = (struct FunctionDefinition *) AllocMemory (sizeof (struct FunctionDefinition));
