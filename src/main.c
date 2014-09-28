@@ -44,7 +44,8 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, con
 BOOL ParseFile (CONST_STRPTR pattern_s, CONST_STRPTR filename_s, struct HeaderDefinitions *header_defs_p);
 BOOL GeneratePrototypesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR function_pattern_s, const BOOL recurse_flag, struct List *header_definitions_p);
 
-int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR output_dir_s, const BOOL recurse_flag);
+
+int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag, const BOOL verbose_flag);
 
 
 enum Args
@@ -56,8 +57,10 @@ enum Args
 	AR_PROTOTYPE_PATTERN,
 	AR_VERSION,
 	AR_FLAGS,
+
 	/** The output format */
 	AR_OUTPUT_FORMAT,
+	AR_VERBOSE,
 	AR_NUM_ARGS
 };
 
@@ -78,6 +81,7 @@ int main (int argc, char *argv [])
 			BOOL recurse_flag = FALSE;
 			int32 args [AR_NUM_ARGS];
 			struct RDArgs *args_p = NULL;
+			BOOL verbose_flag = FALSE;
 
 			memset (args, 0, AR_NUM_ARGS * sizeof (int32));
 
@@ -112,7 +116,7 @@ int main (int argc, char *argv [])
 					if (args [AR_FLAGS])
 						{
 							CONST_STRPTR value_s = (CONST_STRPTR) args [AR_FLAGS];
-							
+
 							if (IUtility->Stricmp (value_s, "private") == 0)
 								{
 									flag = IF_PRIVATE;
@@ -128,40 +132,51 @@ int main (int argc, char *argv [])
 							else
 								{
 									IDOS->Printf ("Ignoring invalid flag \"%s\", must be either private, protected or none");
-								}	
+								}
 						}
-						
+
 					if (args [AR_VERSION])
 						{
 							version = (int32 *) args [AR_VERSION]);
 						}
 
-					IDOS->Printf ("Input Dir = \"%s\"\n", input_dir_s);
-					IDOS->Printf ("Library Name  = \"%s\"\n", library_s);
-					IDOS->Printf ("Filename Pattern = \"%s\"\n", filename_pattern_s);
-					IDOS->Printf ("Recurse = \"%s\"\n", recurse_flag ? "TRUE" : "FALSE");
-					IDOS->Printf ("PrototypePattern = \"%s\"\n", prototype_pattern_s);
-					IDOS->Printf ("OutputFormat = \"%s\"\n", format_s);
-					IDOS->Printf ("Version = \"%ld\"\n", version);
-					
-					switch (flag)
+					if (args [AR_VERBOSE])
 						{
-							case IF_PUBLIC:
-								IDOS->Printf ("Flags = \"none\"\n");
-								break;
-
-							case IF_PROTECTED:
-								IDOS->Printf ("Flags = \"none\"\n");
-								break;
-								
-							case IF_PRIVATE:
-								IDOS->Printf ("Flags = \"none\"\n");
-								break;								
+							verbose_flag = TRUE;
 						}
-					
-					if (input_dir_s && filename_pattern_s)
+
+
+					if (verbose_flag)
 						{
-							result = Run (input_dir_s, filename_pattern_s, prototype_pattern_s, library_s, recurse_flag, version, flag);
+							IDOS->Printf ("Input Dir = \"%s\"\n", input_dir_s);
+							IDOS->Printf ("Library Name  = \"%s\"\n", library_s);
+							IDOS->Printf ("Filename Pattern = \"%s\"\n", filename_pattern_s);
+							IDOS->Printf ("Recurse = \"%s\"\n", recurse_flag ? "TRUE" : "FALSE");
+							IDOS->Printf ("PrototypePattern = \"%s\"\n", prototype_pattern_s);
+							IDOS->Printf ("OutputFormat = \"%s\"\n", format_s);
+							IDOS->Printf ("Version = \"%ld\"\n", version);
+
+							switch (flag)
+								{
+									case IF_PUBLIC:
+										IDOS->Printf ("Flags = \"none\"\n");
+										break;
+
+									case IF_PROTECTED:
+										IDOS->Printf ("Flags = \"protected\"\n");
+										break;
+
+									case IF_PRIVATE:
+										IDOS->Printf ("Flags = \"private\"\n");
+										break;
+								}
+
+						}		/* if (verbose_flag) */
+
+
+					if (input_dir_s && filename_pattern_s && library_s)
+						{
+							result = Run (input_dir_s, filename_pattern_s, prototype_pattern_s, library_s, recurse_flag, version, flag, verbose_flag);
 						}		/* if (input_dir_s && filename_pattern_s) */
 
 
@@ -199,7 +214,7 @@ int main (int argc, char *argv [])
 }
 
 
-int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag)
+int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag, const BOOL verbose_flag)
 {
 	int res = 0;
 	STRPTR prototype_regexp_s = NULL;
@@ -211,13 +226,13 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 	if (prototype_pattern_s)
 		{
 			size_t l = (2 * strlen (prototype_pattern_s)) + 2;
-			
+
 			prototype_regexp_s = (STRPTR) IExec->AllocVecTags (l, TAG_DONE);
-			
+
 			if (prototype_regexp_s)
 				{
 					int32 is_wild = IDOS->ParsePatternNoCase (prototype_pattern_s, prototype_regexp_s, l);
-					
+
 					if (is_wild < 0)
 						{
 							IDOS->Printf ("Error creating pattern from \"%s\"\n", prototype_pattern_s);
@@ -232,20 +247,20 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 	if (GeneratePrototypesList (root_path_s, filename_pattern_s, prototype_regexp_s, recurse_flag, &headers_list))
 		{
 			Writer *writer_p = AllocateIDLWriter ();
-			
+
 			if (writer_p)
 				{
 					STRPTR output_s = ConcatenateStrings (library_s, GetWriterFileSuffix (writer_p));
-					
+
 					if (output_s)
 						{
 							BPTR out_p = IDOS->FOpen (output_s, MODE_NEWFILE, 0);
-							
+
 							if (out_p)
 								{
 									IDOS->Printf ("%lu headers\n", GetHeaderDefinitionsListSize (&headers_list));
-								
-									if (WriteHeaderDefinitionsList (writer_p, &headers_list, library_s, out_p))
+
+									if (WriteHeaderDefinitionsList (writer_p, &headers_list, library_s, version, flags, out_p))
 										{
 											IDOS->Printf ("Successfully wrote header definitions to %s\n", output_s);
 										}
@@ -253,18 +268,18 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 										{
 											IDOS->Printf ("Failed to write header definitions to %s\n", output_s);
 										}
-		
+
 									IDOS->FClose (out_p);
 								}
 							else
 								{
 									IDOS->Printf ("Failed to open %s for writing\n", output_s);
 								}
-												
+
 							IExec->FreeVec (output_s);
 						}
-					
-					FreeIDLWriter (writer_p);	
+
+					FreeIDLWriter (writer_p);
 				}
 			else
 				{
@@ -294,10 +309,10 @@ BOOL GeneratePrototypesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_pat
 			struct HeaderDefinitionsNode *node_p;
 
 			success_flag = TRUE;
-			
-			
+
+
 			IDOS->Printf ("Found %lu header files\n", GetHeaderDefinitionsListSize (header_definitions_p));
-			
+
 			for (node_p = (struct HeaderDefinitionsNode *) IExec->GetHead (header_definitions_p); node_p != NULL; node_p = (struct HeaderDefinitionsNode *) IExec->GetSucc ((struct Node *) node_p))
 				{
 					struct HeaderDefinitions *header_defs_p = node_p -> hdn_defs_p;
@@ -327,11 +342,11 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, con
 	BPTR handle_p = IDOS->FOpen (filename_s, MODE_OLDFILE, 0);
 
 	if (handle_p)
-		{			
+		{
 			int32 count;
-			
+
 			success_flag = TRUE;
-			
+
 			while ((count = IDOS->FReadLine (handle_p, line_p)) > 0)
 				{
 					if (IUtility->Strnicmp (pattern_s, line_p -> frld_Line, pattern_length) == 0)
@@ -380,7 +395,7 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, con
 
 
 	DB (KPRINTF ("%s %ld - GetMatchingPrototypes %ld\n", __FILE__, __LINE__, success_flag));
-	
+
 	return success_flag;
 }
 
