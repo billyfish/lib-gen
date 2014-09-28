@@ -54,7 +54,8 @@ enum Args
 	AR_LIBRARY_NAME,
 	AR_INPUT_FILE_PATTERN,
 	AR_PROTOTYPE_PATTERN,
-
+	AR_VERSION,
+	AR_FLAGS,
 	/** The output format */
 	AR_OUTPUT_FORMAT,
 	AR_NUM_ARGS
@@ -72,14 +73,15 @@ int main (int argc, char *argv [])
 			CONST_STRPTR filename_pattern_s = "#?.h";
 			CONST_STRPTR prototype_pattern_s = NULL;
 			CONST_STRPTR format_s = "idl";
-
+			int32 version = 1;
+			enum InterfaceFlag flag = IF_PUBLIC;
 			BOOL recurse_flag = FALSE;
 			int32 args [AR_NUM_ARGS];
 			struct RDArgs *args_p = NULL;
 
 			memset (args, 0, AR_NUM_ARGS * sizeof (int32));
 
-			args_p = IDOS->ReadArgs ("I=Input/A,R=Recurse/S,L=LibraryName/A,IP=InputPattern/K,PP=PrototypePattern/K,FMT=Format/K", args, NULL);
+			args_p = IDOS->ReadArgs ("I=Input/A,R=Recurse/S,L=LibraryName/A,IP=InputPattern/K,PP=PrototypePattern/K,FMT=Format/K,V=Version/N,FL=Flags/K", args, NULL);
 
 			if (args_p != NULL)
 				{
@@ -107,16 +109,59 @@ int main (int argc, char *argv [])
 							format_s = (CONST_STRPTR) args [AR_OUTPUT_FORMAT];
 						}
 
+					if (args [AR_FLAGS])
+						{
+							CONST_STRPTR value_s = (CONST_STRPTR) args [AR_FLAGS];
+							
+							if (IUtility->Stricmp (value_s, "private") == 0)
+								{
+									flag = IF_PRIVATE;
+								}
+							else if (IUtility->Stricmp (value_s, "protected") == 0)
+								{
+									flag = IF_PROTECTED;
+								}
+							else if (IUtility->Stricmp (value_s, "none") == 0)
+								{
+									flag = IF_PUBLIC;
+								}
+							else
+								{
+									IDOS->Printf ("Ignoring invalid flag \"%s\", must be either private, protected or none");
+								}	
+						}
+						
+					if (args [AR_VERSION])
+						{
+							version = (int32 *) args [AR_VERSION]);
+						}
+
 					IDOS->Printf ("Input Dir = \"%s\"\n", input_dir_s);
 					IDOS->Printf ("Library Name  = \"%s\"\n", library_s);
 					IDOS->Printf ("Filename Pattern = \"%s\"\n", filename_pattern_s);
 					IDOS->Printf ("Recurse = \"%s\"\n", recurse_flag ? "TRUE" : "FALSE");
 					IDOS->Printf ("PrototypePattern = \"%s\"\n", prototype_pattern_s);
 					IDOS->Printf ("OutputFormat = \"%s\"\n", format_s);
+					IDOS->Printf ("Version = \"%ld\"\n", version);
+					
+					switch (flag)
+						{
+							case IF_PUBLIC:
+								IDOS->Printf ("Flags = \"none\"\n");
+								break;
 
+							case IF_PROTECTED:
+								IDOS->Printf ("Flags = \"none\"\n");
+								break;
+								
+							case IF_PRIVATE:
+								IDOS->Printf ("Flags = \"none\"\n");
+								break;								
+						}
+					
 					if (input_dir_s && filename_pattern_s)
 						{
-							result = Run (input_dir_s, filename_pattern_s, prototype_pattern_s, library_s, recurse_flag);
+							result = Run (input_dir_s, filename_pattern_s, prototype_pattern_s, library_s, recurse_flag, version, flag);
 						}		/* if (input_dir_s && filename_pattern_s) */
 
 
@@ -154,7 +199,7 @@ int main (int argc, char *argv [])
 }
 
 
-int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, const BOOL recurse_flag)
+int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag)
 {
 	int res = 0;
 	STRPTR prototype_regexp_s = NULL;
