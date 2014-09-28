@@ -34,7 +34,7 @@ void ClearHeaderDefinitionsList (struct List *hdr_defs_list_p);
 
 BOOL AddHeaderDefintionsToList (struct List *hdr_defs_list_p, struct HeaderDefinitions *hdr_defs_p);
 
-struct HeaderDefinitions *AllocateHeaderDefinitions (STRPTR filename_s, MEM_FLAG filename_mem);
+struct HeaderDefinitions *AllocateHeaderDefinitions (STRPTR filename_s);
 
 void FreeHeaderDefinitions (struct HeaderDefinitions *header_defs_p);
 
@@ -48,5 +48,8 @@ BOOL HasHeaderDefinitions (const struct HeaderDefinitions *header_defs_p);
 
 
 uint32 GetHeaderDefinitionsListSize (struct List * const list_p);
+
+void ClearHeaderDefinitionsList (struct List *header_definitions_p);
+
 
 #endif		/* #ifndef HEADER_DEFINITIONS_H */

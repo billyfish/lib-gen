@@ -14,13 +14,12 @@
 
 static BOOL WriteIDL (struct Writer *writer_p, struct List *header_definitions_list_p, BPTR out_p);
 static BOOL WriteIDLHeader (BPTR out_p, const char * const name_s, const char * const basename_s, const char * const struct_name_s, const char * const prefix_s);
-static BOOL WriteIDLFunctions (BPTR out_p, struct List * const fds_list_p);
 
 static BOOL WriteIDLFunction (BPTR out_p, const struct FunctionDefinition * const fd_p);
 static BOOL WriteIDLParameter (BPTR out_p, const struct Parameter * const param_p);
 
 static BOOL WriteIDLDefaultFunctions (BPTR out_p);
-static BOOL WriteIDLIncludes (BPTR out_p, const char * const name_s, const char * const basename_s, const char * const struct_name_s, const char * const prefix_s);
+static BOOL WriteIDLIncludes (BPTR out_p, struct List *includes_p);
 static BOOL WriteIDLFooter (BPTR out_p);
 
 
@@ -63,20 +62,27 @@ static BOOL WriteIDL (struct Writer *writer_p, struct List *header_definitions_l
 		{
 			if (WriteIDLDefaultFunctions (out_p))
 				{
-					if (WriteIDLHeaderDefinitionsList (out_p, header_definitions_list_p))
+					if (WriteIDLIncludes (out_p, NULL))
 						{
-							if (WriteIDLFooter (out_p))
+							if (WriteIDLHeaderDefinitionsList (out_p, header_definitions_list_p))
 								{
-									success_flag = TRUE;
+									if (WriteIDLFooter (out_p))
+										{
+											success_flag = TRUE;
+										}
+									else
+										{
+											DB (KPRINTF ("%s %ld - Failed to write idl footer", __FILE__, __LINE__));
+										}
 								}
 							else
 								{
-									DB (KPRINTF ("%s %ld - Failed to write idl footer", __FILE__, __LINE__));
+									DB (KPRINTF ("%s %ld - Failed to write idl header definitions\n", __FILE__, __LINE__));
 								}
 						}
 					else
 						{
-							DB (KPRINTF ("%s %ld - Failed to write idl header definitions\n", __FILE__, __LINE__));
+							DB (KPRINTF ("%s %ld - Failed to write idl includes", __FILE__, __LINE__));
 						}
 				}
 			else
@@ -231,7 +237,7 @@ static BOOL WriteIDLDefaultFunctions (BPTR out_p)
 
 
 
-static BOOL WriteIDLIncludes (BPTR out_p, const char * const name_s, const char * const basename_s, const char * const struct_name_s, const char * const prefix_s)
+static BOOL WriteIDLIncludes (BPTR out_p, struct List *includes_p)
 {
 	BOOL success_flag = TRUE;
 

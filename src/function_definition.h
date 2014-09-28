@@ -46,11 +46,7 @@ extern "C" {
 
 uint32 GetFunctionDefinitionsListSize (struct List * const list_p);
 
-
-struct List *AllocateFunctionDefinitionsList (void);
-
-void FreeFunctionDefinitionsList (struct List *fds_p);
-
+void ClearFunctionDefinitionList (struct List *function_definitions_p);
 
 struct FunctionDefinition *AllocateFunctionDefinition (void);
 

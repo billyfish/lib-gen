@@ -7,33 +7,23 @@
 #include "debugging_utils.h"
 
 
-struct HeaderDefinitions *AllocateHeaderDefinitions (STRPTR filename_s, MEM_FLAG filename_mem)
+struct HeaderDefinitions *AllocateHeaderDefinitions (STRPTR filename_s)
 {
-	struct HeaderDefinitions *hdr_defs_p = (struct HeaderDefinitions *) IExec->AllocVecTags (sizeof (struct HeaderDefinitions), TAG_END);
-
-	if (hdr_defs_p)
+	struct HeaderDefinitions *hdr_defs_p = NULL;
+	STRPTR name_s = strdup (filename_s);
+	
+	if (name_s)
 		{
-			STRPTR name_s;
-
-			if (filename_mem == MF_DEEP_COPY)
-				{
-					name_s = strdup (filename_s);
-				}
-			else
-				{
-					name_s = filename_s;
-				}
-				
-			if (name_s)
+			hdr_defs_p = (struct HeaderDefinitions *) IExec->AllocVecTags (sizeof (struct HeaderDefinitions), TAG_END);
+			
+			if (hdr_defs_p)
 				{
 					hdr_defs_p -> hd_filename_s = name_s;
-
 					IExec->NewList (& (hdr_defs_p -> hd_function_definitions));
-				}
+				}		
 			else
 				{
-					IExec->FreeVec (hdr_defs_p);
-					hdr_defs_p = NULL;
+					free (name_s);
 				}
 		}
 
@@ -46,12 +36,14 @@ void FreeHeaderDefinitions (struct HeaderDefinitions *header_defs_p)
 	struct FunctionDefinitionNode *curr_node_p = (struct FunctionDefinitionNode *) IExec->GetHead (& (header_defs_p -> hd_function_definitions));
 	struct FunctionDefinitionNode *next_node_p = NULL;
 
-	while ((next_node_p = (struct FunctionDefinitionNode *) IExec->GetSucc (& (curr_node_p -> fdn_node))) != NULL)
+	while (curr_node_p != NULL)
 		{
+			next_node_p = (struct FunctionDefinitionNode *) IExec->GetSucc (& (curr_node_p -> fdn_node));
 			FreeFunctionDefinitionNode (curr_node_p);
 			curr_node_p = next_node_p;
 		}
 
+	
 	free (header_defs_p -> hd_filename_s);
 
 	IExec->FreeVec (header_defs_p);
@@ -110,8 +102,6 @@ uint32 GetHeaderDefinitionsListSize (struct List * const list_p)
 }
 
 
-
-
 BOOL AddFunctionDefinitionToHeaderDefinitions (struct HeaderDefinitions *header_defs_p, struct FunctionDefinition *fd_p)
 {
 	BOOL success_flag = FALSE;
@@ -143,8 +133,10 @@ void ClearHeaderDefinitionsList (struct List *hdr_defs_list_p)
 	struct HeaderDefinitionsNode *curr_node_p = (struct HeaderDefinitionsNode *) IExec->GetHead (hdr_defs_list_p);
 	struct HeaderDefinitionsNode *next_node_p = NULL;
 
-	while ((next_node_p = (struct HeaderDefinitionsNode *) IExec->GetSucc (& (curr_node_p -> hdn_node))) != NULL)
+	while (curr_node_p != NULL)
 		{
+			next_node_p = (struct HeaderDefinitionsNode *) IExec->GetSucc (& (curr_node_p -> hdn_node));
+			
 			FreeHeaderDefinitionsNode (curr_node_p);
 			curr_node_p = next_node_p;
 		}

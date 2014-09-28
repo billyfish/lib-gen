@@ -50,7 +50,7 @@ int UnitTest (CONST_STRPTR output_name_s)
 
 	if (out_p)
 		{
-			struct HeaderDefinitions *header_defs_p = AllocateHeaderDefinitions ((char *) "foo.h", TRUE);
+			struct HeaderDefinitions *header_defs_p = AllocateHeaderDefinitions ((char *) "foo.h");
 
 			if (header_defs_p)
 				{

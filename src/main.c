@@ -227,6 +227,9 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 			IExec->FreeVec (prototype_regexp_s);
 		}
 
+
+	ClearHeaderDefinitionsList (&headers_list);
+
 	return res;
 }
 

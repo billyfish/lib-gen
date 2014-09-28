@@ -103,7 +103,7 @@ BOOL AddFullHeaderPathToList (struct List *header_definitions_p, CONST_STRPTR di
 
 			if (IDOS->AddPart (full_path_s, name_s, l) != 0)
 				{
-					struct HeaderDefinitions *hdr_defs_p = AllocateHeaderDefinitions (full_path_s, MF_SHALLOW_COPY);
+					struct HeaderDefinitions *hdr_defs_p = AllocateHeaderDefinitions (full_path_s);
 					
 					DB (KPRINTF ("%s %ld - full_path_s \"%s\" dir \"%s\" name \"%s\"\n", __FILE__, __LINE__, full_path_s, dir_s, name_s));
 					
