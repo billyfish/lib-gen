@@ -53,7 +53,7 @@ enum Args
 {
 	AR_INPUT_DIR,
 	AR_RECURSE,
-	AR_OUTPUT_FILENAME,
+	AR_LIBRARY_NAME,
 	AR_INPUT_FILE_PATTERN,
 	AR_PROTOTYPE_PATTERN,
 
@@ -70,7 +70,7 @@ int main (int argc, char *argv [])
 	if (OpenLibs ())
 		{
 			CONST_STRPTR input_dir_s = NULL;
-			CONST_STRPTR output_filename_s = NULL;
+			CONST_STRPTR library_s = NULL;
 			CONST_STRPTR filename_pattern_s = "#?.h";
 			CONST_STRPTR prototype_pattern_s = NULL;
 			CONST_STRPTR format_s = "idl";
@@ -81,12 +81,12 @@ int main (int argc, char *argv [])
 
 			memset (args, 0, AR_NUM_ARGS * sizeof (int32));
 
-			args_p = IDOS->ReadArgs ("I=Input/A,R=Recurse/S,O=Output/A,IP=InputPattern/K,PP=PrototypePattern/K,FMT=Format/K", args, NULL);
+			args_p = IDOS->ReadArgs ("I=Input/A,R=Recurse/S,L=LibraryName/A,IP=InputPattern/K,PP=PrototypePattern/K,FMT=Format/K", args, NULL);
 
 			if (args_p != NULL)
 				{
 					input_dir_s = (CONST_STRPTR) args [AR_INPUT_DIR];
-					output_filename_s = (CONST_STRPTR) args [AR_OUTPUT_FILENAME];
+					library_s = (CONST_STRPTR) args [AR_LIBRARY_NAME];
 
 					if (args [AR_RECURSE])
 						{
@@ -110,7 +110,7 @@ int main (int argc, char *argv [])
 						}
 
 					IDOS->Printf ("Input Dir = \"%s\"\n", input_dir_s);
-					IDOS->Printf ("Output Filename = \"%s\"\n", output_filename_s);
+					IDOS->Printf ("Library Name  = \"%s\"\n", library_s);
 					IDOS->Printf ("Filename Pattern = \"%s\"\n", filename_pattern_s);
 					IDOS->Printf ("Recurse = \"%s\"\n", recurse_flag ? "TRUE" : "FALSE");
 					IDOS->Printf ("PrototypePattern = \"%s\"\n", prototype_pattern_s);
@@ -118,7 +118,7 @@ int main (int argc, char *argv [])
 
 					if (input_dir_s && filename_pattern_s)
 						{
-							result = Run (input_dir_s, filename_pattern_s, prototype_pattern_s, output_filename_s, recurse_flag);
+							result = Run (input_dir_s, filename_pattern_s, prototype_pattern_s, library_s, recurse_flag);
 						}		/* if (input_dir_s && filename_pattern_s) */
 
 
@@ -156,7 +156,7 @@ int main (int argc, char *argv [])
 }
 
 
-int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR output_s, const BOOL recurse_flag)
+int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, const BOOL recurse_flag)
 {
 	int res = 0;
 	STRPTR prototype_regexp_s = NULL;
@@ -192,26 +192,33 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 			
 			if (writer_p)
 				{
-					BPTR out_p = IDOS->FOpen (output_s, MODE_NEWFILE, 0);
+					STRPTR output_s = ConcatenateStrings (library_s, GetWriterFileSuffix (writer_p));
 					
-					if (out_p)
+					if (output_s)
 						{
-							IDOS->Printf ("%lu headers\n", GetHeaderDefinitionsListSize (&headers_list));
-						
-							if (WriteHeaderDefinitionsList (writer_p, &headers_list, out_p))
+							BPTR out_p = IDOS->FOpen (output_s, MODE_NEWFILE, 0);
+							
+							if (out_p)
 								{
-									IDOS->Printf ("Successfully wrote header definitions to %s\n", output_s);
+									IDOS->Printf ("%lu headers\n", GetHeaderDefinitionsListSize (&headers_list));
+								
+									if (WriteHeaderDefinitionsList (writer_p, &headers_list, library_s, out_p))
+										{
+											IDOS->Printf ("Successfully wrote header definitions to %s\n", output_s);
+										}
+									else
+										{
+											IDOS->Printf ("Failed to write header definitions to %s\n", output_s);
+										}
+		
+									IDOS->FClose (out_p);
 								}
 							else
 								{
-									IDOS->Printf ("Failed to write header definitions to %s\n", output_s);
+									IDOS->Printf ("Failed to open %s for writing\n", output_s);
 								}
-
-							IDOS->FClose (out_p);
-						}
-					else
-						{
-							IDOS->Printf ("Failed to open %s for writing\n", output_s);
+												
+							IExec->FreeVec (output_s);
 						}
 					
 					FreeIDLWriter (writer_p);	

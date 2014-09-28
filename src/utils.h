@@ -20,6 +20,9 @@ extern "C" {
 char *CopyToNewString (const char *start_p, const char *end_p, const BOOL trim_flag);
 
 
+STRPTR ConcatenateStrings (CONST_STRPTR first_s, CONST_STRPTR second_s);
+
+
 const char *ScrollPastWhitespace (const char *text_p, const char * const bounds_p, const char * const delimiters_s, const enum SpaceBehaviour space_flag, const BOOL stop_on_delimiters_flag);
 
 

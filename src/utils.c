@@ -14,6 +14,21 @@
 
 
 
+STRPTR ConcatenateStrings (CONST_STRPTR first_s, CONST_STRPTR second_s)
+{
+	const size_t l0 = strlen (first_s);
+	const size_t l1 = strlen (second_s);
+	STRPTR result_s = (STRPTR) IExec->AllocVecTags (l0 + l1 + 1, TAG_DONE);
+	
+	if (result_s)
+		{
+			strncpy (result_s, first_s, l0);
+			strcpy (result_s + l0, second_s);
+		}
+	
+	return result_s;
+}
+
 /**
  * Copy a string to a newly created string.
  *

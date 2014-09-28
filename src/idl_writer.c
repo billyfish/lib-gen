@@ -1,5 +1,9 @@
+#include <ctype.h>
+
 #include <proto/exec.h>
 #include <proto/dos.h>
+#include <proto/utility.h>
+
 
 #include <exec/types.h>
 
@@ -12,8 +16,11 @@
 
 
 
-static BOOL WriteIDL (struct Writer *writer_p, struct List *header_definitions_list_p, BPTR out_p);
-static BOOL WriteIDLHeader (BPTR out_p, const char * const name_s, const char * const basename_s, const char * const struct_name_s, const char * const prefix_s);
+static BOOL WriteIDL (struct Writer *writer_p, struct List *header_definitions_list_p, CONST_STRPTR library_s, BPTR out_p);
+
+static CONST_STRPTR GetIDLWriterFileSuffix (struct Writer *writer_p);
+
+static BOOL WriteIDLHeader (BPTR out_p, const char * const name_s, const char * const struct_name_s, const char * const prefix_s);
 
 static BOOL WriteIDLFunction (BPTR out_p, const struct FunctionDefinition * const fd_p);
 static BOOL WriteIDLParameter (BPTR out_p, const struct Parameter * const param_p);
@@ -25,8 +32,15 @@ static BOOL WriteIDLFooter (BPTR out_p);
 
 static BOOL WriteIDLHeaderDefinitionsList (BPTR out_p, struct List * const header_definitions_list_p);
 
+
+
 static BOOL WriteIDLHeaderDefinitions (BPTR out_p, struct HeaderDefinitions * const header_definitions_p);
 
+
+static CONST_STRPTR GetIDLWriterFileSuffix (struct Writer *writer_p)
+{
+	return ".xml";
+}
 
 
 Writer *AllocateIDLWriter (void)
@@ -36,6 +50,7 @@ Writer *AllocateIDLWriter (void)
 	if (idl_p)
 		{
 			idl_p -> iw_base_writer.wr_write_header_definitions_list_fn = WriteIDL;
+			idl_p -> iw_base_writer.wr_get_file_suffix_fn = GetIDLWriterFileSuffix;
 		}
 
 	return ((Writer *) idl_p);
@@ -50,15 +65,14 @@ void FreeIDLWriter (Writer *writer_p)
 }
 
 
-static BOOL WriteIDL (struct Writer *writer_p, struct List *header_definitions_list_p, BPTR out_p)
+static BOOL WriteIDL (struct Writer *writer_p, struct List *header_definitions_list_p, CONST_STRPTR library_s, BPTR out_p)
 {
 	BOOL success_flag = FALSE;
-	const char * const name_s = "name";
 	const char * const basename_s = "basename";
 	const char * const struct_name_s = "struct_name";
 	const char * const prefix_s = "prefix";
 
-	if (WriteIDLHeader (out_p, name_s, basename_s, struct_name_s, prefix_s))
+	if (WriteIDLHeader (out_p, library_s, struct_name_s, prefix_s))
 		{
 			if (WriteIDLDefaultFunctions (out_p))
 				{
@@ -101,8 +115,7 @@ static BOOL WriteIDL (struct Writer *writer_p, struct List *header_definitions_l
 
 
 
-
-static BOOL WriteIDLHeader (BPTR out_p, const char * const name_s, const char * const basename_s, const char * const struct_name_s, const char * const prefix_s)
+static BOOL WriteIDLHeader (BPTR out_p, const char * const library_s, const char * const struct_name_s, const char * const prefix_s)
 {
 	BOOL success_flag = FALSE;
 
@@ -110,12 +123,23 @@ static BOOL WriteIDLHeader (BPTR out_p, const char * const name_s, const char * 
 		{
 			if (IDOS->FPrintf (out_p, "<!DOCTYPE library SYSTEM \"library.dtd\">\n") >= 0)
 				{
-					if (IDOS->FPrintf (out_p, "<library name=\"%s\" basename=\"%s\">\n", name_s, basename_s) >= 0)
-						{
-							if (IDOS->FPrintf (out_p, "\t<interface name=\"%s\" version=\"1\" flags=\"protected\" struct=\"%s\" prefix=\"%s\">\n", name_s, struct_name_s, prefix_s) >= 0)
+					if (library_s)
+						{							
+							if (IDOS->FPrintf (out_p, "<library name=\"%s\" basename=\"", library_s) >= 0)
 								{
-									success_flag = TRUE;
-								}
+									int32 c = IUtility->ToUpper (*library_s);
+									
+									if (IDOS->FPutC (out_p, c) == c)
+										{
+											if (IDOS->FPrintf (out_p, "%sBase\">\n", library_s + 1) >= 0)
+												{
+													if (IDOS->FPrintf (out_p, "\t<interface name=\"%s\" version=\"1\" flags=\"protected\" struct=\"%s\" prefix=\"%s\">\n", library_s, struct_name_s, prefix_s) >= 0)
+														{
+															success_flag = TRUE;
+														}
+												}
+										}
+								}						
 						}
 				}
 		}
