@@ -65,7 +65,14 @@ static BOOL WriteIDL (struct Writer *writer_p, struct List *header_definitions_l
 				{
 					if (WriteIDLHeaderDefinitionsList (out_p, header_definitions_list_p))
 						{
-							success_flag = TRUE;
+							if (WriteIDLFooter (out_p))
+								{
+									success_flag = TRUE;
+								}
+							else
+								{
+									DB (KPRINTF ("%s %ld - Failed to write idl footer", __FILE__, __LINE__));
+								}
 						}
 					else
 						{
