@@ -26,10 +26,10 @@ const char *ScrollPastWhitespace (const char *text_p, const char * const bounds_
 struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s);
 
 
-int32 ScanDirectories (CONST_STRPTR name_s, struct List *matching_files_list_p, const BOOL recurse_flag);
+int32 ScanDirectories (CONST_STRPTR name_s, struct List *matching_files_list_p, CONST_STRPTR filename_pattern_s, const BOOL recurse_flag);
 
 
-BOOL AddFullHeaderPathToList (struct List *header_definitions_p, CONST STRPTR dir_s, CONST STRPTR name_s);
+BOOL AddFullHeaderPathToList (struct List *header_definitions_p, CONST_STRPTR dir_s, CONST_STRPTR name_s);
 
 
 

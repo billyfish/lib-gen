@@ -159,13 +159,34 @@ int main (int argc, char *argv [])
 int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR output_s, const BOOL recurse_flag)
 {
 	int res = 0;
-
+	STRPTR prototype_regexp_s = NULL;
 	/* List of HeaderDefinitionsNodes */
 	struct List headers_list;
 
 	IExec->NewList (&headers_list);
 
-	if (GeneratePrototypesList (root_path_s, filename_pattern_s, prototype_pattern_s, recurse_flag, &headers_list))
+	if (prototype_pattern_s)
+		{
+			size_t l = (2 * strlen (prototype_pattern_s)) + 2;
+			
+			prototype_regexp_s = (STRPTR) IExec->AllocVecTags (l, TAG_DONE);
+			
+			if (prototype_regexp_s)
+				{
+					int32 is_wild = IDOS->ParsePatternNoCase (prototype_pattern_s, prototype_regexp_s, l);
+					
+					if (is_wild < 0)
+						{
+							IDOS->Printf ("Error creating pattern from \"%s\"\n", prototype_pattern_s);
+						}
+				}
+			else
+				{
+					IDOS->Printf ("Not enough memory to create regular expression from \"%s\"\n", prototype_pattern_s);
+				}
+		}
+
+	if (GeneratePrototypesList (root_path_s, filename_pattern_s, prototype_regexp_s, recurse_flag, &headers_list))
 		{
 			Writer *writer_p = AllocateIDLWriter ();
 			
@@ -201,6 +222,11 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 				}
 		}
 
+	if (prototype_regexp_s)
+		{
+			IExec->FreeVec (prototype_regexp_s);
+		}
+
 	return res;
 }
 
@@ -210,7 +236,7 @@ BOOL GeneratePrototypesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_pat
 	BOOL success_flag = FALSE;
 
 	/* Get a list of the header filenames */
-	if (ScanDirectories (root_path_s, header_definitions_p, recurse_flag))
+	if (ScanDirectories (root_path_s, header_definitions_p, filename_pattern_s, recurse_flag))
 		{
 			struct HeaderDefinitionsNode *curr_hdr_def_node_p = (struct HeaderDefinitionsNode *) IExec->GetHead (header_definitions_p);
 			struct HeaderDefinitionsNode *next_hdr_def_node_p = NULL;
@@ -261,7 +287,7 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, con
 							char *prototype_s = (line_p -> frld_Line) + pattern_length;
 							struct FunctionDefinition *fn_def_p = NULL;
 
-							IDOS->Printf (">>> matched line:= %s", line_p -> frld_Line);
+							//IDOS->Printf (">>> matched line:= %s", line_p -> frld_Line);
 
 							fn_def_p = TokenizeFunctionPrototype (prototype_s);
 
@@ -270,7 +296,7 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, con
 									/* Add the prototype */
 									if (AddFunctionDefinitionToHeaderDefinitions (header_defs_p, fn_def_p))
 										{
-											IDOS->Printf ("Added function definition for \"%s\"\n", prototype_s);
+											DB (KPRINTF ("%s %ld - GetMatchingPrototypes: Added function definition for \"%s\"\n", __FILE__, __LINE__, prototype_s));
 										}
 									else
 										{

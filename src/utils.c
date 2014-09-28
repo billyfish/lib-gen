@@ -85,7 +85,7 @@ char *CopyToNewString (const char *start_p, const char *end_p, const BOOL trim_f
 }
 
 
-BOOL AddFullHeaderPathToList (struct List *header_definitions_p, CONST STRPTR dir_s, CONST STRPTR name_s)
+BOOL AddFullHeaderPathToList (struct List *header_definitions_p, CONST_STRPTR dir_s, CONST_STRPTR name_s)
 {
 	BOOL success_flag = FALSE;
 	STRPTR full_path_s = NULL;
@@ -127,12 +127,13 @@ BOOL AddFullHeaderPathToList (struct List *header_definitions_p, CONST STRPTR di
 					IExec->FreeVec (full_path_s);
 				}
 		}
+		
 
 	return success_flag;
 }
 
 
-int32 ScanDirectories (CONST_STRPTR dir_s, struct List *header_definitions_p, const BOOL recurse_flag)
+int32 ScanDirectories (CONST_STRPTR dir_s, struct List *header_definitions_p, CONST_STRPTR filename_pattern_s, const BOOL recurse_flag)
 {
 	int32 success = FALSE;
 	APTR context_p = IDOS->ObtainDirContextTags (EX_StringNameInput, dir_s,
@@ -148,9 +149,21 @@ int32 ScanDirectories (CONST_STRPTR dir_s, struct List *header_definitions_p, co
 				{
 					if (EXD_IS_FILE (dat_p))
 						{
+							BOOL add_flag = TRUE;
+							
 							IDOS->Printf ("filename=%s\n", dat_p -> Name);
 							
-							if (!AddFullHeaderPathToList (header_definitions_p, dir_s, dat_p -> Name))
+							if (filename_pattern_s)
+								{
+									add_flag = IDOS->MatchPatternNoCase (filename_pattern_s, dat_p -> Name);
+									
+									if (!add_flag)
+										{
+											DB (KPRINTF ("%s %ld - ScanDirectories; no match for %s\n", __FILE__, __LINE__, dat_p -> Name));
+										}
+								}
+							
+							if ((add_flag) && (!AddFullHeaderPathToList (header_definitions_p, dir_s, dat_p -> Name)))
 								{
 									IDOS->Printf ("failed to add filename=%s to list of headers files\n", dat_p -> Name);
 								}
@@ -162,7 +175,7 @@ int32 ScanDirectories (CONST_STRPTR dir_s, struct List *header_definitions_p, co
 
 							if (recurse_flag)
 								{
-									if (!ScanDirectories (dat_p -> Name, header_definitions_p, recurse_flag))  /* recurse */
+									if (!ScanDirectories (dat_p -> Name, header_definitions_p, filename_pattern_s, recurse_flag))  /* recurse */
 										{
 											break;
 										}
