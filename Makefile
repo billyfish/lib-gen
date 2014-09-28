@@ -4,7 +4,7 @@
 #
 # Project: libgen
 #
-# Created on: 26-09-2014 23:38:19
+# Created on: 28-09-2014 08:32:28
 #
 #
 
@@ -19,7 +19,7 @@ BIN = libgen
 
 INCPATH = -I.
 
-CFLAGS = $(INCPATH) -Wall -Wwrite-strings -D_AMIGA_ -D_DEBUG -gstabs
+CFLAGS = $(INCPATH) -Wall -Wextra -Wwrite-strings -D_AMIGA_ -D_DEBUG -gstabs
 
 LDFLAGS = 
 
@@ -48,19 +48,19 @@ $(BIN): $(OBJ)
 src/unit_test.o: src/unit_test.c src/header_definitions.h src/function_definition.h src/parameter.h src/memory.h src/utils.h src/string_list.h src/debugging_utils.h src/idl_writer.h src/writer.h
 	$(CC) -c src/unit_test.c -o src/unit_test.o $(CFLAGS)
 
-src/header_definitions.o: src/header_definitions.c src/header_definitions.h src/function_definition.h src/parameter.h src/memory.h
+src/header_definitions.o: src/header_definitions.c src/header_definitions.h src/function_definition.h src/parameter.h src/memory.h src/debugging_utils.h
 	$(CC) -c src/header_definitions.c -o src/header_definitions.o $(CFLAGS)
 
 src/string_list.o: src/string_list.c src/string_list.h src/memory.h
 	$(CC) -c src/string_list.c -o src/string_list.o $(CFLAGS)
 
-src/idl_writer.o: src/idl_writer.c src/idl_writer.h src/writer.h src/function_definition.h src/memory.h src/parameter.h src/header_definitions.h
+src/idl_writer.o: src/idl_writer.c src/idl_writer.h src/writer.h src/function_definition.h src/memory.h src/parameter.h src/header_definitions.h src/debugging_utils.h
 	$(CC) -c src/idl_writer.c -o src/idl_writer.o $(CFLAGS)
 
 src/memory.o: src/memory.c src/memory.h
 	$(CC) -c src/memory.c -o src/memory.o $(CFLAGS)
 
-src/main.o: src/main.c src/unit_test.h src/string_list.h src/memory.h src/utils.h src/header_definitions.h src/function_definition.h src/parameter.h
+src/main.o: src/main.c src/unit_test.h src/string_list.h src/memory.h src/utils.h src/header_definitions.h src/function_definition.h src/parameter.h src/debugging_utils.h src/idl_writer.h src/writer.h
 	$(CC) -c src/main.c -o src/main.o $(CFLAGS)
 
 src/utils.o: src/utils.c src/debugging_utils.h src/memory.h src/string_list.h src/utils.h src/parameter.h src/header_definitions.h src/function_definition.h

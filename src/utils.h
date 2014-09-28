@@ -32,6 +32,7 @@ int32 ScanDirectories (CONST_STRPTR name_s, struct List *matching_files_list_p, 
 BOOL AddFullHeaderPathToList (struct List *header_definitions_p, CONST STRPTR dir_s, CONST STRPTR name_s);
 
 
+
 #ifdef __cplusplus
 }
 #endif

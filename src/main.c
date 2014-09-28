@@ -175,6 +175,8 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 					
 					if (out_p)
 						{
+							IDOS->Printf ("%lu headers\n", GetHeaderDefinitionsListSize (&headers_list));
+						
 							if (WriteHeaderDefinitionsList (writer_p, &headers_list, out_p))
 								{
 									IDOS->Printf ("Successfully wrote header definitions to %s\n", output_s);
@@ -238,9 +240,6 @@ BOOL GeneratePrototypesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_pat
 
 	return success_flag;
 }
-
-
-
 
 
 

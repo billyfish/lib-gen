@@ -8,11 +8,13 @@
 #include "parameter.h"
 #include "function_definition.h"
 #include "header_definitions.h"
+#include "debugging_utils.h"
 
 
-static BOOL WriteIDL (struct Writer *writer_p, const struct List *header_definitions_list_p, BPTR out_p);
+
+static BOOL WriteIDL (struct Writer *writer_p, struct List *header_definitions_list_p, BPTR out_p);
 static BOOL WriteIDLHeader (BPTR out_p, const char * const name_s, const char * const basename_s, const char * const struct_name_s, const char * const prefix_s);
-static BOOL WriteIDLFunctions (BPTR out_p, const struct List * const fds_list_p);
+static BOOL WriteIDLFunctions (BPTR out_p, struct List * const fds_list_p);
 
 static BOOL WriteIDLFunction (BPTR out_p, const struct FunctionDefinition * const fd_p);
 static BOOL WriteIDLParameter (BPTR out_p, const struct Parameter * const param_p);
@@ -22,9 +24,9 @@ static BOOL WriteIDLIncludes (BPTR out_p, const char * const name_s, const char 
 static BOOL WriteIDLFooter (BPTR out_p);
 
 
-static BOOL WriteIDLHeaderDefinitionsList (BPTR out_p, const struct List * const header_definitions_list_p);
+static BOOL WriteIDLHeaderDefinitionsList (BPTR out_p, struct List * const header_definitions_list_p);
 
-static BOOL WriteIDLHeaderDefinitions (BPTR out_p, const struct HeaderDefinitions * const header_definitions_p);
+static BOOL WriteIDLHeaderDefinitions (BPTR out_p, struct HeaderDefinitions * const header_definitions_p);
 
 
 
@@ -49,13 +51,13 @@ void FreeIDLWriter (Writer *writer_p)
 }
 
 
-static BOOL WriteIDL (struct Writer *writer_p, const struct List *header_definitions_list_p, BPTR out_p)
+static BOOL WriteIDL (struct Writer *writer_p, struct List *header_definitions_list_p, BPTR out_p)
 {
 	BOOL success_flag = FALSE;
-	const char * const name_s = NULL;
-	const char * const basename_s = NULL;
-	const char * const struct_name_s = NULL;
-	const char * const prefix_s = NULL;
+	const char * const name_s = "name";
+	const char * const basename_s = "basename";
+	const char * const struct_name_s = "struct_name";
+	const char * const prefix_s = "prefix";
 
 	if (WriteIDLHeader (out_p, name_s, basename_s, struct_name_s, prefix_s))
 		{
@@ -65,11 +67,20 @@ static BOOL WriteIDL (struct Writer *writer_p, const struct List *header_definit
 						{
 							success_flag = TRUE;
 						}
-
+					else
+						{
+							DB (KPRINTF ("%s %ld - Failed to write idl header definitions\n", __FILE__, __LINE__));
+						}
 				}
-
+			else
+				{
+					DB (KPRINTF ("%s %ld - Failed to write idl default_functions\n", __FILE__, __LINE__));
+				}
 		}		/* if (WriteIDLHeader (name_s, basename_s, struct_name_s, prefix_s)) */
-
+	else
+		{
+			DB (KPRINTF ("%s %ld - Failed to write idl header\n", __FILE__, __LINE__));
+		}
 
 	return success_flag;
 }
@@ -88,7 +99,7 @@ static BOOL WriteIDLHeader (BPTR out_p, const char * const name_s, const char * 
 				{
 					if (IDOS->FPrintf (out_p, "<library name=\"%s\" basename=\"%s\">\n", name_s, basename_s) >= 0)
 						{
-							if (IDOS->FPrintf (out_p, "<interface name=\"%s\" version=\"1\" flags=\"protected\" struct=\"%s\" prefix=\"%s\">\n", name_s, struct_name_s, prefix_s) >= 0)
+							if (IDOS->FPrintf (out_p, "\t<interface name=\"%s\" version=\"1\" flags=\"protected\" struct=\"%s\" prefix=\"%s\">\n", name_s, struct_name_s, prefix_s) >= 0)
 								{
 									success_flag = TRUE;
 								}
@@ -100,15 +111,16 @@ static BOOL WriteIDLHeader (BPTR out_p, const char * const name_s, const char * 
 }
 
 
-static BOOL WriteIDLHeaderDefinitionsList (BPTR out_p, const struct List * const header_definitions_list_p)
+static BOOL WriteIDLHeaderDefinitionsList (BPTR out_p, struct List * const header_definitions_list_p)
 {
 	BOOL success_flag = TRUE;
-	const struct HeaderDefinitionsNode *curr_node_p = (const struct HeaderDefinitionsNode *) IExec->GetHead (header_definitions_list_p);
-	const struct HeaderDefinitionsNode *next_node_p = NULL;
+	struct HeaderDefinitionsNode *curr_node_p = (struct HeaderDefinitionsNode *) IExec->GetHead (header_definitions_list_p);
+	struct HeaderDefinitionsNode *next_node_p = NULL;
 
 	while (((next_node_p = (struct HeaderDefinitionsNode *) IExec->GetSucc (& (curr_node_p -> hdn_node))) != NULL) && success_flag)
 		{
 			success_flag = WriteIDLHeaderDefinitions (out_p, curr_node_p -> hdn_defs_p);
+			curr_node_p = next_node_p;
 		}
 
 
@@ -118,18 +130,22 @@ static BOOL WriteIDLHeaderDefinitionsList (BPTR out_p, const struct List * const
 
 
 
-static BOOL WriteIDLHeaderDefinitions (BPTR out_p, const struct HeaderDefinitions * const header_definitions_p)
+static BOOL WriteIDLHeaderDefinitions (BPTR out_p, struct HeaderDefinitions * const header_definitions_p)
 {
 	BOOL success_flag = FALSE;
 
-	if (IDOS->FPrintf (out_p, "\t<-- %s -->\n", header_definitions_p -> hd_filename_s) >= 0)
-		{
-			const struct FunctionDefinitionNode *curr_node_p = (const struct FunctionDefinitionNode *) IExec->GetHead (& (header_definitions_p -> hd_function_definitions));
-			const struct FunctionDefinitionNode *next_node_p = NULL;
 
+	if (IDOS->FPrintf (out_p, "\n\t\t<-- %lu definitions in %s -->\n", GetFunctionDefinitionsListSize (& (header_definitions_p -> hd_function_definitions)), header_definitions_p -> hd_filename_s) >= 0)
+		{
+			struct FunctionDefinitionNode *curr_node_p = (struct FunctionDefinitionNode *) IExec->GetHead (& (header_definitions_p -> hd_function_definitions));
+			struct FunctionDefinitionNode *next_node_p = NULL;
+			
+			success_flag = TRUE;
+			
 			while (((next_node_p = (struct FunctionDefinitionNode *) IExec->GetSucc (& (curr_node_p -> fdn_node))) != NULL) && success_flag)
 				{
 					success_flag = WriteIDLFunction (out_p, curr_node_p -> fdn_function_def_p);
+					curr_node_p = next_node_p;
 				}
 		}
 
@@ -141,14 +157,22 @@ static BOOL WriteIDLFunction (BPTR out_p, const struct FunctionDefinition * cons
 {
 	BOOL success_flag = FALSE;
 
-	if (IDOS->FPrintf (out_p, "\t<method name=\"%s\" result=\"%s\">\n", fd_p -> fd_definition_p -> pa_name_s, fd_p -> fd_definition_p -> pa_type_s) >= 0)
+	if (IDOS->FPrintf (out_p, "\t\t<method name=\"%s\" result=\"%s\">\n", fd_p -> fd_definition_p -> pa_name_s, fd_p -> fd_definition_p -> pa_type_s) >= 0)
 		{
 			struct ParameterNode *curr_node_p = (struct ParameterNode *) IExec->GetHead (fd_p -> fd_args_p);
 			struct ParameterNode *next_node_p = NULL;
 
+			success_flag = TRUE;
+
 			while (((next_node_p = (struct ParameterNode *) IExec->GetSucc (& (curr_node_p -> pn_node))) != NULL) && success_flag)
 				{
 					success_flag = WriteIDLParameter (out_p, curr_node_p -> pn_param_p);
+					curr_node_p = next_node_p;
+				}
+				
+			if (success_flag)
+				{
+					success_flag = (IDOS->FPrintf (out_p, "\t\t</method>\n") >= 0);
 				}
 		}
 
@@ -158,7 +182,7 @@ static BOOL WriteIDLFunction (BPTR out_p, const struct FunctionDefinition * cons
 
 static BOOL WriteIDLParameter (BPTR out_p, const struct Parameter * const param_p)
 {
-	BOOL success_flag = (IDOS->FPrintf (out_p, "\t\t<arg name=\"%s\" type=\"%s\">\n", param_p -> pa_name_s, param_p -> pa_type_s) >= 0);
+	BOOL success_flag = (IDOS->FPrintf (out_p, "\t\t\t<arg name=\"%s\" type=\"%s\">\n", param_p -> pa_name_s, param_p -> pa_type_s) >= 0);
 
 	return success_flag;
 }
@@ -168,13 +192,13 @@ static BOOL WriteIDLDefaultFunctions (BPTR out_p)
 {
 	BOOL success_flag = FALSE;
 
-	if (IDOS->FPrintf (out_p, "\t<method name=\"Obtain\" result=\"uint32\"></method>\n") >= 0)
+	if (IDOS->FPrintf (out_p, "\t\t<method name=\"Obtain\" result=\"uint32\"></method>\n") >= 0)
 		{
-			if (IDOS->FPrintf (out_p, "\t<method name=\"Release\" result=\"uint32\"></method>\n") >= 0)
+			if (IDOS->FPrintf (out_p, "\t\t<method name=\"Release\" result=\"uint32\"></method>\n") >= 0)
 				{
-					if (IDOS->FPrintf (out_p, "\t<method name=\"Expunge\" result=\"void\" status=\"unimplemented\"></method>\n") >= 0)
+					if (IDOS->FPrintf (out_p, "\t\t<method name=\"Expunge\" result=\"void\" status=\"unimplemented\"></method>\n") >= 0)
 						{
-							if (IDOS->FPrintf (out_p, "\t<method name=\"Clone\" result=\"struct Interface *\" status=\"unimplemented\"></method>\n") >= 0)
+							if (IDOS->FPrintf (out_p, "\t\t<method name=\"Clone\" result=\"struct Interface *\" status=\"unimplemented\"></method>\n") >= 0)
 								{
 									success_flag = TRUE;
 								}
@@ -199,5 +223,5 @@ static BOOL WriteIDLIncludes (BPTR out_p, const char * const name_s, const char 
 
 static BOOL WriteIDLFooter (BPTR out_p)
 {
-	return (IDOS->FPrintf (out_p, "</library>\n") >= 0);
+	return (IDOS->FPrintf (out_p, "\t</interface>\n</library>\n") >= 0);
 }

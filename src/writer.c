@@ -19,7 +19,7 @@
 #include "writer.h"
 
 
-BOOL WriteHeaderDefinitionsList (struct Writer *writer_p, const struct List *header_definitions_p, BPTR out_p)
+BOOL WriteHeaderDefinitionsList (struct Writer *writer_p, struct List *header_definitions_p, BPTR out_p)
 {
 	BOOL success_flag = writer_p -> wr_write_header_definitions_list_fn (writer_p, header_definitions_p, out_p);
 

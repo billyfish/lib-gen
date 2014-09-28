@@ -47,4 +47,6 @@ BOOL AddFunctionDefinitionToHeaderDefinitions (struct HeaderDefinitions *header_
 BOOL HasHeaderDefinitions (const struct HeaderDefinitions *header_defs_p);
 
 
+uint32 GetHeaderDefinitionsListSize (struct List * const list_p);
+
 #endif		/* #ifndef HEADER_DEFINITIONS_H */

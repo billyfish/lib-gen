@@ -138,6 +138,26 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 }
 
 
+uint32 GetFunctionDefinitionsListSize (struct List * const list_p)
+{
+	uint32 i = 0;
+	
+	struct FunctionDefinitionNode *curr_node_p = (struct FunctionDefinitionNode *) IExec->GetHead (list_p);
+	struct FunctionDefinitionNode *next_node_p = NULL;
+
+	while ((next_node_p = (struct FunctionDefinitionNode *) IExec->GetSucc (& (curr_node_p -> fdn_node))) != NULL)
+		{
+			++ i;
+			DB (KPRINTF ("%s %ld - GetHeaderDefinitionsListSize %lu\n", __FILE__, __LINE__, i));
+						
+			PrintParameter (IDOS->Output (), curr_node_p -> fdn_function_def_p -> fd_definition_p);
+			IDOS->FPrintf (IDOS->Output (), "\n");
+			curr_node_p = next_node_p;
+		}
+			
+	return i;
+}
+
 
 struct List *AllocateFunctionDefinitionsList (void)
 {

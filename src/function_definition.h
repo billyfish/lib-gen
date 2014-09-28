@@ -44,6 +44,8 @@ extern "C" {
 #endif
 
 
+uint32 GetFunctionDefinitionsListSize (struct List * const list_p);
+
 
 struct List *AllocateFunctionDefinitionsList (void);
 

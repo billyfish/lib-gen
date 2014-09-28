@@ -50,7 +50,7 @@ int UnitTest (CONST_STRPTR output_name_s)
 
 	if (out_p)
 		{
-			struct HeaderDefinitions *header_defs_p = AllocateHeaderDefinitions ("foo.h", TRUE);
+			struct HeaderDefinitions *header_defs_p = AllocateHeaderDefinitions ((char *) "foo.h", TRUE);
 
 			if (header_defs_p)
 				{
@@ -70,7 +70,6 @@ int UnitTest (CONST_STRPTR output_name_s)
 
 									if (node_p)
 										{
-											BOOL success_flag = FALSE;
 
 											IExec->NewList (&hdr_defs_list);
 											IExec->AddTail (&hdr_defs_list, (struct Node *) node_p);

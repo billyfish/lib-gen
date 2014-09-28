@@ -4,6 +4,8 @@
 
 #include "header_definitions.h"
 #include "function_definition.h"
+#include "debugging_utils.h"
+
 
 struct HeaderDefinitions *AllocateHeaderDefinitions (STRPTR filename_s, MEM_FLAG filename_mem)
 {
@@ -78,6 +80,8 @@ struct HeaderDefinitionsNode *AllocateHeaderDefinitionsNode (struct HeaderDefini
 	if (node_p)
 		{
 			node_p -> hdn_defs_p = hdr_defs_p;
+			node_p -> hdn_node.ln_Pred = NULL;
+			node_p -> hdn_node.ln_Succ = NULL;
 		}
 
 	return node_p;
@@ -91,6 +95,22 @@ void FreeHeaderDefinitionsNode (struct HeaderDefinitionsNode *node_p)
 }
 
 
+uint32 GetHeaderDefinitionsListSize (struct List * const list_p)
+{
+	uint32 i = 0;
+	
+	struct HeaderDefinitionsNode *curr_node_p = (struct HeaderDefinitionsNode *) IExec->GetHead (list_p);
+	struct HeaderDefinitionsNode *next_node_p = NULL;
+
+	while ((next_node_p = (struct HeaderDefinitionsNode *) IExec->GetSucc (& (curr_node_p -> hdn_node))) != NULL)
+		{
+			++ i;
+			DB (KPRINTF ("%s %ld - GetHeaderDefinitionsListSize i: %lu node filename %s\n", __FILE__, __LINE__, i, curr_node_p -> hdn_defs_p -> hd_filename_s));
+			curr_node_p = next_node_p;
+		}
+			
+	return i;
+}
 
 
 
