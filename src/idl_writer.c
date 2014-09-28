@@ -16,7 +16,7 @@
 
 
 
-static BOOL WriteIDL (struct Writer *writer_p, struct List *header_definitions_list_p, CONST_STRPTR library_s, const int32 version, const InterfaceFlag flag, BPTR out_p);
+static BOOL WriteIDL (struct Writer *writer_p, struct List *header_definitions_list_p, CONST_STRPTR library_s, const int32 version, const enum InterfaceFlag flag, BPTR out_p);
 
 static CONST_STRPTR GetIDLWriterFileSuffix (struct Writer *writer_p);
 
@@ -65,7 +65,7 @@ void FreeIDLWriter (Writer *writer_p)
 }
 
 
-static BOOL WriteIDL (struct Writer *writer_p, struct List *header_definitions_list_p, CONST_STRPTR library_s, const int32 version, const InterfaceFlag flag, BPTR out_p)
+static BOOL WriteIDL (struct Writer *writer_p, struct List *header_definitions_list_p, CONST_STRPTR library_s, const int32 version, const enum InterfaceFlag flag, BPTR out_p)
 {
 	BOOL success_flag = FALSE;
 

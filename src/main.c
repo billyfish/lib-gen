@@ -137,7 +137,7 @@ int main (int argc, char *argv [])
 
 					if (args [AR_VERSION])
 						{
-							version = (int32 *) args [AR_VERSION]);
+							version = * ((int32 *) args [AR_VERSION]);
 						}
 
 					if (args [AR_VERBOSE])
@@ -260,7 +260,7 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 								{
 									IDOS->Printf ("%lu headers\n", GetHeaderDefinitionsListSize (&headers_list));
 
-									if (WriteHeaderDefinitionsList (writer_p, &headers_list, library_s, version, flags, out_p))
+									if (WriteHeaderDefinitionsList (writer_p, &headers_list, library_s, version, flag, out_p))
 										{
 											IDOS->Printf ("Successfully wrote header definitions to %s\n", output_s);
 										}
