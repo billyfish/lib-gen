@@ -58,7 +58,7 @@ char *CopyToNewString (const char *start_p, const char *end_p, const BOOL trim_f
 				}
 		}
 
-	DB (KPRINTF ("%s %ld - Copying \"%s\" - \"%s\" to a new string\n", __FILE__, __LINE__, start_p ? start_p : "NULL", end_p ? end_p : "NULL"));
+	//DB (KPRINTF ("%s %ld - Copying \"%s\" - \"%s\" to a new string\n", __FILE__, __LINE__, start_p ? start_p : "NULL", end_p ? end_p : "NULL"));
 
 	if (start_p < end_p)
 		{
@@ -66,7 +66,7 @@ char *CopyToNewString (const char *start_p, const char *end_p, const BOOL trim_f
 
 			char *dest_p = (char *) AllocMemory (len + 1);
 
-			DB (KPRINTF ("%s %ld - len %ld\n", __FILE__, __LINE__, len));
+			//DB (KPRINTF ("%s %ld - len %ld\n", __FILE__, __LINE__, len));
 
 			if (dest_p)
 				{
@@ -112,6 +112,7 @@ BOOL AddFullHeaderPathToList (struct List *header_definitions_p, CONST_STRPTR di
 							if (AddHeaderDefintionsToList (header_definitions_p, hdr_defs_p))
 								{
 									success_flag = TRUE;
+									DB (KPRINTF ("%s %ld - Added full_path_s \"%s\"\n", __FILE__, __LINE__, full_path_s));
 								}
 							else
 								{
@@ -147,6 +148,8 @@ int32 ScanDirectories (CONST_STRPTR dir_s, struct List *header_definitions_p, CO
 
 			while ((dat_p = IDOS->ExamineDir (context_p)))
 				{
+					DB (KPRINTF ("%s %ld - ScanDirectories; scanning \"%s\"\n", __FILE__, __LINE__, dat_p -> Name));
+					
 					if (EXD_IS_FILE (dat_p))
 						{
 							BOOL add_flag = TRUE;
@@ -163,9 +166,16 @@ int32 ScanDirectories (CONST_STRPTR dir_s, struct List *header_definitions_p, CO
 										}
 								}
 							
-							if ((add_flag) && (!AddFullHeaderPathToList (header_definitions_p, dir_s, dat_p -> Name)))
+							if (add_flag) 
 								{
-									IDOS->Printf ("failed to add filename=%s to list of headers files\n", dat_p -> Name);
+									if (AddFullHeaderPathToList (header_definitions_p, dir_s, dat_p -> Name))
+										{
+											DB (KPRINTF ("%s %ld - ScanDirectories; added %s size %lu\n", __FILE__, __LINE__, dat_p -> Name, GetHeaderDefinitionsListSize (header_definitions_p)));
+										}
+									else
+										{
+											IDOS->Printf ("failed to add filename=%s to list of headers files\n", dat_p -> Name);
+										}
 								}
 							
 						}

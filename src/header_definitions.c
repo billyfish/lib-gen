@@ -98,15 +98,12 @@ void FreeHeaderDefinitionsNode (struct HeaderDefinitionsNode *node_p)
 uint32 GetHeaderDefinitionsListSize (struct List * const list_p)
 {
 	uint32 i = 0;
-	
-	struct HeaderDefinitionsNode *curr_node_p = (struct HeaderDefinitionsNode *) IExec->GetHead (list_p);
-	struct HeaderDefinitionsNode *next_node_p = NULL;
+	struct HeaderDefinitionsNode *node_p = NULL;
 
-	while ((next_node_p = (struct HeaderDefinitionsNode *) IExec->GetSucc (& (curr_node_p -> hdn_node))) != NULL)
+	for (node_p = (struct HeaderDefinitionsNode *) IExec->GetHead (list_p); node_p != NULL; node_p = (struct HeaderDefinitionsNode *) IExec->GetSucc ((struct Node *) node_p))
 		{
 			++ i;
-			DB (KPRINTF ("%s %ld - GetHeaderDefinitionsListSize i: %lu node filename %s\n", __FILE__, __LINE__, i, curr_node_p -> hdn_defs_p -> hd_filename_s));
-			curr_node_p = next_node_p;
+			DB (KPRINTF ("%s %ld - GetHeaderDefinitionsListSize i: %lu node filename %s\n", __FILE__, __LINE__, i, node_p -> hdn_defs_p -> hd_filename_s));
 		}
 			
 	return i;

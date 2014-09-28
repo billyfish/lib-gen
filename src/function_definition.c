@@ -44,12 +44,12 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 	BOOL success_flag = FALSE;
 	struct FunctionDefinition *fd_p = AllocateFunctionDefinition ();
 
-	DB (KPRINTF ("%s %ld - Tokenizing \"%s\"\n", __FILE__, __LINE__, prototype_s));
+	//DB (KPRINTF ("%s %ld - Tokenizing \"%s\"\n", __FILE__, __LINE__, prototype_s));
 
 	if (fd_p)
 		{
 			const char *opening_bracket_p = strchr (prototype_s, '(');
-			DB (KPRINTF ("%s %ld - opening_bracket \"%s\"\n", __FILE__, __LINE__, opening_bracket_p ? opening_bracket_p : "NULL"));
+			//DB (KPRINTF ("%s %ld - opening_bracket \"%s\"\n", __FILE__, __LINE__, opening_bracket_p ? opening_bracket_p : "NULL"));
 
 			if (opening_bracket_p)
 				{
@@ -141,18 +141,15 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 uint32 GetFunctionDefinitionsListSize (struct List * const list_p)
 {
 	uint32 i = 0;
-	
-	struct FunctionDefinitionNode *curr_node_p = (struct FunctionDefinitionNode *) IExec->GetHead (list_p);
-	struct FunctionDefinitionNode *next_node_p = NULL;
+	struct FunctionDefinitionNode *node_p;
 
-	while ((next_node_p = (struct FunctionDefinitionNode *) IExec->GetSucc (& (curr_node_p -> fdn_node))) != NULL)
+	for (node_p = (struct FunctionDefinitionNode *) IExec->GetHead (list_p); node_p != NULL; node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p))
 		{
 			++ i;
-			DB (KPRINTF ("%s %ld - GetHeaderDefinitionsListSize %lu\n", __FILE__, __LINE__, i));
+			DB (KPRINTF ("%s %ld - GetFunctionDefinitionsListSize %lu\n", __FILE__, __LINE__, i));
 						
-			PrintParameter (IDOS->Output (), curr_node_p -> fdn_function_def_p -> fd_definition_p);
+			PrintParameter (IDOS->Output (), node_p -> fdn_function_def_p -> fd_definition_p);
 			IDOS->FPrintf (IDOS->Output (), "\n");
-			curr_node_p = next_node_p;
 		}
 			
 	return i;

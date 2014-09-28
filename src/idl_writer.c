@@ -121,13 +121,19 @@ static BOOL WriteIDLHeader (BPTR out_p, const char * const name_s, const char * 
 static BOOL WriteIDLHeaderDefinitionsList (BPTR out_p, struct List * const header_definitions_list_p)
 {
 	BOOL success_flag = TRUE;
-	struct HeaderDefinitionsNode *curr_node_p = (struct HeaderDefinitionsNode *) IExec->GetHead (header_definitions_list_p);
-	struct HeaderDefinitionsNode *next_node_p = NULL;
-
-	while (((next_node_p = (struct HeaderDefinitionsNode *) IExec->GetSucc (& (curr_node_p -> hdn_node))) != NULL) && success_flag)
+	struct HeaderDefinitionsNode *node_p = (struct HeaderDefinitionsNode *) IExec->GetHead (header_definitions_list_p); 
+	
+	
+	while ((node_p != NULL) && success_flag)	
 		{
-			success_flag = WriteIDLHeaderDefinitions (out_p, curr_node_p -> hdn_defs_p);
-			curr_node_p = next_node_p;
+			if (WriteIDLHeaderDefinitions (out_p, node_p -> hdn_defs_p))
+				{
+					node_p = (struct HeaderDefinitionsNode *) IExec->GetSucc ((struct Node *) node_p);
+				}
+			else
+				{
+					success_flag = FALSE;
+				}
 		}
 
 
@@ -144,18 +150,25 @@ static BOOL WriteIDLHeaderDefinitions (BPTR out_p, struct HeaderDefinitions * co
 
 	if (IDOS->FPrintf (out_p, "\n\t\t<-- %lu definitions in %s -->\n", GetFunctionDefinitionsListSize (& (header_definitions_p -> hd_function_definitions)), header_definitions_p -> hd_filename_s) >= 0)
 		{
-			struct FunctionDefinitionNode *curr_node_p = (struct FunctionDefinitionNode *) IExec->GetHead (& (header_definitions_p -> hd_function_definitions));
-			struct FunctionDefinitionNode *next_node_p = NULL;
+			struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (& (header_definitions_p -> hd_function_definitions));
 			
 			success_flag = TRUE;
 			
-			while (((next_node_p = (struct FunctionDefinitionNode *) IExec->GetSucc (& (curr_node_p -> fdn_node))) != NULL) && success_flag)
+			
+			while ((node_p != NULL) && success_flag)	
 				{
-					success_flag = WriteIDLFunction (out_p, curr_node_p -> fdn_function_def_p);
-					curr_node_p = next_node_p;
-				}
+					if (WriteIDLFunction (out_p, node_p -> fdn_function_def_p))
+						{
+							node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p);
+						}
+					else
+						{
+							success_flag = FALSE;
+						}
+				}			
 		}
-
+		
+		
 	return success_flag;
 }
 

@@ -53,7 +53,7 @@ enum Args
 {
 	AR_INPUT_DIR,
 	AR_RECURSE,
-	AR_OUTPUT_DIR,
+	AR_OUTPUT_FILENAME,
 	AR_INPUT_FILE_PATTERN,
 	AR_PROTOTYPE_PATTERN,
 
@@ -70,7 +70,7 @@ int main (int argc, char *argv [])
 	if (OpenLibs ())
 		{
 			CONST_STRPTR input_dir_s = NULL;
-			CONST_STRPTR output_dir_s = NULL;
+			CONST_STRPTR output_filename_s = NULL;
 			CONST_STRPTR filename_pattern_s = "#?.h";
 			CONST_STRPTR prototype_pattern_s = NULL;
 			CONST_STRPTR format_s = "idl";
@@ -86,7 +86,7 @@ int main (int argc, char *argv [])
 			if (args_p != NULL)
 				{
 					input_dir_s = (CONST_STRPTR) args [AR_INPUT_DIR];
-					output_dir_s = (CONST_STRPTR) args [AR_OUTPUT_DIR];
+					output_filename_s = (CONST_STRPTR) args [AR_OUTPUT_FILENAME];
 
 					if (args [AR_RECURSE])
 						{
@@ -110,7 +110,7 @@ int main (int argc, char *argv [])
 						}
 
 					IDOS->Printf ("Input Dir = \"%s\"\n", input_dir_s);
-					IDOS->Printf ("Output Dir = \"%s\"\n", output_dir_s);
+					IDOS->Printf ("Output Filename = \"%s\"\n", output_filename_s);
 					IDOS->Printf ("Filename Pattern = \"%s\"\n", filename_pattern_s);
 					IDOS->Printf ("Recurse = \"%s\"\n", recurse_flag ? "TRUE" : "FALSE");
 					IDOS->Printf ("PrototypePattern = \"%s\"\n", prototype_pattern_s);
@@ -118,7 +118,7 @@ int main (int argc, char *argv [])
 
 					if (input_dir_s && filename_pattern_s)
 						{
-							result = Run (input_dir_s, filename_pattern_s, prototype_pattern_s, output_dir_s, recurse_flag);
+							result = Run (input_dir_s, filename_pattern_s, prototype_pattern_s, output_filename_s, recurse_flag);
 						}		/* if (input_dir_s && filename_pattern_s) */
 
 
@@ -238,26 +238,25 @@ BOOL GeneratePrototypesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_pat
 	/* Get a list of the header filenames */
 	if (ScanDirectories (root_path_s, header_definitions_p, filename_pattern_s, recurse_flag))
 		{
-			struct HeaderDefinitionsNode *curr_hdr_def_node_p = (struct HeaderDefinitionsNode *) IExec->GetHead (header_definitions_p);
-			struct HeaderDefinitionsNode *next_hdr_def_node_p = NULL;
+			struct HeaderDefinitionsNode *node_p;
 
 			success_flag = TRUE;
 			
-			/* Open each of the matched filenames in turn */
-			while ((next_hdr_def_node_p = (struct HeaderDefinitionsNode *) IExec->GetSucc ((struct Node *) curr_hdr_def_node_p)) != NULL)
+			
+			IDOS->Printf ("Found %lu header files\n", GetHeaderDefinitionsListSize (header_definitions_p));
+			
+			for (node_p = (struct HeaderDefinitionsNode *) IExec->GetHead (header_definitions_p); node_p != NULL; node_p = (struct HeaderDefinitionsNode *) IExec->GetSucc ((struct Node *) node_p))
 				{
-					struct HeaderDefinitions *current_header_defs_p = curr_hdr_def_node_p -> hdn_defs_p;
-					CONST_STRPTR filename_s = current_header_defs_p -> hd_filename_s;
+					struct HeaderDefinitions *header_defs_p = node_p -> hdn_defs_p;
+					CONST_STRPTR filename_s = header_defs_p -> hd_filename_s;
 
 					IDOS->Printf ("Parsing \"%s\"\n", filename_s);
 
 					/* Get the list of matching prototypes in each file */
-					if (!ParseFile (function_pattern_s, filename_s, current_header_defs_p))
+					if (!ParseFile (function_pattern_s, filename_s, header_defs_p))
 						{
 							success_flag = FALSE;
 						}
-
-					curr_hdr_def_node_p = next_hdr_def_node_p;
 				}
 
 		}
