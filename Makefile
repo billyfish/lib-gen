@@ -4,7 +4,7 @@
 #
 # Project: libgen
 #
-# Created on: 29-09-2014 00:26:51
+# Created on: 29-09-2014 23:44:45
 #
 #
 
@@ -47,7 +47,7 @@ $(BIN): $(OBJ)
 src/header_definitions.o: src/header_definitions.c src/header_definitions.h src/function_definition.h src/parameter.h src/memory.h src/debugging_utils.h
 	$(CC) -c src/header_definitions.c -o src/header_definitions.o $(CFLAGS)
 
-src/idl_writer.o: src/idl_writer.c src/idl_writer.h src/writer.h src/memory.h src/parameter.h src/function_definition.h src/header_definitions.h src/debugging_utils.h
+src/idl_writer.o: src/idl_writer.c src/idl_writer.h src/writer.h src/header_definitions.h src/memory.h src/parameter.h src/function_definition.h src/debugging_utils.h
 	$(CC) -c src/idl_writer.c -o src/idl_writer.o $(CFLAGS)
 
 src/memory.o: src/memory.c src/memory.h
@@ -65,6 +65,6 @@ src/parameter.o: src/parameter.c src/debugging_utils.h src/memory.h src/paramete
 src/function_definition.o: src/function_definition.c src/function_definition.h src/parameter.h src/debugging_utils.h src/memory.h
 	$(CC) -c src/function_definition.c -o src/function_definition.o $(CFLAGS)
 
-src/writer.o: src/writer.c src/writer.h
+src/writer.o: src/writer.c src/writer.h src/header_definitions.h src/function_definition.h src/memory.h
 	$(CC) -c src/writer.c -o src/writer.o $(CFLAGS)
 

@@ -186,23 +186,6 @@ int main (int argc, char *argv [])
 				{
 					IDOS->PrintFault (IDOS->IoErr (), "Unable to parse command-line args");
 				}
-
-
-			/*
-			if (argc > 2)
-				{
-					ParseFiles (argv [1], argv [2]);
-				}
-			else if ((argc == 2) && (strcmp ("test", argv [1]) == 0))
-				{
-					UnitTest ("unit_test_out.xml");
-				}
-			else
-				{
-					IDOS->Printf ("LibraryGenerator <pattern> <filename>\n");
-				}
-			*/
-
 			CloseLibs ();
 		}
 	else
