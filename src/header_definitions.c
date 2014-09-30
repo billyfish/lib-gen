@@ -152,11 +152,28 @@ static BOOL WriteIncludes (BPTR out_p, CONST_STRPTR header_name_s)
 }
 
 
-static BOOL WriteFunctionImplementations (BPTR out_p, struct List *functions_defs_p)
+static BOOL WriteFunctionImplementations (BPTR out_p, const struct HeaderDefinitions *hdr_defs_p)
 {
 	BOOL success_flag = TRUE;
 	
-	
+	if (HasHeaderDefinitions (hdr_defs_p))
+		{
+			struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (); 
+			
+			
+			while ((node_p != NULL) && success_flag)
+				{
+					if (WriteFunctionImplementation (out_p, node_p -> fdn_function_def_p))
+						{
+							node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p);
+						}
+					else
+						{
+							success_flag = FALSE;
+						}
+				} 
+		}
+		
 	return success_flag;
 }
 
