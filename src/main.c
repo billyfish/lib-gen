@@ -45,7 +45,7 @@ BOOL ParseFile (CONST_STRPTR pattern_s, CONST_STRPTR filename_s, struct HeaderDe
 BOOL GeneratePrototypesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR function_pattern_s, const BOOL recurse_flag, struct List *header_definitions_p);
 
 
-int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag, const BOOL verbose_flag);
+int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag);
 
 
 enum Args
@@ -81,7 +81,6 @@ int main (int argc, char *argv [])
 			BOOL recurse_flag = FALSE;
 			int32 args [AR_NUM_ARGS];
 			struct RDArgs *args_p = NULL;
-			BOOL verbose_flag = FALSE;
 
 			memset (args, 0, AR_NUM_ARGS * sizeof (int32));
 
@@ -142,11 +141,11 @@ int main (int argc, char *argv [])
 
 					if (args [AR_VERBOSE])
 						{
-							verbose_flag = TRUE;
+							SetVerboseFlag (TRUE);
 						}
 
 
-					if (verbose_flag)
+					if (GetVerboseFlag ())
 						{
 							IDOS->Printf ("Input Dir = \"%s\"\n", input_dir_s);
 							IDOS->Printf ("Library Name  = \"%s\"\n", library_s);
@@ -176,7 +175,7 @@ int main (int argc, char *argv [])
 
 					if (input_dir_s && filename_pattern_s && library_s)
 						{
-							result = Run (input_dir_s, filename_pattern_s, prototype_pattern_s, library_s, recurse_flag, version, flag, verbose_flag);
+							result = Run (input_dir_s, filename_pattern_s, prototype_pattern_s, library_s, recurse_flag, version, flag);
 						}		/* if (input_dir_s && filename_pattern_s) */
 
 
@@ -197,7 +196,7 @@ int main (int argc, char *argv [])
 }
 
 
-int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag, const BOOL verbose_flag)
+int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag)
 {
 	int res = 0;
 	STRPTR prototype_regexp_s = NULL;

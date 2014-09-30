@@ -11,6 +11,42 @@
 #include "header_definitions.h"
 
 
+static BOOL s_verbose_flag = FALSE;
+
+
+void SetVerboseFlag (BOOL b)
+{
+	s_verbose_flag = b;
+}
+
+
+BOOL GetVerboseFlag (void)
+{
+	return s_verbose_flag;
+}
+
+
+STRPTR MakeFilename (CONST_STRPTR first_s, CONST_STRPTR second_s)
+{
+	const size_t l0 = strlen (first_s);
+	const size_t l = l0 + strlen (second_s) + 2;
+
+	STRPTR result_s = (STRPTR) IExec->AllocVecTags (l, TAG_DONE);
+	
+	if (result_s)
+		{
+			strcpy (result_s, first_s);
+			
+			if (IDOS->AddPart (result_s, second_s, l) == 0)
+				{
+					IExec->FreeVec (result_s);
+					result_s = NULL;
+				}
+		}
+	
+	return result_s;
+}
+
 
 
 STRPTR ConcatenateStrings (CONST_STRPTR first_s, CONST_STRPTR second_s)
@@ -152,24 +188,32 @@ int32 ScanDirectories (CONST_STRPTR dir_s, struct List *header_definitions_p, CO
 {
 	int32 success = FALSE;
 	APTR context_p = IDOS->ObtainDirContextTags (EX_StringNameInput, dir_s,
-		EX_DoCurrentDir, TRUE, /* for relative cd lock */
 		EX_DataFields, (EXF_NAME | EXF_LINK | EXF_TYPE),
 		TAG_END);
 
 	if (context_p)
 		{
 			struct ExamineData *dat_p;
-
+			const BOOL verbose_flag = GetVerboseFlag ();
+			
+			if (verbose_flag)
+				{
+					IDOS->Printf ("Scanning %s\n", dir_s);
+				}					
+			
 			while ((dat_p = IDOS->ExamineDir (context_p)))
 				{
+					if (verbose_flag)
+						{
+							IDOS->Printf ("filename=%s\n", dat_p -> Name);
+						}				
+				
 					DB (KPRINTF ("%s %ld - ScanDirectories; scanning \"%s\"\n", __FILE__, __LINE__, dat_p -> Name));
 					
 					if (EXD_IS_FILE (dat_p))
 						{
 							BOOL add_flag = TRUE;
-							
-							IDOS->Printf ("filename=%s\n", dat_p -> Name);
-							
+										
 							if (filename_pattern_s)
 								{
 									add_flag = IDOS->MatchPatternNoCase (filename_pattern_s, dat_p -> Name);
@@ -195,13 +239,22 @@ int32 ScanDirectories (CONST_STRPTR dir_s, struct List *header_definitions_p, CO
 						}
 					else if (EXD_IS_DIRECTORY (dat_p))
 						{
-							IDOS->Printf ("dirname=%s\n",  dat_p -> Name);
-
 							if (recurse_flag)
 								{
-									if (!ScanDirectories (dat_p -> Name, header_definitions_p, filename_pattern_s, recurse_flag))  /* recurse */
+									STRPTR path_s = MakeFilename (dir_s, dat_p -> Name);
+									
+									if (path_s)
 										{
-											break;
+											if (!ScanDirectories (path_s, header_definitions_p, filename_pattern_s, recurse_flag))  /* recurse */
+												{
+													break;
+												}
+																				
+											IExec->FreeVec (path_s);
+										}
+									else
+										{
+											IDOS->Printf ("ScanDirectories: Not enough memory to allocate filename\n");
 										}
 								}
 						}

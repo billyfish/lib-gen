@@ -146,7 +146,6 @@ uint32 GetFunctionDefinitionsListSize (struct List * const list_p)
 	for (node_p = (struct FunctionDefinitionNode *) IExec->GetHead (list_p); node_p != NULL; node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p))
 		{
 			++ i;
-			DB (KPRINTF ("%s %ld - GetFunctionDefinitionsListSize %lu\n", __FILE__, __LINE__, i));
 						
 			PrintParameter (IDOS->Output (), node_p -> fdn_function_def_p -> fd_definition_p);
 			IDOS->FPrintf (IDOS->Output (), "\n");

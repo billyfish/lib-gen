@@ -1,3 +1,4 @@
+#include <proto/dos.h>
 #include <proto/exec.h>
 
 #include <string.h>
@@ -5,6 +6,7 @@
 #include "header_definitions.h"
 #include "function_definition.h"
 #include "debugging_utils.h"
+#include "utils.h"
 
 
 struct HeaderDefinitions *AllocateHeaderDefinitions (STRPTR filename_s)
@@ -141,3 +143,84 @@ void ClearHeaderDefinitionsList (struct List *hdr_defs_list_p)
 			curr_node_p = next_node_p;
 		}
 }
+
+
+
+static BOOL WriteIncludes (BPTR out_p, CONST_STRPTR header_name_s)
+{
+	return (IDOS->FPrintf (out_p, "#include \"%s\"\n\n", header_name_s) > 0);
+}
+
+
+static BOOL WriteFunctionImplementations (BPTR out_p, struct List *functions_defs_p)
+{
+	BOOL success_flag = TRUE;
+	
+	
+	return success_flag;
+}
+
+
+BOOL WriteSourceForHeaderDefinitions (const struct HeaderDefinitions *hdr_defs_p, CONST_STRPTR output_dir_s)
+{
+	BOOL success_flag = FALSE;
+	
+	if (HasHeaderDefinitions (hdr_defs_p))
+		{ 
+			/* Get the .c filename */
+			STRPTR filename_s = IDOS->FilePart (hdr_defs_p -> hd_filename_s);
+			
+			if (filename_s)
+				{
+					STRPTR suffix_p = strrchr (filename_s, '.');
+					
+					if (suffix_p)
+						{
+							++ suffix_p;
+							
+							if (*suffix_p != '\0')
+								{
+									STRPTR full_name_s = NULL;
+									
+									*suffix_p = 'c';
+									* (++ suffix_p) = '\0';
+									
+									/* Make the full filename */
+									full_name_s = MakeFilename (output_dir_s, filename_s);
+									
+									if (full_name_s)
+										{
+											BPTR c_file_p = IDOS->FOpen (full_name_s, MODE_NEWFILE, 0);
+											
+											if (c_file_p)
+												{
+													if (WriteIncludes (c_file_p, hdr_defs_p -> hd_filename_s))
+														{
+															
+														}		/* if (WriteIncludes (c_file_p, hdr_defs_p -> hd_filename_s)) */
+														
+													IDOS->FClose (c_file_p);
+												}		/* if (c_file_p) */											
+											
+											IExec->FreeVec (full_name_s);
+										}		/* if (full_name_s) */				
+									
+								}		/* if (*suffix_p != '\0') */	
+								
+						}		/* if (suffix_p) */
+					
+					IExec->FreeVec (filename_s);
+				}		/* if (filename_s) */
+		}
+	else
+		{
+			success_flag = TRUE;
+		}
+	
+	return success_flag;
+}
+
+
+
+
+
