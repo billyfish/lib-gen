@@ -65,7 +65,7 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s);
 
 BOOL PrintFunctionDefinition (BPTR out_p, const struct FunctionDefinition * const fn_p);
 
-
+BOOL WriteLibraryFunctionImplementation (BPTR out_p, const struct FunctionDefinition * const fd_p, CONST_STRPTR interface_struct_s);
 
 
 #ifdef __cplusplus

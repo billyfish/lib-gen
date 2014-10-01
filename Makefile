@@ -4,7 +4,7 @@
 #
 # Project: libgen
 #
-# Created on: 30-09-2014 21:46:10
+# Created on: 01-10-2014 23:09:03
 #
 #
 
@@ -12,7 +12,8 @@ CC = SDK:gcc/bin/gcc
 OBJ = \
 	 src/header_definitions.o src/idl_writer.o src/memory.o \
 	 src/main.o src/utils.o src/parameter.o \
-	 src/function_definition.o src/writer.o
+	 src/function_definition.o src/writer.o src/c_writer.o \
+	
 
 BIN = libgen
 
@@ -44,7 +45,7 @@ $(BIN): $(OBJ)
 	$(CC) -o $(BIN).debug $(OBJ) $(LDFLAGS) $(LIBS)
 	strip $(BIN).debug -o $(BIN)
 
-src/header_definitions.o: src/header_definitions.c src/header_definitions.h src/function_definition.h src/parameter.h src/memory.h src/debugging_utils.h
+src/header_definitions.o: src/header_definitions.c src/header_definitions.h src/function_definition.h src/parameter.h src/memory.h src/debugging_utils.h src/utils.h
 	$(CC) -c src/header_definitions.c -o src/header_definitions.o $(CFLAGS)
 
 src/idl_writer.o: src/idl_writer.c src/idl_writer.h src/writer.h src/header_definitions.h src/memory.h src/parameter.h src/function_definition.h src/debugging_utils.h
@@ -67,4 +68,7 @@ src/function_definition.o: src/function_definition.c src/function_definition.h s
 
 src/writer.o: src/writer.c src/writer.h src/header_definitions.h src/function_definition.h src/memory.h
 	$(CC) -c src/writer.c -o src/writer.o $(CFLAGS)
+
+src/c_writer.o: src/c_writer.c src/c_writer.h src/writer.h src/header_definitions.h
+	$(CC) -c src/c_writer.c -o src/c_writer.o $(CFLAGS)
 

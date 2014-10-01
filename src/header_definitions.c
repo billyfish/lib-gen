@@ -152,18 +152,17 @@ static BOOL WriteIncludes (BPTR out_p, CONST_STRPTR header_name_s)
 }
 
 
-static BOOL WriteFunctionImplementations (BPTR out_p, const struct HeaderDefinitions *hdr_defs_p)
+static BOOL WriteFunctionImplementations (BPTR out_p, const struct HeaderDefinitions *hdr_defs_p, CONST_STRPTR library_s)
 {
 	BOOL success_flag = TRUE;
 	
 	if (HasHeaderDefinitions (hdr_defs_p))
 		{
-			struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (); 
-			
+			struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (& (hdr_defs_p -> hd_function_definitions)); 
 			
 			while ((node_p != NULL) && success_flag)
 				{
-					if (WriteFunctionImplementation (out_p, node_p -> fdn_function_def_p))
+					if (WriteLibraryFunctionImplementation (out_p, node_p -> fdn_function_def_p, library_s))
 						{
 							node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p);
 						}
@@ -178,14 +177,32 @@ static BOOL WriteFunctionImplementations (BPTR out_p, const struct HeaderDefinit
 }
 
 
-BOOL WriteSourceForHeaderDefinitions (const struct HeaderDefinitions *hdr_defs_p, CONST_STRPTR output_dir_s)
+BOOL WriteSourceForAllHeaderDefinitions (struct List *hdr_defs_list_p, CONST_STRPTR output_dir_s, CONST_STRPTR library_s)
+{
+	BOOL success_flag = TRUE;
+	struct HeaderDefinitionsNode *node_p = (struct HeaderDefinitionsNode *) IExec->GetHead (hdr_defs_list_p);
+	
+	while (node_p && success_flag)
+		{
+			success_flag  = WriteSourceForHeaderDefinitions (node_p -> hdn_defs_p, output_dir_s, library_s);
+
+			if (success_flag)
+				{
+					node_p = (struct HeaderDefinitionsNode *) IExec->GetSucc ((struct Node *) node_p);
+				}
+		}
+	
+	return success_flag;
+}
+
+BOOL WriteSourceForHeaderDefinitions (const struct HeaderDefinitions *hdr_defs_p, CONST_STRPTR output_dir_s, CONST_STRPTR library_s)
 {
 	BOOL success_flag = FALSE;
 	
 	if (HasHeaderDefinitions (hdr_defs_p))
 		{ 
 			/* Get the .c filename */
-			STRPTR filename_s = IDOS->FilePart (hdr_defs_p -> hd_filename_s);
+			STRPTR filename_s = strdup (IDOS->FilePart (hdr_defs_p -> hd_filename_s));
 			
 			if (filename_s)
 				{
@@ -203,18 +220,33 @@ BOOL WriteSourceForHeaderDefinitions (const struct HeaderDefinitions *hdr_defs_p
 									* (++ suffix_p) = '\0';
 									
 									/* Make the full filename */
+									/* @TODO Make sure output dir already exists */
 									full_name_s = MakeFilename (output_dir_s, filename_s);
 									
 									if (full_name_s)
 										{
 											BPTR c_file_p = IDOS->FOpen (full_name_s, MODE_NEWFILE, 0);
 											
+											DB (KPRINTF ("%s %ld - Opened source file %s (%lu)\n", __FILE__, __LINE__, full_name_s, (uint32) c_file_p));											
+											
 											if (c_file_p)
 												{
 													if (WriteIncludes (c_file_p, hdr_defs_p -> hd_filename_s))
 														{
-															
+															if (WriteFunctionImplementations (c_file_p, hdr_defs_p, library_s))
+																{
+																	success_flag = TRUE;
+																}
+															else
+																{
+																	DB (KPRINTF ("%s %ld - Failed to writer implementation to %s\n", __FILE__, __LINE__, full_name_s));		
+																}																
+																
 														}		/* if (WriteIncludes (c_file_p, hdr_defs_p -> hd_filename_s)) */
+													else
+														{
+															DB (KPRINTF ("%s %ld - Failed to write includes to %s\n", __FILE__, __LINE__, full_name_s));		
+														}
 														
 													IDOS->FClose (c_file_p);
 												}		/* if (c_file_p) */											
@@ -226,7 +258,7 @@ BOOL WriteSourceForHeaderDefinitions (const struct HeaderDefinitions *hdr_defs_p
 								
 						}		/* if (suffix_p) */
 					
-					IExec->FreeVec (filename_s);
+					free (filename_s);
 				}		/* if (filename_s) */
 		}
 	else

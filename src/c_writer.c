@@ -4,17 +4,17 @@ Writer *AllocateCWriter (void)
 {
 	CWriter *cw_p = (CWriter *) AllocMemory (sizeof (CWriter));
 
-	if (idl_p)
+	if (cw_p)
 		{
-			idl_p -> iw_base_writer.wr_write_header_definitions_list_fn = WriteCSource;
-			idl_p -> iw_base_writer.wr_get_file_suffix_fn = GetCWriterFileSuffix;
+			cw_p -> cw_base_writer.wr_write_header_definitions_list_fn = NULL;
+			cw_p -> cw_base_writer.wr_get_file_suffix_fn = NULL;
 		}
 
-	return ((Writer *) idl_p);
+	return ((Writer *) cw_p);
 }
 
 
-void FreeIDLWriter (Writer *writer_p)
+void FreeCWriter (Writer *writer_p)
 {
 	CWriter *cw_p = (CWriter *) writer_p;
 

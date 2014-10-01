@@ -45,7 +45,7 @@ BOOL ParseFile (CONST_STRPTR pattern_s, CONST_STRPTR filename_s, struct HeaderDe
 BOOL GeneratePrototypesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR function_pattern_s, const BOOL recurse_flag, struct List *header_definitions_p);
 
 
-int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag);
+int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag, const BOOL gen_source_flag);
 
 
 enum Args
@@ -57,7 +57,8 @@ enum Args
 	AR_PROTOTYPE_PATTERN,
 	AR_VERSION,
 	AR_FLAGS,
-
+	AR_GENERATE_CODE,
+	
 	/** The output format */
 	AR_OUTPUT_FORMAT,
 	AR_VERBOSE,
@@ -79,12 +80,13 @@ int main (int argc, char *argv [])
 			int32 version = 1;
 			enum InterfaceFlag flag = IF_PUBLIC;
 			BOOL recurse_flag = FALSE;
+			BOOL generate_code_flag = FALSE;
 			int32 args [AR_NUM_ARGS];
 			struct RDArgs *args_p = NULL;
 
 			memset (args, 0, AR_NUM_ARGS * sizeof (int32));
 
-			args_p = IDOS->ReadArgs ("I=Input/A,R=Recurse/S,L=LibraryName/A,IP=InputPattern/K,PP=PrototypePattern/K,FMT=Format/K,V=Version/N,FL=Flags/K", args, NULL);
+			args_p = IDOS->ReadArgs ("I=Input/A,R=Recurse/S,L=LibraryName/A,IP=InputPattern/K,PP=PrototypePattern/K,VER=Version/N,FL=Flags/K,GC=GenerateCode/S,FMT=Format/K,V=Verbose/S", args, NULL);
 
 			if (args_p != NULL)
 				{
@@ -145,14 +147,21 @@ int main (int argc, char *argv [])
 						}
 
 
+					if (args [AR_GENERATE_CODE])
+						{
+							generate_code_flag = TRUE;
+						}
+
+
 					if (GetVerboseFlag ())
 						{
 							IDOS->Printf ("Input Dir = \"%s\"\n", input_dir_s);
 							IDOS->Printf ("Library Name  = \"%s\"\n", library_s);
 							IDOS->Printf ("Filename Pattern = \"%s\"\n", filename_pattern_s);
 							IDOS->Printf ("Recurse = \"%s\"\n", recurse_flag ? "TRUE" : "FALSE");
-							IDOS->Printf ("PrototypePattern = \"%s\"\n", prototype_pattern_s);
-							IDOS->Printf ("OutputFormat = \"%s\"\n", format_s);
+							IDOS->Printf ("Generate Code = \"%s\"\n", generate_code_flag ? "TRUE" : "FALSE");
+							IDOS->Printf ("Prototype Pattern = \"%s\"\n", prototype_pattern_s);
+							IDOS->Printf ("Output Format = \"%s\"\n", format_s);
 							IDOS->Printf ("Version = \"%ld\"\n", version);
 
 							switch (flag)
@@ -175,7 +184,7 @@ int main (int argc, char *argv [])
 
 					if (input_dir_s && filename_pattern_s && library_s)
 						{
-							result = Run (input_dir_s, filename_pattern_s, prototype_pattern_s, library_s, recurse_flag, version, flag);
+							result = Run (input_dir_s, filename_pattern_s, prototype_pattern_s, library_s, recurse_flag, version, flag, generate_code_flag);
 						}		/* if (input_dir_s && filename_pattern_s) */
 
 
@@ -196,7 +205,7 @@ int main (int argc, char *argv [])
 }
 
 
-int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag)
+int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag, const BOOL gen_source_flag)
 {
 	int res = 0;
 	STRPTR prototype_regexp_s = NULL;
@@ -272,6 +281,21 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 	if (prototype_regexp_s)
 		{
 			IExec->FreeVec (prototype_regexp_s);
+		}
+
+
+	if (gen_source_flag)
+		{
+			IDOS->Printf ("Generating source");
+			
+			if (WriteSourceForAllHeaderDefinitions (&headers_list, "c_source", library_s))
+				{
+					IDOS->Printf ("Generating source succeeded");
+				}
+			else
+				{
+					IDOS->Printf ("Generating source failed");				
+				}
 		}
 
 

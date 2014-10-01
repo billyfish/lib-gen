@@ -72,6 +72,7 @@ BOOL PrintParameter (BPTR out_p, const struct Parameter * const param_p);
 
 BOOL PrintParameterList (BPTR out_p, struct List * const params_p);
 
+BOOL WriteParameterAsSource (BPTR out_p, const struct Parameter * const param_p);
 
 #ifdef __cplusplus
 }

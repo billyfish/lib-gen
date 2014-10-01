@@ -391,36 +391,38 @@ DB (KPRINTF ("%s %ld -  setting param value to: \"%s\" - \"%s\"\n", __FILE__, __
 }
 
 
+BOOL WriteParameterAsSource (BPTR out_p, const struct Parameter * const param_p)
+{
+	return (IDOS->FPrintf (out_p, "%s %s", param_p -> pa_type_s, param_p -> pa_name_s) >= 0);
+}
+
+
 BOOL PrintParameter (BPTR out_p, const struct Parameter * const param_p)
 {
 	BOOL success_flag = TRUE;
 
 	if (param_p)
 		{
-
-
-	if (param_p -> pa_type_s)
-		{
-			success_flag = (IDOS->FPrintf (out_p, "%s -", param_p -> pa_type_s) >= 0);
-		}
-	else
-		{
-			success_flag = (IDOS->FPrintf (out_p, "NULL -") >= 0);
-		}
-
-	if (success_flag)
-		{
-			if (param_p -> pa_name_s)
+			if (param_p -> pa_type_s)
 				{
-					success_flag = (IDOS->FPrintf (out_p, " %s", param_p -> pa_name_s) >= 0);
+					success_flag = (IDOS->FPrintf (out_p, "%s -", param_p -> pa_type_s) >= 0);
 				}
 			else
 				{
-					success_flag = (IDOS->FPrintf (out_p, " NULL") >= 0);
+					success_flag = (IDOS->FPrintf (out_p, "NULL -") >= 0);
 				}
-		}
-
-
+		
+			if (success_flag)
+				{
+					if (param_p -> pa_name_s)
+						{
+							success_flag = (IDOS->FPrintf (out_p, " %s", param_p -> pa_name_s) >= 0);
+						}
+					else
+						{
+							success_flag = (IDOS->FPrintf (out_p, " NULL") >= 0);
+						}
+				}
 		}
 
 	return success_flag;
