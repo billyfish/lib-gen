@@ -4,7 +4,7 @@
 #
 # Project: libgen
 #
-# Created on: 01-10-2014 23:09:03
+# Created on: 02-10-2014 22:46:23
 #
 #
 
@@ -13,7 +13,7 @@ OBJ = \
 	 src/header_definitions.o src/idl_writer.o src/memory.o \
 	 src/main.o src/utils.o src/parameter.o \
 	 src/function_definition.o src/writer.o src/c_writer.o \
-	
+	 src/makefile_utils.o
 
 BIN = libgen
 
@@ -71,4 +71,7 @@ src/writer.o: src/writer.c src/writer.h src/header_definitions.h src/function_de
 
 src/c_writer.o: src/c_writer.c src/c_writer.h src/writer.h src/header_definitions.h
 	$(CC) -c src/c_writer.c -o src/c_writer.o $(CFLAGS)
+
+src/makefile_utils.o: src/makefile_utils.c
+	$(CC) -c src/makefile_utils.c -o src/makefile_utils.o $(CFLAGS)
 

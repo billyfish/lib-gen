@@ -181,10 +181,12 @@ BOOL WriteSourceForAllHeaderDefinitions (struct List *hdr_defs_list_p, CONST_STR
 {
 	BOOL success_flag = TRUE;
 	struct HeaderDefinitionsNode *node_p = (struct HeaderDefinitionsNode *) IExec->GetHead (hdr_defs_list_p);
+	BPTR makefile_p = GetMakefileHandle (library_s);
+	
 	
 	while (node_p && success_flag)
 		{
-			success_flag  = WriteSourceForHeaderDefinitions (node_p -> hdn_defs_p, output_dir_s, library_s);
+			success_flag  = WriteSourceForHeaderDefinitions (node_p -> hdn_defs_p, output_dir_s, library_s, makefile_p);
 
 			if (success_flag)
 				{
@@ -195,7 +197,8 @@ BOOL WriteSourceForAllHeaderDefinitions (struct List *hdr_defs_list_p, CONST_STR
 	return success_flag;
 }
 
-BOOL WriteSourceForHeaderDefinitions (const struct HeaderDefinitions *hdr_defs_p, CONST_STRPTR output_dir_s, CONST_STRPTR library_s)
+
+BOOL WriteSourceForHeaderDefinitions (const struct HeaderDefinitions *hdr_defs_p, CONST_STRPTR output_dir_s, CONST_STRPTR library_s, BPTR makefile_p)
 {
 	BOOL success_flag = FALSE;
 	
@@ -235,6 +238,8 @@ BOOL WriteSourceForHeaderDefinitions (const struct HeaderDefinitions *hdr_defs_p
 														{
 															if (WriteFunctionImplementations (c_file_p, hdr_defs_p, library_s))
 																{
+
+																												
 																	success_flag = TRUE;
 																}
 															else

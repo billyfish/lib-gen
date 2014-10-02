@@ -48,6 +48,8 @@ BOOL GeneratePrototypesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_pat
 int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag, const BOOL gen_source_flag);
 
 
+
+
 enum Args
 {
 	AR_INPUT_DIR,
@@ -286,7 +288,11 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 
 	if (gen_source_flag)
 		{
+
+			
 			IDOS->Printf ("Generating source");
+			
+			
 			
 			if (WriteSourceForAllHeaderDefinitions (&headers_list, "c_source", library_s))
 				{

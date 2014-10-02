@@ -59,10 +59,9 @@ uint32 GetHeaderDefinitionsListSize (struct List * const list_p);
 void ClearHeaderDefinitionsList (struct List *header_definitions_p);
 
 
+BOOL WriteSourceForHeaderDefinitions (const struct HeaderDefinitions *hdr_defs_p, CONST_STRPTR output_dir_s, CONST_STRPTR library_s, BPTR makefile_p);
 
 BOOL WriteSourceForAllHeaderDefinitions (struct List *hdr_defs_list_p, CONST_STRPTR output_dir_s, CONST_STRPTR library_s);
-
-BOOL WriteSourceForHeaderDefinitions (const struct HeaderDefinitions *hdr_defs_p, CONST_STRPTR output_dir_s, CONST_STRPTR library_s);
 
 
 #endif		/* #ifndef HEADER_DEFINITIONS_H */

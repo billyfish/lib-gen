@@ -39,6 +39,9 @@ void SetVerboseFlag (BOOL b);
 
 BOOL GetVerboseFlag (void);
 
+BPTR GetMakefileHandle (CONST_STRPTR library_s);
+
+
 #ifdef __cplusplus
 }
 #endif
