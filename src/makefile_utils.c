@@ -6,7 +6,7 @@
 **
 ** Project: libgen
 **
-** File: 
+** File:
 **
 ** Date: 02-10-2014 22:43:42
 **
@@ -29,10 +29,10 @@ BOOL WriteMakefileHeader (BPTR makefile_p, CONST_STRPTR library_s)
 
 	if (IDOS->FPrintf (makefile_p, "# Use our generated source rather than the stub files created by idltool\n\n%s_SRCS = \\\n", library_s) >= 0)
 		{
-			return success_flag;
+			success_flag = TRUE;
 		}
-		
-	return success_flag; 
+
+	return success_flag;
 }
 
 
@@ -44,8 +44,8 @@ BOOL WriteMakefileFooter (BPTR makefile_p)
 		{
 			return success_flag;
 		}
-			
-	return success_flag; 
+
+	return success_flag;
 }
 
 BOOL AddFileToMakefileSources (BPTR makefile_p, CONST_STRPTR filename_s)
@@ -75,14 +75,26 @@ BPTR GetMakefileHandle (CONST_STRPTR library_s)
 {
 	BPTR makefile_p = ZERO;
 	STRPTR makefile_s = MakeFilename (library_s, ".mk");
-	
+
 	if (makefile_s)
 		{
-			makefile_p = IDOS->FOpen (makefile_s, MODE_NEWFILE, 0); 
-			
+			makefile_p = IDOS->FOpen (makefile_s, MODE_NEWFILE, 0);
+
+			if (makefile_p)
+				{
+					if (!WriteMakefileHeader (makefile_p, library_s))
+						{
+							IDOS->FPrintf (makefile_p, "Failed to write header block to makefile \"%s\"\n", makefile_s);
+						}
+				}
+			else
+				{
+					IDOS->FPrintf (makefile_p, "Failed to open makefile \"%s\"\n", makefile_s);
+				}
+
 			IExec->FreeVec (makefile_s);
 		}
-		
+
 	return makefile_p;
 }
 

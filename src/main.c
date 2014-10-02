@@ -31,14 +31,11 @@
 #include "header_definitions.h"
 #include "debugging_utils.h"
 #include "idl_writer.h"
-
+#include "library_utils.h"
 
 static BOOL OpenLibs (void);
 static void CloseLibs (void);
 
-static BOOL OpenLib (struct Library **library_pp, CONST_STRPTR lib_name_s, const uint32 lib_version, struct Interface **interface_pp, CONST_STRPTR interface_name_s, const uint32 interface_version);
-
-static void CloseLib (struct Library *library_p, struct Interface *interface_p);
 
 BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, const size_t pattern_length, struct FReadLineData *line_p, struct HeaderDefinitions *hdr_defs_p);
 BOOL ParseFile (CONST_STRPTR pattern_s, CONST_STRPTR filename_s, struct HeaderDefinitions *header_defs_p);
@@ -60,7 +57,7 @@ enum Args
 	AR_VERSION,
 	AR_FLAGS,
 	AR_GENERATE_CODE,
-	
+
 	/** The output format */
 	AR_OUTPUT_FORMAT,
 	AR_VERBOSE,
@@ -288,19 +285,15 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 
 	if (gen_source_flag)
 		{
-
-			
 			IDOS->Printf ("Generating source");
-			
-			
-			
+
 			if (WriteSourceForAllHeaderDefinitions (&headers_list, "c_source", library_s))
 				{
 					IDOS->Printf ("Generating source succeeded");
 				}
 			else
 				{
-					IDOS->Printf ("Generating source failed");				
+					IDOS->Printf ("Generating source failed");
 				}
 		}
 
@@ -445,8 +438,6 @@ BOOL ParseFile (CONST_STRPTR pattern_s, CONST_STRPTR filename_s, struct HeaderDe
 }
 
 
-
-
 static BOOL OpenLibs (void)
 {
 	if (OpenLib (&DOSBase, "dos.library", 52L, (struct Interface **) &IDOS, "main", 1))
@@ -466,43 +457,6 @@ static void CloseLibs (void)
 {
 	CloseLib (UtilityBase, (struct Interface *) IUtility);
 	CloseLib (DOSBase, (struct Interface *) IDOS);
-}
-
-
-static BOOL OpenLib (struct Library **library_pp, CONST_STRPTR lib_name_s, const uint32 lib_version, struct Interface **interface_pp, CONST_STRPTR interface_name_s, const uint32 interface_version)
-{
-	if ((*library_pp = IExec->OpenLibrary (lib_name_s, lib_version)) != NULL)
-		{
-			if ((*interface_pp = IExec->GetInterface (*library_pp, interface_name_s, interface_version, NULL)) != NULL)
-				{
-					return TRUE;
-				}
-			else
-				{
-					printf ("failed to open interface \"%s\" version %lu from \"%s\"\n", interface_name_s, interface_version, lib_name_s);
-				}
-			IExec->CloseLibrary (*library_pp);
-		}
-	else
-		{
-			printf ("failed to open library \"%s\" version %lu\n", lib_name_s, lib_version);
-		}
-
-	return FALSE;
-}
-
-
-static void CloseLib (struct Library *library_p, struct Interface *interface_p)
-{
-	if (interface_p)
-		{
-			IExec->DropInterface (interface_p);
-		}
-
-	if (library_p)
-		{
-			IExec->CloseLibrary (library_p);
-		}
 }
 
 

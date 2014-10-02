@@ -31,15 +31,6 @@ struct ParameterNode
 };
 
 
-struct FileFunctions
-{
-	const char * const ff_filename_s;
-
-	/** List of FunctionDefinitionNodes */
-	struct List *ff_definitions_p;
-};
-
-
 #ifdef __cplusplus
 extern "C" {
 #endif
