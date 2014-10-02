@@ -26,6 +26,22 @@ BOOL GetVerboseFlag (void)
 }
 
 
+BOOL EnsureDirectoryExists (CONST_STRPTR dir_s)
+{
+	BOOL success_flag = FALSE;
+	BPTR lock_p = IDOS->CreateDirTree (dir_s);
+	
+	if (lock_p)
+		{
+			IDOS->UnLock (lock_p);
+			success_flag = TRUE;
+		}
+	
+	return success_flag;
+}
+
+
+
 STRPTR MakeFilename (CONST_STRPTR first_s, CONST_STRPTR second_s)
 {
 	const size_t l0 = strlen (first_s);

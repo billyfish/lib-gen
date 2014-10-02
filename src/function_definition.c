@@ -22,7 +22,7 @@
 #include "function_definition.h"
 #include "debugging_utils.h"
 #include "memory.h"
-
+#include "utils.h"
 
 /*
 	<type> <function> (<type> <name>, ....);
@@ -142,13 +142,17 @@ uint32 GetFunctionDefinitionsListSize (struct List * const list_p)
 {
 	uint32 i = 0;
 	struct FunctionDefinitionNode *node_p;
-
+	const BOOL verbose_flag = GetVerboseFlag ();
+	
 	for (node_p = (struct FunctionDefinitionNode *) IExec->GetHead (list_p); node_p != NULL; node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p))
 		{
 			++ i;
-						
-			PrintParameter (IDOS->Output (), node_p -> fdn_function_def_p -> fd_definition_p);
-			IDOS->FPrintf (IDOS->Output (), "\n");
+
+			if (verbose_flag)
+				{			
+					PrintParameter (IDOS->Output (), node_p -> fdn_function_def_p -> fd_definition_p);
+					IDOS->FPrintf (IDOS->Output (), "\n");
+				}
 		}
 			
 	return i;

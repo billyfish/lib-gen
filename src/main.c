@@ -144,6 +144,10 @@ int main (int argc, char *argv [])
 						{
 							SetVerboseFlag (TRUE);
 						}
+					else
+						{
+							SetVerboseFlag (FALSE);
+						}
 
 
 					if (args [AR_GENERATE_CODE])
@@ -284,17 +288,37 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 
 
 	if (gen_source_flag)
-		{
-			IDOS->Printf ("Generating source");
-
-			if (WriteSourceForAllHeaderDefinitions (&headers_list, "c_source", library_s))
+		{	
+			STRPTR output_dir_s = ConcatenateStrings (library_s, "_source");
+			
+			if (output_dir_s)
 				{
-					IDOS->Printf ("Generating source succeeded");
+					if (EnsureDirectoryExists (output_dir_s))
+						{
+							IDOS->Printf ("Generating source");
+				
+							if (WriteSourceForAllHeaderDefinitions (&headers_list, output_dir_s, library_s))
+								{
+									IDOS->Printf ("Generating source succeeded");
+								}
+							else
+								{
+									IDOS->Printf ("Generating source failed");
+								}							
+						}
+					else
+						{
+							IDOS->Printf ("Could not create output directory \"%s\"\n", output_dir_s);
+						}
+						
+					IExec->FreeVec (output_dir_s);
 				}
 			else
 				{
-					IDOS->Printf ("Generating source failed");
-				}
+					IDOS->Printf ("Not enough memeory for output directory name\n");
+				}			
+		
+	
 		}
 
 
@@ -302,6 +326,9 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 
 	return res;
 }
+
+
+
 
 
 BOOL GeneratePrototypesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR function_pattern_s, const BOOL recurse_flag, struct List *header_definitions_p)
@@ -418,7 +445,7 @@ BOOL ParseFile (CONST_STRPTR pattern_s, CONST_STRPTR filename_s, struct HeaderDe
 
 			success_flag = GetMatchingPrototypes (filename_s, pattern_s, pattern_length, line_data_p, header_defs_p);
 
-			if (success_flag)
+			if (success_flag && GetVerboseFlag ())
 				{
 					IDOS->Printf ("read \"%s\" successfully\n", filename_s);
 				}

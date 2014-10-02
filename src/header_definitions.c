@@ -7,7 +7,7 @@
 #include "function_definition.h"
 #include "debugging_utils.h"
 #include "utils.h"
-
+#include "makefile_utils.h"
 
 struct HeaderDefinitions *AllocateHeaderDefinitions (STRPTR filename_s)
 {
@@ -197,12 +197,12 @@ BOOL WriteSourceForAllHeaderDefinitions (struct List *hdr_defs_list_p, CONST_STR
 		{
 			if (!WriteMakefileFooter (makefile_p))
 				{
-					IDOS->FPrintf ("Failed to write footer block to makefile\n");
+					IDOS->Printf ("Failed to write footer block to makefile\n");
 				}
 
 			if (!CloseMakefile (makefile_p))
 				{
-					IDOS->FPrintf ("Failed to close makefile\n");
+					IDOS->Printf ("Failed to close makefile\n");
 				}
 		}
 
@@ -250,16 +250,16 @@ BOOL WriteSourceForHeaderDefinitions (const struct HeaderDefinitions *hdr_defs_p
 														{
 															if (WriteFunctionImplementations (c_file_p, hdr_defs_p, library_s))
 																{
-																	if (!AddFileToMakefileSources (makefile_p, hdr_defs_p -> hd_filename_s))
+																	if (!AddFileToMakefileSources (makefile_p, full_name_s))
 																		{
-																			IDOS->FPrintf ("Failed to add %s to list of sources in makefile\n", hdr_defs_p -> hd_filename_s);
+																			IDOS->Printf ("Failed to add %s to list of sources in makefile\n", full_name_s);
 																		}
 
 																	success_flag = TRUE;
 																}
 															else
 																{
-																	DB (KPRINTF ("%s %ld - Failed to writer implementation to %s\n", __FILE__, __LINE__, full_name_s));
+																	DB (KPRINTF ("%s %ld - Failed to write implementation to %s\n", __FILE__, __LINE__, full_name_s));
 																}
 
 														}		/* if (WriteIncludes (c_file_p, hdr_defs_p -> hd_filename_s)) */

@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<CodeBench_Project name="libgen" path="DH4:projects&#047;libgen&#047;libgen.cbp" created="1119285779" lastmodified="1159829273">
+<CodeBench_Project name="libgen" path="DH4:projects&#047;libgen&#047;libgen.cbp" created="1119285779" lastmodified="1159833733">
 	<plugin name="PROGDIR:Plugins&#047;AmigaOS4SDK.CCPlugin" flags="16"/>
 	<label identifier="&#047;&#047;&#047;&#047;"/>
 	<target name="libgen"/>
@@ -13,6 +13,7 @@
 	<builder name="SDK:c&#047;make -f"/>
 	<environment tabsize="2"/>
 	<headers>
+		<file name="src&#047;library_utils.h" current="0" open="0"/>
 		<file name="src&#047;header_definitions.h" current="0" open="1"/>
 		<file name="src&#047;utils.h" current="0" open="1"/>
 		<file name="src&#047;debugging_utils.h" current="0" open="0"/>
@@ -22,10 +23,11 @@
 		<file name="src&#047;idl_writer.h" current="0" open="1"/>
 		<file name="src&#047;function_definition.h" current="0" open="1"/>
 		<file name="src&#047;c_writer.h" current="0" open="1"/>
-		<file name="src&#047;makefile_utils.h" current="1" open="1"/>
+		<file name="src&#047;makefile_utils.h" current="0" open="1"/>
 	</headers>
 	<sources>
-		<file name="src&#047;header_definitions.c" current="0" open="1"/>
+		<file name="src&#047;library_utils.c" current="0" open="0"/>
+		<file name="src&#047;header_definitions.c" current="1" open="1"/>
 		<file name="src&#047;idl_writer.c" current="0" open="1"/>
 		<file name="src&#047;memory.c" current="0" open="0"/>
 		<file name="src&#047;main.c" current="0" open="1"/>
@@ -36,10 +38,10 @@
 		<file name="src&#047;c_writer.c" current="0" open="1"/>
 		<file name="src&#047;makefile_utils.c" current="0" open="1"/>
 	</sources>
-	<flags value="4101"/>
+	<flags value="4097"/>
 	<buildscript name="Makefile" depth="3" open="0"/>
 	<projectnotes open="0"/>
 	<buildwindow open="1"/>
 	<logfile name="RAM Disk:Build.log"/>
-	<repository plugin="PROGDIR:plugins&#047;svntool.syncplugin" lastcommit="1159747429" lastupdate="1159489610"/>
+	<repository plugin="PROGDIR:plugins&#047;svntool.syncplugin" lastcommit="1159831782" lastupdate="1159831782"/>
 </CodeBench_Project>

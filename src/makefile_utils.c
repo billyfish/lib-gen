@@ -42,7 +42,7 @@ BOOL WriteMakefileFooter (BPTR makefile_p)
 
 	if (IDOS->FPrintf (makefile_p, "\n\ninclude Makefile\n") >= 0)
 		{
-			return success_flag;
+			success_flag = TRUE;
 		}
 
 	return success_flag;
@@ -60,6 +60,10 @@ BOOL AddFileToMakefileSources (BPTR makefile_p, CONST_STRPTR filename_s)
 					success_flag = FALSE;
 				}
 		}
+	else
+		{
+			IDOS->Printf ("makefile handle is null");
+		}
 
 	return success_flag;
 }
@@ -74,7 +78,7 @@ BOOL CloseMakefile (BPTR makefile_p)
 BPTR GetMakefileHandle (CONST_STRPTR library_s)
 {
 	BPTR makefile_p = ZERO;
-	STRPTR makefile_s = MakeFilename (library_s, ".mk");
+	STRPTR makefile_s = ConcatenateStrings (library_s, ".mk");
 
 	if (makefile_s)
 		{
@@ -84,15 +88,19 @@ BPTR GetMakefileHandle (CONST_STRPTR library_s)
 				{
 					if (!WriteMakefileHeader (makefile_p, library_s))
 						{
-							IDOS->FPrintf (makefile_p, "Failed to write header block to makefile \"%s\"\n", makefile_s);
+							IDOS->Printf ("Failed to write header block to makefile \"%s\"\n", makefile_s);
 						}
 				}
 			else
 				{
-					IDOS->FPrintf (makefile_p, "Failed to open makefile \"%s\"\n", makefile_s);
+					IDOS->Printf ("Failed to open makefile \"%s\"\n", makefile_s);
 				}
 
 			IExec->FreeVec (makefile_s);
+		}
+	else
+		{
+			IDOS->Printf ("Failed to create makefile name for \"%s\"\n", library_s);
 		}
 
 	return makefile_p;
