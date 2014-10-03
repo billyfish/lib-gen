@@ -248,7 +248,12 @@ static BOOL WriteIDLFunction (BPTR out_p, const struct FunctionDefinition * cons
 
 static BOOL WriteIDLParameter (BPTR out_p, const struct Parameter * const param_p)
 {
-	BOOL success_flag = (IDOS->FPrintf (out_p, "\t\t\t<arg name=\"%s\" type=\"%s\" />\n", param_p -> pa_name_s, param_p -> pa_type_s) >= 0);
+	BOOL success_flag = TRUE;
+	
+	if (!IsVoidParameter (param_p))
+		{		
+			success_flag = (IDOS->FPrintf (out_p, "\t\t\t<arg name=\"%s\" type=\"%s\" />\n", param_p -> pa_name_s, param_p -> pa_type_s) >= 0);
+		}
 
 	return success_flag;
 }

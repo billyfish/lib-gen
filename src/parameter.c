@@ -62,6 +62,8 @@ struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 	const char *type_end_p = NULL;
 	const char *name_start_p = NULL;
 	const char *name_end_p = end_p;
+	char *name_s = NULL;
+	char *type_s = NULL;
 	uint8 array_count = 0;
 	uint8 loop_flag = TRUE;
 	BOOL matched_flag = FALSE;
@@ -143,6 +145,18 @@ struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 						}
 				}
 
+			if (matched_flag)
+				{
+					// success;
+					name_s = CopyToNewString (name_start_p, name_end_p, FALSE);
+					
+					if (!name_s)
+						{
+							IDOS->Printf ("Failed to allocate memory for param name");
+							matched_flag = FALSE;
+						}	
+				}
+
 			/* Have we found the start of the name? */
 			if (matched_flag)
 				{
@@ -166,7 +180,7 @@ struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 								}
 						}
 
-
+					/* Did we get the end of the type? */
 					if (matched_flag)
 						{
 							/* scroll to the start of the type*/
@@ -191,24 +205,22 @@ struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 
 							if (matched_flag)
 								{
-									// success;
-									char *name_s = CopyToNewString (name_start_p, name_end_p, FALSE);
+									char *type_s = CopyToNewString (type_start_p, type_end_p, FALSE);
 
-									if (name_s)
+									if (type_s)
 										{
-											char *type_s = CopyToNewString (type_start_p, type_end_p, FALSE);
-
-											if (type_s)
-												{
-													param_p = AllocateParameter (type_s, name_s);
-												}
-
+											param_p = AllocateParameter (type_s, name_s);
 										}
 								}
 						}
-
-
-
+					else
+						{
+							/* Check for void parameter */
+							if (strcmp ("void", name_s) == 0)
+								{
+									param_p = AllocateParameter ("void", NULL);
+								}
+						}
 				}
 		}
 
@@ -217,6 +229,10 @@ struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 }
 
 
+BOOL IsVoidParameter (const struct Parameter *param_p)
+{
+	return ((strcmp (param_p -> pa_type_s, "void") == 0) && (param_p -> pa_type_s == NULL));
+}
 
 
 void FreeParameterList (struct List *params_p)
@@ -393,7 +409,24 @@ DB (KPRINTF ("%s %ld -  setting param value to: \"%s\" - \"%s\"\n", __FILE__, __
 
 BOOL WriteParameterAsSource (BPTR out_p, const struct Parameter * const param_p)
 {
-	return (IDOS->FPrintf (out_p, "%s %s", param_p -> pa_type_s, param_p -> pa_name_s) >= 0);
+	BOOL success_flag = FALSE;
+
+	if (IDOS->FPrintf (out_p, "%s", param_p -> pa_type_s) >= 0)
+		{
+			if (param_p -> pa_name_s)
+				{
+					if (IDOS->FPrintf (out_p, "%s" "%s", param_p -> pa_type_s, param_p -> pa_name_s) >= 0)
+						{
+							success_flag = TRUE;
+						}
+				}
+			else
+				{
+					success_flag = TRUE;
+				}
+		}
+		
+	return success_flag;
 }
 
 
