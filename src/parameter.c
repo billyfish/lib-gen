@@ -20,11 +20,7 @@ static BOOL SetParameterValue (char **param_value_ss, const char *start_p, const
 /**************************/
 
 
-static BOOL IsParameterFunctionPointer (const char *start_p, const char *end_p);
-
-
-
-static BOOL IsParameterFunctionPointer (const char *start_p, const char *end_p)
+BOOL IsParameterFunctionPointer (const char *start_p, const char *end_p)
 {
 	const char *data_p = start_p;
 	BOOL is_param_function_pointer_flag = FALSE;
@@ -33,16 +29,18 @@ static BOOL IsParameterFunctionPointer (const char *start_p, const char *end_p)
 		{
 			data_p = strchr (data_p, '(');
 
-			if (data_p)
-				{
-					if (* (data_p + 1) == '*')
+			while (data_p && (data_p < end_p))
+				{				
+					++ data_p;
+					
+					if (*data_p == '*')
 						{
 							is_param_function_pointer_flag = TRUE;
 
 							/* Force exit from loop */
 							data_p = NULL;
 						}
-					else
+					else 
 						{
 							++ data_p;
 						}
@@ -51,7 +49,70 @@ static BOOL IsParameterFunctionPointer (const char *start_p, const char *end_p)
 
 		}		/* while (data_p && (data_p < end_p)) */
 
-	return is_param_function_pointer_flag;
+	return FALSE; //is_param_function_pointer_flag;
+}
+
+
+struct Parameter *ParseFunctionPointerParameter (const char *start_p, const char **end_pp)
+{
+	struct Parameter *param_p = NULL;
+	const char *type_start_p = NULL;
+	const char *type_end_p = NULL;
+	const char *name_start_p = strchr (start_p, '(');
+	const char *name_end_p = *end_pp;
+	char *name_s = NULL;
+	uint8 array_count = 0;
+	
+	if (name_start_p)
+		{
+			const char *data_p = name_start_p;
+			BOOL loop_flag = TRUE;
+			BOOL matched_flag = FALSE;
+			BOOL space_flag = TRUE;
+			
+			/* find the closing bracket */
+			while (loop_flag && !matched_flag)
+				{
+					const char c = *data_p;
+					
+					if (c == ')')
+						{
+							matched_flag = TRUE;
+						}		
+					else if (space_flag && (!isspace (c)))
+						{
+							space_flag = FALSE;
+							
+							if (c == '*')
+								{
+									
+									loop_flag = FALSE;
+								}
+							
+						}
+						
+					if (loop_flag && !matched_flag)
+						{
+							++ data_p;
+							
+							loop_flag = (data_p && (data_p < *end_pp));
+						}
+				}
+				
+				
+			if (matched_flag)
+				{
+					loop_flag = TRUE;
+					matched_flag = FALSE;
+					
+					
+				}
+		}
+	
+
+				
+				
+	return param_p;
 }
 
 
@@ -63,7 +124,6 @@ struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 	const char *name_start_p = NULL;
 	const char *name_end_p = end_p;
 	char *name_s = NULL;
-	char *type_s = NULL;
 	uint8 array_count = 0;
 	uint8 loop_flag = TRUE;
 	BOOL matched_flag = FALSE;
@@ -218,7 +278,7 @@ struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 							/* Check for void parameter */
 							if (strcmp ("void", name_s) == 0)
 								{
-									param_p = AllocateParameter ("void", NULL);
+									param_p = AllocateParameter (name_s, NULL);
 								}
 						}
 				}
@@ -415,7 +475,7 @@ BOOL WriteParameterAsSource (BPTR out_p, const struct Parameter * const param_p)
 		{
 			if (param_p -> pa_name_s)
 				{
-					if (IDOS->FPrintf (out_p, "%s" "%s", param_p -> pa_type_s, param_p -> pa_name_s) >= 0)
+					if (IDOS->FPrintf (out_p, " %s", param_p -> pa_name_s) >= 0)
 						{
 							success_flag = TRUE;
 						}

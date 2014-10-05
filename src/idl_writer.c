@@ -225,20 +225,29 @@ static BOOL WriteIDLFunction (BPTR out_p, const struct FunctionDefinition * cons
 
 	if (IDOS->FPrintf (out_p, "\t\t<method name=\"%s\" result=\"%s\">\n", fd_p -> fd_definition_p -> pa_name_s, fd_p -> fd_definition_p -> pa_type_s) >= 0)
 		{
-			struct ParameterNode *curr_node_p = (struct ParameterNode *) IExec->GetHead (fd_p -> fd_args_p);
-			struct ParameterNode *next_node_p = NULL;
-
-			success_flag = TRUE;
-
-			while (((next_node_p = (struct ParameterNode *) IExec->GetSucc (& (curr_node_p -> pn_node))) != NULL) && success_flag)
+			if (fd_p -> fd_args_p)
 				{
-					success_flag = WriteIDLParameter (out_p, curr_node_p -> pn_param_p);
-					curr_node_p = next_node_p;
-				}
+					struct ParameterNode *node_p = (struct ParameterNode *) IExec->GetHead (fd_p -> fd_args_p);
+					
+					success_flag = TRUE;
+					
+					while (node_p && success_flag)
+						{
+							if (WriteIDLParameter (out_p, node_p -> pn_param_p))
+								{
+									node_p = (struct ParameterNode *) IExec->GetSucc ((struct Node *) node_p);
+								}
+							else
+								{
+									success_flag = FALSE;
+								}
+						}
 
-			if (success_flag)
-				{
-					success_flag = (IDOS->FPrintf (out_p, "\t\t</method>\n") >= 0);
+
+					if (success_flag)
+						{
+							success_flag = (IDOS->FPrintf (out_p, "\t\t</method>\n") >= 0);
+						}
 				}
 		}
 

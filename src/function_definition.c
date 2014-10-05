@@ -44,15 +44,17 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 	BOOL success_flag = FALSE;
 	struct FunctionDefinition *fd_p = AllocateFunctionDefinition ();
 
-	//DB (KPRINTF ("%s %ld - Tokenizing \"%s\"\n", __FILE__, __LINE__, prototype_s));
+	DB (KPRINTF ("%s %ld - Tokenizing \"%s\"\n", __FILE__, __LINE__, prototype_s));
 
 	if (fd_p)
 		{
 			const char *opening_bracket_p = strchr (prototype_s, '(');
+			const char *closing_bracket_p = strrchr (prototype_s, ')');
+			
 			//DB (KPRINTF ("%s %ld - opening_bracket \"%s\"\n", __FILE__, __LINE__, opening_bracket_p ? opening_bracket_p : "NULL"));
 
-			if (opening_bracket_p)
-				{
+			if (opening_bracket_p && closing_bracket_p)
+				{				
 					struct Parameter *param_p = ParseParameter (prototype_s, opening_bracket_p - 1);
 
 					if (param_p)
@@ -68,18 +70,31 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 							/* Get all of the parameters before each comma */
 							while (loop_flag && success_flag)
 								{
-									param_p = ParseParameter (start_p, end_p);
-
+									DB (KPRINTF ("%s %ld - Tokenizing loop %s", __FILE__, __LINE__, start_p));
+								
+									if (IsParameterFunctionPointer (start_p, end_p))
+										{
+										
+										}
+									else
+										{
+											param_p = ParseParameter (start_p, end_p);
+										}
+										
 									if (param_p)
 										{
 											if (AddParameterAtBack (fd_p, param_p))
 												{
 													start_p = end_p + 1;
 
-													if (start_p < prototype_s)
+													if (start_p < closing_bracket_p)
 														{
 															end_p = strchr (start_p, ',');
-															loop_flag = (end_p != NULL);
+															
+															if (!end_p)
+																{
+																	loop_flag = FALSE;
+																}
 														}
 													else
 														{
@@ -100,8 +115,8 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 
 							if (success_flag)
 								{
-									const char *start_p = (end_p != NULL) ? end_p + 1 : opening_bracket_p + 1;
-									const char *end_p = strchr (start_p, ')');
+									//const char *start_p = (end_p != NULL) ? end_p + 1 : opening_bracket_p + 1;
+									end_p = strchr (start_p, ')');
 
 									/* Get the final parameter before the closing braacket */
 									if (end_p)
@@ -228,6 +243,11 @@ BOOL AddParameterAtBack (struct FunctionDefinition *fd_p, struct Parameter *para
 	if (node_p)
 		{
 			IExec->AddTail (fd_p -> fd_args_p, (struct Node *) node_p);
+
+			if (GetVerboseFlag ())
+				{			
+					IDOS->FPrintf (IDOS->Output (), "Added %s - %s to %s\n", param_p -> pa_type_s, param_p -> pa_name_s, fd_p -> fd_definition_p -> pa_name_s);
+				}
 
 			return TRUE;
 		}
