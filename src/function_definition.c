@@ -60,7 +60,7 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 					if (param_p)
 						{
 							const char *start_p = opening_bracket_p + 1;
-							const char *end_p = strchr (start_p, ',')l
+							const char *end_p = strchr (start_p, ',');
 							BOOL loop_flag = (end_p != NULL);
 
 							fd_p -> fd_definition_p = param_p;

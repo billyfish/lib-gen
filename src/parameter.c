@@ -181,6 +181,8 @@ struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 				}
 		}
 
+	DB (KPRINTF ("%s %ld -  name_end_p to: \"%s\" from \"%s\" %ld\n", __FILE__, __LINE__, name_end_p, start_p, (int) matched_flag));
+
 	/* Have we found the end of the name? */
 	if (matched_flag)
 		{
@@ -205,10 +207,14 @@ struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 						}
 				}
 
+			DB (KPRINTF ("%s %ld -  name_start_p to: \"%s\" from \"%s\" %ld\n", __FILE__, __LINE__, name_start_p,  start_p, (int) matched_flag));
+
 			if (matched_flag)
 				{
 					// success;
 					name_s = CopyToNewString (name_start_p, name_end_p, FALSE);
+					
+					DB (KPRINTF ("%s %ld -  setting param name to: \"%s\" from \"%s\"\n", __FILE__, __LINE__, name_s ? name_s : "NULL", start_p));
 					
 					if (!name_s)
 						{
@@ -240,6 +246,9 @@ struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 								}
 						}
 
+
+					DB (KPRINTF ("%s %ld -  type_end_p to: \"%s\" from \"%s\" %ld\n", __FILE__, __LINE__, type_end_p,  start_p, (int) matched_flag));
+
 					/* Did we get the end of the type? */
 					if (matched_flag)
 						{
@@ -263,6 +272,8 @@ struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 										}
 								}
 
+							DB (KPRINTF ("%s %ld -  type_end_p to: \"%s\" from \"%s\" %ld\n", __FILE__, __LINE__, type_end_p,  start_p, (int) matched_flag));
+
 							if (matched_flag)
 								{
 									char *type_s = CopyToNewString (type_start_p, type_end_p, FALSE);
@@ -278,6 +289,7 @@ struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 							/* Check for void parameter */
 							if (strcmp ("void", name_s) == 0)
 								{
+									DB (KPRINTF ("%s %ld -  setting param type to: void  from \"%s\"\n", __FILE__, __LINE__, name_s ? name_s : "NULL", start_p));
 									param_p = AllocateParameter (name_s, NULL);
 								}
 						}
@@ -411,7 +423,7 @@ static BOOL SetParameterValue (char **param_value_ss, const char *start_p, const
 	size_t l;
 	char *copy_s = NULL;
 
-DB (KPRINTF ("%s %ld -  setting param value to: \"%s\" - \"%s\"\n", __FILE__, __LINE__, start_p ? start_p : "NULL", end_p ? end_p : "NULL"));
+	DB (KPRINTF ("%s %ld -  setting param value to: \"%s\" - \"%s\"\n", __FILE__, __LINE__, start_p ? start_p : "NULL", end_p ? end_p : "NULL"));
 
 	if (end_p)
 		{
