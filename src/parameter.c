@@ -504,7 +504,7 @@ BOOL PrintParameter (BPTR out_p, const struct Parameter * const param_p)
 				{
 					success_flag = (IDOS->FPrintf (out_p, "NULL -") >= 0);
 				}
-		
+
 			if (success_flag)
 				{
 					if (param_p -> pa_name_s)
