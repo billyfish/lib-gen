@@ -124,6 +124,7 @@ struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 	const char *name_start_p = NULL;
 	const char *name_end_p = end_p;
 	char *name_s = NULL;
+	char *type_s = NULL;
 	uint8 array_count = 0;
 	uint8 loop_flag = TRUE;
 	BOOL matched_flag = FALSE;
@@ -209,7 +210,21 @@ struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 
 			DB (KPRINTF ("%s %ld -  name_start_p to: \"%s\" from \"%s\" %ld\n", __FILE__, __LINE__, name_start_p,  start_p, (int) matched_flag));
 
-			if (matched_flag)
+			if (!matched_flag)
+				{
+					DB (KPRINTF ("%s %ld -  checking void match name_start_p: \"%s\" name_end_p: \"%s\" diff %ld\n", __FILE__, __LINE__, name_start_p,  name_end_p, (int) (name_end_p - name_start_p)));
+					
+					if ((name_end_p - name_start_p == 3) && (strncmp ("void", name_start_p, 4) == 0))
+						{
+							type_s = CopyToNewString (name_start_p, name_end_p, FALSE);
+							
+							matched_flag = (type_s != NULL);
+							name_s = NULL;
+						}				
+						
+					DB (KPRINTF ("%s %ld -  void match %ld\n", __FILE__, __LINE__, (int) matched_flag));
+				}
+			else
 				{
 					// success;
 					name_s = CopyToNewString (name_start_p, name_end_p, FALSE);
@@ -221,78 +236,72 @@ struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 							IDOS->Printf ("Failed to allocate memory for param name");
 							matched_flag = FALSE;
 						}	
-				}
-
-			/* Have we found the start of the name? */
-			if (matched_flag)
-				{
-					/* scroll to the end of the type*/
-					type_end_p = name_start_p - 1;
-					matched_flag = FALSE;
-					loop_flag = (type_end_p > start_p);
-
-					while (loop_flag && !matched_flag)
-						{
-							const char c = *type_end_p;
-
-							if (isspace (c))
-								{
-									-- type_end_p;
-									loop_flag = (type_end_p > start_p);
-								}
-							else
-								{
-									matched_flag = TRUE;
-								}
-						}
-
-
-					DB (KPRINTF ("%s %ld -  type_end_p to: \"%s\" from \"%s\" %ld\n", __FILE__, __LINE__, type_end_p,  start_p, (int) matched_flag));
-
-					/* Did we get the end of the type? */
+						
+				
+					/* Have we found the start of the name? */
 					if (matched_flag)
 						{
-							/* scroll to the start of the type*/
-							type_start_p = start_p;
+							/* scroll to the end of the type*/
+							type_end_p = name_start_p - 1;
 							matched_flag = FALSE;
-							loop_flag = (type_start_p < type_end_p);
-
+							loop_flag = (type_end_p > start_p);
+		
 							while (loop_flag && !matched_flag)
 								{
-									const char c = *type_start_p;
-
+									const char c = *type_end_p;
+		
 									if (isspace (c))
 										{
-											++ type_start_p;
-											loop_flag = (type_start_p < type_end_p);
+											-- type_end_p;
+											loop_flag = (type_end_p > start_p);
 										}
 									else
 										{
 											matched_flag = TRUE;
 										}
 								}
-
+		
+		
 							DB (KPRINTF ("%s %ld -  type_end_p to: \"%s\" from \"%s\" %ld\n", __FILE__, __LINE__, type_end_p,  start_p, (int) matched_flag));
-
+		
+							/* Did we get the end of the type? */
 							if (matched_flag)
 								{
-									char *type_s = CopyToNewString (type_start_p, type_end_p, FALSE);
-
-									if (type_s)
+									/* scroll to the start of the type*/
+									type_start_p = start_p;
+									matched_flag = FALSE;
+									loop_flag = (type_start_p < type_end_p);
+		
+									while (loop_flag && !matched_flag)
 										{
-											param_p = AllocateParameter (type_s, name_s);
+											const char c = *type_start_p;
+		
+											if (isspace (c))
+												{
+													++ type_start_p;
+													loop_flag = (type_start_p < type_end_p);
+												}
+											else
+												{
+													matched_flag = TRUE;
+												}
 										}
+		
+									DB (KPRINTF ("%s %ld -  type_end_p to: \"%s\" from \"%s\" %ld\n", __FILE__, __LINE__, type_end_p,  start_p, (int) matched_flag));
+								
 								}
-						}
-					else
-						{
-							/* Check for void parameter */
-							if (strcmp ("void", name_s) == 0)
+								
+							if (matched_flag)
 								{
-									DB (KPRINTF ("%s %ld -  setting param type to: void  from \"%s\"\n", __FILE__, __LINE__, name_s ? name_s : "NULL", start_p));
-									param_p = AllocateParameter (name_s, NULL);
+									type_s = CopyToNewString (type_start_p, type_end_p, FALSE);
 								}
-						}
+						}	
+				}
+		
+			
+			if (matched_flag)
+				{
+					param_p = AllocateParameter (type_s, name_s);
 				}
 		}
 
