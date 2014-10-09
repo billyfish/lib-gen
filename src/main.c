@@ -37,10 +37,12 @@ static BOOL OpenLibs (void);
 static void CloseLibs (void);
 
 
-BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, const size_t pattern_length, struct FReadLineData *line_p, struct HeaderDefinitions *hdr_defs_p);
+BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, struct FReadLineData *line_p, struct HeaderDefinitions *hdr_defs_p);
 BOOL ParseFile (CONST_STRPTR pattern_s, CONST_STRPTR filename_s, struct HeaderDefinitions *header_defs_p);
 BOOL GeneratePrototypesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR function_pattern_s, const BOOL recurse_flag, struct List *header_definitions_p);
 
+STRPTR CreateRegEx (CONST_STRPTR pattern_s, BOOL capture_flag);
+void ClearCapturedExpression (struct CapturedExpression *capture_p);
 
 int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag, const BOOL gen_source_flag);
 
@@ -208,10 +210,49 @@ int main (int argc, char *argv [])
 }
 
 
+STRPTR CreateRegEx (CONST_STRPTR pattern_s, BOOL capture_flag)
+{
+	STRPTR reg_ex_s = NULL;
+	
+	if (pattern_s)
+		{
+			size_t l = (2 * strlen (pattern_s)) + 2;
+
+			reg_ex_s = (STRPTR) IExec->AllocVecTags (l, TAG_DONE);
+
+			if (reg_ex_s)
+				{
+					int32 is_wild;
+					
+					if (capture_flag)
+						{
+							is_wild = IDOS->ParseCapturePattern (pattern_s, reg_ex_s, l, TRUE);
+						}
+					else
+						{
+							is_wild = IDOS->ParsePatternNoCase (pattern_s, reg_ex_s, l);
+						}
+						
+					if (is_wild < 0)
+						{
+							IDOS->Printf ("Error creating pattern from \"%s\"\n", pattern_s);
+						}
+				}
+			else
+				{
+					IDOS->Printf ("Not enough memory to create regular expression from \"%s\"\n", pattern_s);
+				}
+		}
+
+	return reg_ex_s;
+}
+
+
 int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag, const BOOL gen_source_flag)
 {
 	int res = 0;
 	STRPTR prototype_regexp_s = NULL;
+	STRPTR filename_regexp_s = NULL;
 	/* List of HeaderDefinitionsNodes */
 	struct List headers_list;
 
@@ -219,26 +260,26 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 
 	if (prototype_pattern_s)
 		{
-			size_t l = (2 * strlen (prototype_pattern_s)) + 2;
-
-			prototype_regexp_s = (STRPTR) IExec->AllocVecTags (l, TAG_DONE);
-
-			if (prototype_regexp_s)
+			prototype_regexp_s = CreateRegEx (prototype_pattern_s, FALSE);
+			
+			if (!prototype_regexp_s)
 				{
-					int32 is_wild = IDOS->ParsePatternNoCase (prototype_pattern_s, prototype_regexp_s, l);
-
-					if (is_wild < 0)
-						{
-							IDOS->Printf ("Error creating pattern from \"%s\"\n", prototype_pattern_s);
-						}
-				}
-			else
-				{
-					IDOS->Printf ("Not enough memory to create regular expression from \"%s\"\n", prototype_pattern_s);
+					return -1;
 				}
 		}
+		
+	if (filename_pattern_s)
+		{
+			filename_regexp_s = CreateRegEx (filename_pattern_s, TRUE);
+			
+			if (!filename_regexp_s)
+				{
+					return -1;
+				}
+		}
+				
 
-	if (GeneratePrototypesList (root_path_s, filename_pattern_s, prototype_regexp_s, recurse_flag, &headers_list))
+	if (GeneratePrototypesList (root_path_s, filename_regexp_s, prototype_regexp_s, recurse_flag, &headers_list))
 		{
 			Writer *writer_p = AllocateIDLWriter ();
 
@@ -287,6 +328,12 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 		}
 
 
+	if (filename_regexp_s)
+		{
+			IExec->FreeVec (filename_regexp_s);
+		}
+
+
 	if (gen_source_flag)
 		{	
 			STRPTR output_dir_s = ConcatenateStrings (library_s, "_source");
@@ -331,12 +378,12 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 
 
 
-BOOL GeneratePrototypesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR function_pattern_s, const BOOL recurse_flag, struct List *header_definitions_p)
+BOOL GeneratePrototypesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_regexp_s, CONST_STRPTR function_regexp_s, const BOOL recurse_flag, struct List *header_definitions_p)
 {
 	BOOL success_flag = FALSE;
 
 	/* Get a list of the header filenames */
-	if (ScanDirectories (root_path_s, header_definitions_p, filename_pattern_s, recurse_flag))
+	if (ScanDirectories (root_path_s, header_definitions_p, filename_regexp_s, recurse_flag))
 		{
 			struct HeaderDefinitionsNode *node_p;
 
@@ -353,7 +400,7 @@ BOOL GeneratePrototypesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_pat
 					IDOS->Printf ("Parsing \"%s\"\n", filename_s);
 
 					/* Get the list of matching prototypes in each file */
-					if (!ParseFile (function_pattern_s, filename_s, header_defs_p))
+					if (!ParseFile (function_regexp_s, filename_s, header_defs_p))
 						{
 							success_flag = FALSE;
 						}
@@ -368,7 +415,7 @@ BOOL GeneratePrototypesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_pat
 
 
 
-BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, const size_t pattern_length, struct FReadLineData *line_p, struct HeaderDefinitions *header_defs_p)
+BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, struct FReadLineData *line_p, struct HeaderDefinitions *header_defs_p)
 {
 	BOOL success_flag = FALSE;
 	BPTR handle_p = IDOS->FOpen (filename_s, MODE_OLDFILE, 0);
@@ -376,39 +423,57 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, con
 	if (handle_p)
 		{
 			int32 count;
-
+			struct CapturedExpression capture;
+			struct CapturedExpression *capture_p = &capture;
+			
 			success_flag = TRUE;
-
+			memset (capture_p, 0, sizeof (struct CapturedExpression));
+			
 			while ((count = IDOS->FReadLine (handle_p, line_p)) > 0)
 				{
-					if (IUtility->Strnicmp (pattern_s, line_p -> frld_Line, pattern_length) == 0)
+					if (IDOS->CapturePattern (pattern_s, line_p -> frld_Line, TRUE, &capture_p) == 0)
 						{
-							char *prototype_s = (line_p -> frld_Line) + pattern_length;
-							struct FunctionDefinition *fn_def_p = NULL;
-
-							//IDOS->Printf (">>> matched line:= %s", line_p -> frld_Line);
-
-							fn_def_p = TokenizeFunctionPrototype (prototype_s);
-
-							if (fn_def_p)
-								{
-									/* Add the prototype */
-									if (AddFunctionDefinitionToHeaderDefinitions (header_defs_p, fn_def_p))
+							/* we only want the first match */
+							STRPTR prototype_s = CopyToNewString (capture_p -> cape_Start, (capture_p -> cape_End) - 1, FALSE);
+							
+							if (prototype_s)
+								{		
+									struct FunctionDefinition *fn_def_p = NULL;
+		
+									//IDOS->Printf (">>> matched line:= %s", line_p -> frld_Line);
+		
+									fn_def_p = TokenizeFunctionPrototype (prototype_s);
+		
+									if (fn_def_p)
 										{
-											DB (KPRINTF ("%s %ld - GetMatchingPrototypes: Added function definition for \"%s\"\n", __FILE__, __LINE__, prototype_s));
+											/* Add the prototype */
+											if (AddFunctionDefinitionToHeaderDefinitions (header_defs_p, fn_def_p))
+												{
+													DB (KPRINTF ("%s %ld - GetMatchingPrototypes: Added function definition for \"%s\"\n", __FILE__, __LINE__, prototype_s));
+												}
+											else
+												{
+													IDOS->Printf ("Failed to add function definition for \"%s\"\n", prototype_s);
+													success_flag = FALSE;
+												}
 										}
 									else
 										{
-											IDOS->Printf ("Failed to add function definition for \"%s\"\n", prototype_s);
+											IDOS->Printf ("Failed to tokenize \"%s\"\n", prototype_s);
 											success_flag = FALSE;
 										}
-								}
+										
+									IExec->FreeVec (prototype_s);
+								}		/* if (protoype_s) */
 							else
 								{
-									IDOS->Printf ("Failed to tokenize \"%s\"\n", prototype_s);
-									success_flag = FALSE;
+									IDOS->Printf ("Not enough memory to copy prototype\n");
+									success_flag = FALSE;								
 								}
 
+							/* Clear the capture list */
+							ClearCapturedExpression (capture_p);
+							
 						}
 					else
 						{
@@ -432,18 +497,31 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, con
 }
 
 
+void ClearCapturedExpression (struct CapturedExpression *capture_p)
+{
+	struct CapturedExpression *next_p;
+	
+	while (capture_p)
+		{
+			next_p = capture_p -> cape_Next;
+			IExec->FreeVec (capture_p);
+
+			capture_p = next_p;
+		}
+	
+	memset (capture_p, 0, sizeof (struct CapturedExpression));
+}
 
 
-BOOL ParseFile (CONST_STRPTR pattern_s, CONST_STRPTR filename_s, struct HeaderDefinitions *header_defs_p)
+
+BOOL ParseFile (CONST_STRPTR function_regexp_s, CONST_STRPTR filename_s, struct HeaderDefinitions *header_defs_p)
 {
 	struct FReadLineData *line_data_p = IDOS->AllocDosObject (DOS_FREADLINEDATA, 0);
 	BOOL success_flag = FALSE;
 
 	if (line_data_p)
 		{
-			const size_t pattern_length = strlen (pattern_s);
-
-			success_flag = GetMatchingPrototypes (filename_s, pattern_s, pattern_length, line_data_p, header_defs_p);
+			success_flag = GetMatchingPrototypes (filename_s, function_regexp_s, line_data_p, header_defs_p);
 
 			if (success_flag)
 				{
