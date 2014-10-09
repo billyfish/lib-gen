@@ -315,7 +315,7 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 				}
 			else
 				{
-					IDOS->Printf ("Not enough memeory for output directory name\n");
+					IDOS->Printf ("Not enough memory for output directory name\n");
 				}			
 		
 	
@@ -445,9 +445,12 @@ BOOL ParseFile (CONST_STRPTR pattern_s, CONST_STRPTR filename_s, struct HeaderDe
 
 			success_flag = GetMatchingPrototypes (filename_s, pattern_s, pattern_length, line_data_p, header_defs_p);
 
-			if (success_flag && GetVerboseFlag ())
+			if (success_flag)
 				{
-					IDOS->Printf ("read \"%s\" successfully\n", filename_s);
+					if (GetVerboseFlag ())
+						{
+							IDOS->Printf ("read \"%s\" successfully\n", filename_s);
+						}
 				}
 			else
 				{

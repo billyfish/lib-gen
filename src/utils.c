@@ -29,14 +29,25 @@ BOOL GetVerboseFlag (void)
 BOOL EnsureDirectoryExists (CONST_STRPTR dir_s)
 {
 	BOOL success_flag = FALSE;
-	BPTR lock_p = IDOS->CreateDirTree (dir_s);
-	
-	if (lock_p)
+	struct ExamineData *dat_p = IDOS->ExamineObjectTags (EX_StringNameInput, dir_s, TAG_END);
+
+	/* check if it already exists */
+	if (dat_p)
 		{
-			IDOS->UnLock (lock_p);
-			success_flag = TRUE;
+		  success_flag = EXD_IS_DIRECTORY (dat_p);
+		  IDOS->FreeDosObject (DOS_EXAMINEDATA, dat_p);
 		}
-	
+	else
+		{
+			BPTR lock_p = IDOS->CreateDirTree (dir_s);
+			
+			if (lock_p)
+				{
+					IDOS->UnLock (lock_p);
+					success_flag = TRUE;
+				}		
+		}
+			
 	return success_flag;
 }
 

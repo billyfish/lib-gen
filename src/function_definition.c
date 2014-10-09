@@ -15,6 +15,7 @@
 */
 
 #include <string.h>
+#include <ctype.h>
 
 #include <proto/exec.h>
 #include <proto/dos.h>
@@ -64,6 +65,12 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 							BOOL loop_flag = (end_p != NULL);
 
 							fd_p -> fd_definition_p = param_p;
+
+
+							while (isspace (*start_p))
+								{
+									++ start_p;
+								}
 
 							success_flag = TRUE;
 
@@ -282,32 +289,42 @@ BOOL WriteLibraryFunctionImplementation (BPTR out_p, const struct FunctionDefini
 
 	if (IDOS->FPrintf (out_p, "%s %s%s (", fd_p -> fd_definition_p -> pa_type_s, library_s, fd_p -> fd_definition_p -> pa_name_s) >= 0)
 		{
-			if (IDOS->FPrintf (out_p, "struct %s *Self, ", library_s) >= 0)
+			struct ParameterNode *curr_node_p = (struct ParameterNode *) IExec->GetHead (fd_p -> fd_args_p);
+			struct ParameterNode *final_node_p = (struct ParameterNode *) IExec->GetTail (fd_p -> fd_args_p);
+					
+			if (IDOS->FPrintf (out_p, "struct %s *Self", library_s) >= 0)
 				{
-					struct ParameterNode *curr_node_p = (struct ParameterNode *) IExec->GetHead (fd_p -> fd_args_p);
-					struct ParameterNode *final_node_p = (struct ParameterNode *) IExec->GetTail (fd_p -> fd_args_p);
-
-					success_flag = TRUE;
-
-					while ((curr_node_p != final_node_p) && success_flag)
+					if (curr_node_p != final_node_p)
 						{
-							success_flag = WriteParameterAsSource (out_p, curr_node_p -> pn_param_p);
-
-							if (success_flag)
+							success_flag = (IDOS->FPrintf (out_p, ", ", library_s) >= 0);
+		
+							while ((curr_node_p != final_node_p) && success_flag)
 								{
-									success_flag = (IDOS->FPrintf (out_p, ", ") >= 0);
-
+									success_flag = WriteParameterAsSource (out_p, curr_node_p -> pn_param_p);
+		
 									if (success_flag)
 										{
-											curr_node_p = (struct ParameterNode *) IExec->GetSucc ((struct Node *) curr_node_p);
+											success_flag = (IDOS->FPrintf (out_p, ", ") >= 0);
+		
+											if (success_flag)
+												{
+													curr_node_p = (struct ParameterNode *) IExec->GetSucc ((struct Node *) curr_node_p);
+												}
 										}
 								}
 						}
-
+					else
+						{
+							success_flag = TRUE;
+						}
+						
 					if (success_flag)
 						{
-							success_flag = WriteParameterAsSource (out_p, final_node_p -> pn_param_p);
-
+							if (strcmp (final_node_p -> pn_param_p -> pa_type_s, "void") != 0)
+								{
+									success_flag = WriteParameterAsSource (out_p, final_node_p -> pn_param_p);
+								}						
+							
 							if (success_flag)
 								{
 									success_flag = (IDOS->FPrintf (out_p, ")\n{\n\t") >= 0);

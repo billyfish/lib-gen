@@ -192,19 +192,27 @@ struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 			matched_flag = FALSE;
 			loop_flag = TRUE;
 
+			DB (KPRINTF ("%s %ld -  start_p=%s\n", __FILE__, __LINE__, start_p));
+
 			while (loop_flag && !matched_flag)
 				{
 					const char c = *name_start_p;
+
+					DB (KPRINTF ("%s %ld - looking for start of name %c\n", __FILE__, __LINE__, c));
 
 					if (isspace (c) || (c == '*'))
 						{
 							matched_flag = TRUE;
 							++ name_start_p;
+							
+							DB (KPRINTF ("%s %ld - !!!!!!!matched and incrementing start of name %s\n", __FILE__, __LINE__, name_start_p));
 						}
 					else
 						{
 							-- name_start_p;
 							loop_flag = (start_p < name_start_p);
+							
+							DB (KPRINTF ("%s %ld - counting down %ld=%s\n", __FILE__, __LINE__, (int) loop_flag, name_start_p));
 						}
 				}
 
