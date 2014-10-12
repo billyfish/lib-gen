@@ -61,8 +61,13 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 					if (param_p)
 						{
 							const char *start_p = opening_bracket_p + 1;
-							const char *end_p = strchr (start_p, ',');
 							BOOL loop_flag = (end_p != NULL);
+
+
+							/* find the end of the parameter definition */
+
+
+							const char *end_p = strchr (start_p, ',');
 
 							fd_p -> fd_definition_p = param_p;
 
@@ -291,21 +296,21 @@ BOOL WriteLibraryFunctionImplementation (BPTR out_p, const struct FunctionDefini
 		{
 			struct ParameterNode *curr_node_p = (struct ParameterNode *) IExec->GetHead (fd_p -> fd_args_p);
 			struct ParameterNode *final_node_p = (struct ParameterNode *) IExec->GetTail (fd_p -> fd_args_p);
-					
+
 			if (IDOS->FPrintf (out_p, "struct %s *Self", library_s) >= 0)
 				{
 					if (curr_node_p != final_node_p)
 						{
 							success_flag = (IDOS->FPrintf (out_p, ", ", library_s) >= 0);
-		
+
 							while ((curr_node_p != final_node_p) && success_flag)
 								{
 									success_flag = WriteParameterAsSource (out_p, curr_node_p -> pn_param_p);
-		
+
 									if (success_flag)
 										{
 											success_flag = (IDOS->FPrintf (out_p, ", ") >= 0);
-		
+
 											if (success_flag)
 												{
 													curr_node_p = (struct ParameterNode *) IExec->GetSucc ((struct Node *) curr_node_p);
@@ -317,14 +322,14 @@ BOOL WriteLibraryFunctionImplementation (BPTR out_p, const struct FunctionDefini
 						{
 							success_flag = TRUE;
 						}
-						
+
 					if (success_flag)
 						{
 							if (strcmp (final_node_p -> pn_param_p -> pa_type_s, "void") != 0)
 								{
 									success_flag = WriteParameterAsSource (out_p, final_node_p -> pn_param_p);
-								}						
-							
+								}
+
 							if (success_flag)
 								{
 									success_flag = (IDOS->FPrintf (out_p, ")\n{\n\t") >= 0);

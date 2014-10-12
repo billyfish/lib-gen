@@ -22,96 +22,130 @@ static BOOL SetParameterValue (char **param_value_ss, const char *start_p, const
 
 BOOL IsParameterFunctionPointer (const char *start_p, const char *end_p)
 {
-	const char *data_p = start_p;
 	BOOL is_param_function_pointer_flag = FALSE;
+	char *data_p = strchr (data_p, '(');
 
-	while (data_p && (data_p < end_p))
+	if (data_p)
 		{
-			data_p = strchr (data_p, '(');
+			BOOL loop_flag = data_p && (data_p < end_p);
 
-			while (data_p && (data_p < end_p))
-				{				
-					++ data_p;
-					
+			++ data_p;
+
+			while (loop_flag)
+				{
 					if (*data_p == '*')
 						{
 							is_param_function_pointer_flag = TRUE;
-
-							/* Force exit from loop */
-							data_p = NULL;
+							loop_flag = FALSE;
 						}
-					else 
+					else if (!isspace (*data_p))
 						{
-							++ data_p;
+							loop_flag = FALSE;
 						}
+				}
+		}
 
-				}		/* if (data_p) */
-
-		}		/* while (data_p && (data_p < end_p)) */
-
-	return FALSE; //is_param_function_pointer_flag;
+	return is_param_function_pointer_flag;
 }
 
 
-struct Parameter *ParseFunctionPointerParameter (const char *start_p, const char **end_pp)
+static void ScrollPastWhitespace (const char **start_pp, const char *end_p, const BOOL space_flag)
 {
-	struct Parameter *param_p = NULL;
-	const char *type_start_p = NULL;
-	const char *type_end_p = NULL;
-	const char *name_start_p = strchr (start_p, '(');
-	const char *name_end_p = *end_pp;
-	char *name_s = NULL;
-	uint8 array_count = 0;
-	
-	if (name_start_p)
+	const char *start_p = *start_pp;
+	BOOL loop_flag = (start_p < end_p);
+
+	/* scroll past any whitespace */
+	while (loop_flag)
 		{
-			const char *data_p = name_start_p;
-			BOOL loop_flag = TRUE;
-			BOOL matched_flag = FALSE;
-			BOOL space_flag = TRUE;
-			
-			/* find the closing bracket */
-			while (loop_flag && !matched_flag)
+			BOOL b = (isspace (start_p) == 0);
+
+			if (b == space_flag)
 				{
-					const char c = *data_p;
-					
-					if (c == ')')
+					++ start_p;
+
+					if (start_p >= end_p)
 						{
-							matched_flag = TRUE;
-						}		
-					else if (space_flag && (!isspace (c)))
-						{
-							space_flag = FALSE;
-							
-							if (c == '*')
-								{
-									
-									loop_flag = FALSE;
-								}
-							
-						}
-						
-					if (loop_flag && !matched_flag)
-						{
-							++ data_p;
-							
-							loop_flag = (data_p && (data_p < *end_pp));
+							loop_flag = FALSE;
 						}
 				}
-				
-				
-			if (matched_flag)
+			else
 				{
-					loop_flag = TRUE;
-					matched_flag = FALSE;
-					
-					
+					loop_flag = FALSE;
 				}
 		}
-	
 
-				
-				
+	start_pp = &start_p;
+
+	return (start_p < end_p);
+}
+
+
+BOOL ParseFunctionPointerParameter (const char **start_pp, const char **end_pp)
+{
+	const char *type_start_p = NULL;
+	const char *type_end_p = NULL;
+	const char *start_p = *start_pp;
+	const char *name_end_p = *end_pp;
+	char *name_s = NULL;
+	const char *end_p = *end_pp;
+
+	/* scroll past any whitespace */
+	if (ScrollPastWhitespace (&start_p, end_p, TRUE))
+		{
+			if (*start_p == '(')
+				{
+					const char *data_p = start_p + 1;
+
+					if (ScrollPastWhitespace (&data_p, end_p, FALSE))
+						{
+							/* Do we have a function pointer parameter? */
+							if (*data_p == '*')
+								{
+									BOOL match_flag = FAlSE;
+									uint8 bracket_count = 1;
+
+									++ data_p;
+
+									while (data_p && (data_p < end_p) && (bracket_count > 0))
+										{
+											if (*data_p == '(')
+												{
+													++ bracket_count;
+												}
+											else if (*data_p == ')')
+												{
+													-- bracket_count;
+												}
+
+											if (bracket_count > 0)
+												{
+													++ data_p;
+												}
+											else if (data_p && (data_p < end_p))
+												{
+													match_flag = TRUE;
+												}
+										}
+
+									if (match_flag)
+										{
+
+											name_end_p = data_p;
+										}
+
+
+								}		/* if (*data_p == '*') */
+							else
+								{
+									/* It's a standard parameter */
+								}
+
+						}		/* if (ScrollPastWhitespace (&data_p, end_p, FALSE)) */
+
+				}		/* if (*start_p == '(') */
+
+		}		/* if (ScrollPastWhitespace (&start_p, end_p, TRUE)) */
+
 	return param_p;
 }
 
@@ -204,14 +238,14 @@ struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 						{
 							matched_flag = TRUE;
 							++ name_start_p;
-							
+
 							DB (KPRINTF ("%s %ld - !!!!!!!matched and incrementing start of name %s\n", __FILE__, __LINE__, name_start_p));
 						}
 					else
 						{
 							-- name_start_p;
 							loop_flag = (start_p < name_start_p);
-							
+
 							DB (KPRINTF ("%s %ld - counting down %ld=%s\n", __FILE__, __LINE__, (int) loop_flag, name_start_p));
 						}
 				}
@@ -221,31 +255,31 @@ struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 			if (!matched_flag)
 				{
 					DB (KPRINTF ("%s %ld -  checking void match name_start_p: \"%s\" name_end_p: \"%s\" diff %ld\n", __FILE__, __LINE__, name_start_p,  name_end_p, (int) (name_end_p - name_start_p)));
-					
+
 					if ((name_end_p - name_start_p == 3) && (strncmp ("void", name_start_p, 4) == 0))
 						{
 							type_s = CopyToNewString (name_start_p, name_end_p, FALSE);
-							
+
 							matched_flag = (type_s != NULL);
 							name_s = NULL;
-						}				
-						
+						}
+
 					DB (KPRINTF ("%s %ld -  void match %ld\n", __FILE__, __LINE__, (int) matched_flag));
 				}
 			else
 				{
 					// success;
 					name_s = CopyToNewString (name_start_p, name_end_p, FALSE);
-					
+
 					DB (KPRINTF ("%s %ld -  setting param name to: \"%s\" from \"%s\"\n", __FILE__, __LINE__, name_s ? name_s : "NULL", start_p));
-					
+
 					if (!name_s)
 						{
 							IDOS->Printf ("Failed to allocate memory for param name");
 							matched_flag = FALSE;
-						}	
-						
-				
+						}
+
+
 					/* Have we found the start of the name? */
 					if (matched_flag)
 						{
@@ -253,11 +287,11 @@ struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 							type_end_p = name_start_p - 1;
 							matched_flag = FALSE;
 							loop_flag = (type_end_p > start_p);
-		
+
 							while (loop_flag && !matched_flag)
 								{
 									const char c = *type_end_p;
-		
+
 									if (isspace (c))
 										{
 											-- type_end_p;
@@ -268,10 +302,10 @@ struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 											matched_flag = TRUE;
 										}
 								}
-		
-		
+
+
 							DB (KPRINTF ("%s %ld -  type_end_p to: \"%s\" from \"%s\" %ld\n", __FILE__, __LINE__, type_end_p,  start_p, (int) matched_flag));
-		
+
 							/* Did we get the end of the type? */
 							if (matched_flag)
 								{
@@ -279,11 +313,11 @@ struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 									type_start_p = start_p;
 									matched_flag = FALSE;
 									loop_flag = (type_start_p < type_end_p);
-		
+
 									while (loop_flag && !matched_flag)
 										{
 											const char c = *type_start_p;
-		
+
 											if (isspace (c))
 												{
 													++ type_start_p;
@@ -294,19 +328,19 @@ struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 													matched_flag = TRUE;
 												}
 										}
-		
+
 									DB (KPRINTF ("%s %ld -  type_end_p to: \"%s\" from \"%s\" %ld\n", __FILE__, __LINE__, type_end_p,  start_p, (int) matched_flag));
-								
+
 								}
-								
+
 							if (matched_flag)
 								{
 									type_s = CopyToNewString (type_start_p, type_end_p, FALSE);
 								}
-						}	
+						}
 				}
-		
-			
+
+
 			if (matched_flag)
 				{
 					param_p = AllocateParameter (type_s, name_s);
@@ -514,7 +548,7 @@ BOOL WriteParameterAsSource (BPTR out_p, const struct Parameter * const param_p)
 					success_flag = TRUE;
 				}
 		}
-		
+
 	return success_flag;
 }
 
