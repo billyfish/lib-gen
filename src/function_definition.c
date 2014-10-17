@@ -62,20 +62,25 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 						{
 							const char *start_p = opening_bracket_p + 1;
 							BOOL loop_flag = (end_p != NULL);
+							const char *start_of_last_token_p;
+
+							/* scroll to the first non-spacecharacter */
+							while (isspace (*start_p))
+								{
+									++ start_p;
+								}
+							start_of_last_token_p = start_p;
+
+
+							/* scroll until we
 
 
 							/* find the end of the parameter definition */
-
-
 							const char *end_p = strchr (start_p, ',');
 
 							fd_p -> fd_definition_p = param_p;
 
 
-							while (isspace (*start_p))
-								{
-									++ start_p;
-								}
 
 							success_flag = TRUE;
 
