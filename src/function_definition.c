@@ -25,6 +25,59 @@
 #include "memory.h"
 #include "utils.h"
 
+
+char *FindParameterEnd (char *start_p)
+{
+	char *end_p = NULL;
+	uint8 bracket_count = 0;
+
+	while ((*start_p != '\0') && (!end_p))
+		{
+			switch (*start_p)
+				{
+					case '(':
+						++ bracket_count;
+						break;
+
+					case ')':
+						switch (bracket_count)
+							{
+								case 1:
+									end_p = start_p;
+									break;
+
+								case 0:
+									/* error*/
+									break;
+
+								default:
+									-- bracket_count;
+									break;
+							}
+						break;
+
+					case ',':
+						if (bracket_count == 0)
+							{
+								end_p = start_p;
+							}
+						break;
+
+					default:
+						break;
+				}		/* switch (start_p) */
+
+			if (!end_p)
+				{
+					++ start_p;
+				}
+		}
+
+	return end_p;
+}
+
+
+
 /*
 	<type> <function> (<type> <name>, ....);
 
@@ -159,16 +212,90 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 
 				}		/* if (opening_bracket_p) */
 
-		}
+			if (!success_flag)
+				{
+					FreeFunctionDefinition (fd_p);
+					fd_p = NULL;
+				}
 
-	if (!success_flag)
-		{
-			FreeFunctionDefinition (fd_p);
-			fd_p = NULL;
-		}
+		}		/* if (fd_p) */
+
 
 	return fd_p;
 }
+
+
+struct FunctionDefinition *TokenizeFunctionPrototype2 (const char *prototype_s)
+{
+	BOOL success_flag = FALSE;
+	struct FunctionDefinition *fd_p = AllocateFunctionDefinition ();
+
+	DB (KPRINTF ("%s %ld - Tokenizing \"%s\"\n", __FILE__, __LINE__, prototype_s));
+
+	if (fd_p)
+		{
+			/* Get the function name and return type */
+			const char *opening_bracket_p = strchr (prototype_s, '(');
+
+			if (opening_bracket_p)
+				{
+					struct Parameter *param_p = ParseParameter (prototype_s, opening_bracket_p - 1);
+
+					if (param_p)
+						{
+							/* Get each of the parameters in turn */
+							const char *comma_p;
+							const char *closing_bracket_p;
+							const char *next_opening_bracket_p;
+
+							++ opening_bracket_p;
+
+							comma_p = strchr (opening_bracket_p, ',');
+							next_opening_bracket_p = strchr (opening_bracket_p, '(');
+
+							if (next_opening_bracket_p)
+								{
+									/* at least one of the parameters is a function pointer */
+									if (comma_p)
+										{
+											while (opening_bracket_p)
+												{
+													if (comma_p < next_opening_bracket_p)
+														{
+															/* next parameter is normal */
+															param_p = ParseParameter (opening_bracket_p, next_opening_bracket_p - 1);
+															opening_
+														}
+												}
+
+										}		/* if (comma_p) */
+									else
+										{
+											/* only 1 parameter */
+										}
+
+								}
+							else
+								{
+
+								}
+
+
+						}
+				}		/* if (opening_bracket_p) */
+
+			if (!success_flag)
+				{
+					FreeFunctionDefinition (fd_p);
+					fd_p = NULL;
+				}
+
+		}
+
+
+	return fd_p;
+}
+
 
 
 uint32 GetFunctionDefinitionsListSize (struct List * const list_p)
