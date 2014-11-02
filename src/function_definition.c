@@ -26,28 +26,78 @@
 #include "utils.h"
 
 
-char *FindParameterEnd (char *start_p)
-{
-	char *end_p = NULL;
-	uint8 bracket_count = 0;
 
-	while ((*start_p != '\0') && (!end_p))
+void UnitTest (const char *prototype_s)
+{
+	const char *start_p = prototype_s;
+	const char *end_p = NULL;
+	BOOL function_flag = TRUE;
+
+	printf ("*** %s ***\n", prototype_s);
+
+	while (start_p)
 		{
-			switch (*start_p)
+			end_p = FindParameterEnd (start_p, function_flag);
+
+			if (end_p)
+				{
+					if (function_flag)
+						{
+							function_flag = FALSE;
+						}
+
+					start_p = end_p + 1;
+				}
+			else
+				{
+					start_p = NULL;
+				}
+		}
+
+	printf ("\n");
+}
+
+
+const char *FindParameterEnd (const char *start_p, BOOL function_flag)
+{
+	const char *data_p = start_p;
+	const char *end_p = NULL;
+	const char *res_p = NULL;
+	uint8 bracket_count = 0;
+	BOOL function_pointer_parameter_flag = FALSE;
+
+	while ((*data_p != '\0') && (!res_p))
+		{
+			switch (*data_p)
 				{
 					case '(':
-						++ bracket_count;
+						if (function_flag)
+							{
+								end_p = data_p - 1;
+								res_p = data_p;
+							}
+						else
+							{
+								function_pointer_parameter_flag = TRUE;
+								++ bracket_count;
+							}
 						break;
 
 					case ')':
 						switch (bracket_count)
 							{
 								case 1:
-									end_p = start_p;
-									break;
-
 								case 0:
-									/* error*/
+									if (function_pointer_parameter_flag)
+										{
+											 function_pointer_parameter_flag = FALSE;
+											 -- bracket_count;
+										}
+									else
+										{
+											end_p = data_p - 1;
+											res_p = data_p + 1;
+										}
 									break;
 
 								default:
@@ -59,21 +109,48 @@ char *FindParameterEnd (char *start_p)
 					case ',':
 						if (bracket_count == 0)
 							{
-								end_p = start_p;
+								end_p = data_p - 1;
+								res_p = data_p + 1;
 							}
 						break;
 
 					default:
 						break;
-				}		/* switch (start_p) */
+				}		/* switch (data_p) */
 
-			if (!end_p)
+			if (!res_p)
 				{
-					++ start_p;
+					++ data_p;
 				}
 		}
 
-	return end_p;
+	if (end_p)
+		{
+			const char *temp_p = end_p;
+			char *param_s = NULL;
+
+			while (isspace (*temp_p))
+				{
+					-- temp_p;
+				}
+
+			while (isspace (*start_p))
+				{
+					++ start_p;
+				}
+
+
+			param_s = CopyToNewString (start_p, temp_p, FALSE);
+
+			if (param_s)
+				{
+					printf ("param \"%s\"\n", param_s);
+					free (param_s);
+				}
+
+		}
+
+	return res_p;
 }
 
 
