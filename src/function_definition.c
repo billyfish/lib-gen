@@ -26,6 +26,10 @@
 #include "utils.h"
 
 
+#ifdef _DBUG
+#define FUNCTION_DEFINITIONS_DEBUG (1)
+#endif
+
 
 void UnitTest (const char *prototype_s)
 {
@@ -33,7 +37,7 @@ void UnitTest (const char *prototype_s)
 	const char *end_p = NULL;
 	BOOL function_flag = TRUE;
 
-	printf ("*** %s ***\n", prototype_s);
+	IDOS->Printf ("*** %s ***\n", prototype_s);
 
 	while (start_p)
 		{
@@ -54,7 +58,7 @@ void UnitTest (const char *prototype_s)
 				}
 		}
 
-	printf ("\n");
+	IDOS->Printf ("\n");
 }
 
 
@@ -127,7 +131,10 @@ const char *FindParameterEnd (const char *start_p, BOOL function_flag)
 	if (end_p)
 		{
 			const char *temp_p = end_p;
+
+			#ifdef FUNCTION_DEFINITIONS_DEBUG
 			char *param_s = NULL;
+			#endif
 
 			while (isspace (*temp_p))
 				{
@@ -140,14 +147,15 @@ const char *FindParameterEnd (const char *start_p, BOOL function_flag)
 				}
 
 
+			#ifdef FUNCTION_DEFINITIONS_DEBUG
 			param_s = CopyToNewString (start_p, temp_p, FALSE);
 
 			if (param_s)
 				{
-					printf ("param \"%s\"\n", param_s);
-					free (param_s);
+					DB (KPRINTF ("%s %ld - param \"%s\"\n", __FILE__, __LINE__, param_s));
+					IExec->FreeVecTags (param_s);
 				}
-
+			#endif
 		}
 
 	return res_p;
@@ -179,115 +187,44 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 
 	if (fd_p)
 		{
-			const char *opening_bracket_p = strchr (prototype_s, '(');
-			const char *closing_bracket_p = strrchr (prototype_s, ')');
-
-			//DB (KPRINTF ("%s %ld - opening_bracket \"%s\"\n", __FILE__, __LINE__, opening_bracket_p ? opening_bracket_p : "NULL"));
-
-			if (opening_bracket_p && closing_bracket_p)
+			const char *start_p = prototype_s;
+			const char *end_p = NULL;
+			BOOL function_flag = TRUE;
+			BOOL loop_flag = TRUE;
+			
+			success_flag = TRUE;
+			
+			while (loop_flag && success_flag)
 				{
-					struct Parameter *param_p = ParseParameter (prototype_s, opening_bracket_p - 1);
-
-					if (param_p)
+					end_p = FindParameterEnd (start_p, function_flag);
+		
+					if (end_p)
 						{
-							const char *start_p = opening_bracket_p + 1;
-							BOOL loop_flag = (end_p != NULL);
-							const char *start_of_last_token_p;
-
-							/* scroll to the first non-spacecharacter */
-							while (isspace (*start_p))
+							struct Parameter *param_p = ParseParameter (start_p, end_p);
+							
+							if (param_p)
 								{
-									++ start_p;
-								}
-							start_of_last_token_p = start_p;
-
-
-							/* scroll until we
-
-
-							/* find the end of the parameter definition */
-							const char *end_p = strchr (start_p, ',');
-
-							fd_p -> fd_definition_p = param_p;
-
-
-
-							success_flag = TRUE;
-
-							/* Get all of the parameters before each comma */
-							while (loop_flag && success_flag)
-								{
-									DB (KPRINTF ("%s %ld - Tokenizing loop %s", __FILE__, __LINE__, start_p));
-
-									if (IsParameterFunctionPointer (start_p, end_p))
+									if (function_flag)
 										{
-
+											fd_p -> fd_definition_p = param_p;
+											function_flag = FALSE;
 										}
 									else
 										{
-											param_p = ParseParameter (start_p, end_p);
-										}
-
-
-									if (param_p)
-										{
-											if (AddParameterAtBack (fd_p, param_p))
-												{
-													start_p = end_p + 1;
-
-													if (start_p < closing_bracket_p)
-														{
-															end_p = strchr (start_p, ',');
-
-															if (!end_p)
-																{
-																	loop_flag = FALSE;
-																}
-														}
-													else
-														{
-															loop_flag = FALSE;
-														}
-												}
-											else
-												{
-													success_flag = FALSE;
-												}
-										}
-									else
-										{
-											success_flag = FALSE;
+											success_flag = AddParameterAtBack (fd_p, param_p);
 										}
 								}
-
-
-							if (success_flag)
+							else
 								{
-									//const char *start_p = (end_p != NULL) ? end_p + 1 : opening_bracket_p + 1;
-									end_p = strchr (start_p, ')');
-
-									/* Get the final parameter before the closing braacket */
-									if (end_p)
-										{
-											param_p = ParseParameter (start_p, end_p);
-
-											if (param_p)
-												{
-													success_flag = AddParameterAtBack (fd_p, param_p);
-												}
-											else
-												{
-													success_flag = FALSE;
-												}
-										}
-									else
-										{
-											success_flag = FALSE;
-										}
+									success_flag = FALSE;
 								}
 						}
-
-				}		/* if (opening_bracket_p) */
+					else
+						{
+							loop_flag = FALSE;
+						}
+				
+				}		/* while (start_p) */		
 
 			if (!success_flag)
 				{
@@ -300,79 +237,6 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 
 	return fd_p;
 }
-
-
-struct FunctionDefinition *TokenizeFunctionPrototype2 (const char *prototype_s)
-{
-	BOOL success_flag = FALSE;
-	struct FunctionDefinition *fd_p = AllocateFunctionDefinition ();
-
-	DB (KPRINTF ("%s %ld - Tokenizing \"%s\"\n", __FILE__, __LINE__, prototype_s));
-
-	if (fd_p)
-		{
-			/* Get the function name and return type */
-			const char *opening_bracket_p = strchr (prototype_s, '(');
-
-			if (opening_bracket_p)
-				{
-					struct Parameter *param_p = ParseParameter (prototype_s, opening_bracket_p - 1);
-
-					if (param_p)
-						{
-							/* Get each of the parameters in turn */
-							const char *comma_p;
-							const char *closing_bracket_p;
-							const char *next_opening_bracket_p;
-
-							++ opening_bracket_p;
-
-							comma_p = strchr (opening_bracket_p, ',');
-							next_opening_bracket_p = strchr (opening_bracket_p, '(');
-
-							if (next_opening_bracket_p)
-								{
-									/* at least one of the parameters is a function pointer */
-									if (comma_p)
-										{
-											while (opening_bracket_p)
-												{
-													if (comma_p < next_opening_bracket_p)
-														{
-															/* next parameter is normal */
-															param_p = ParseParameter (opening_bracket_p, next_opening_bracket_p - 1);
-															opening_
-														}
-												}
-
-										}		/* if (comma_p) */
-									else
-										{
-											/* only 1 parameter */
-										}
-
-								}
-							else
-								{
-
-								}
-
-
-						}
-				}		/* if (opening_bracket_p) */
-
-			if (!success_flag)
-				{
-					FreeFunctionDefinition (fd_p);
-					fd_p = NULL;
-				}
-
-		}
-
-
-	return fd_p;
-}
-
 
 
 uint32 GetFunctionDefinitionsListSize (struct List * const list_p)
