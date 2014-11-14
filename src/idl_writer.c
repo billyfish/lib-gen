@@ -8,7 +8,6 @@
 #include <exec/types.h>
 
 #include "idl_writer.h"
-#include "memory.h"
 #include "parameter.h"
 #include "function_definition.h"
 #include "header_definitions.h"

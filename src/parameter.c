@@ -8,7 +8,6 @@
 
 #include "debugging_utils.h"
 
-#include "memory.h"
 #include "parameter.h"
 #include "utils.h"
 
@@ -20,7 +19,7 @@ static BOOL SetParameterValue (char **param_value_ss, const char *start_p, const
 /**************************/
 
 
-struct Parameter *ParseParameter (const char *start_p, const char *end_p)
+struct Parameter *GetNormalParameter (const char *start_p, const char *end_p)
 {
 	struct Parameter *param_p = NULL;
 	const char *type_start_p = NULL;
@@ -86,7 +85,7 @@ struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 				}
 		}
 
-	DB (KPRINTF ("%s %ld -  name_end_p to: \"%s\" from \"%s\" %ld\n", __FILE__, __LINE__, name_end_p, start_p, (int) matched_flag));
+	DB (KPRINTF ("%s %ld -  name_end_p to: \"%c\" from \"%s\" %ld\n", __FILE__, __LINE__, *name_end_p, start_p, (int) matched_flag));
 
 	/* Have we found the end of the name? */
 	if (matched_flag)
@@ -116,7 +115,7 @@ struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 							-- name_start_p;
 							loop_flag = (start_p < name_start_p);
 
-							DB (KPRINTF ("%s %ld - counting down %ld=%s\n", __FILE__, __LINE__, (int) loop_flag, name_start_p));
+							DB (KPRINTF ("%s %ld - counting down %ld=%c\n", __FILE__, __LINE__, (int) loop_flag, *name_start_p));
 						}
 				}
 
@@ -188,6 +187,8 @@ struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 										{
 											const char c = *type_start_p;
 
+											DB (KPRINTF ("%s %ld -  type_start_p to: \"%c\" %ld\n", __FILE__, __LINE__, type_start_p, (int) matched_flag));
+
 											if (isspace (c))
 												{
 													++ type_start_p;
@@ -199,9 +200,9 @@ struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 												}
 										}
 
-									DB (KPRINTF ("%s %ld -  type_end_p to: \"%s\" from \"%s\" %ld\n", __FILE__, __LINE__, type_end_p,  start_p, (int) matched_flag));
-
 								}
+
+								DB (KPRINTF ("%s %ld -  final type_start_p to: \"%c\" %ld\n", __FILE__, __LINE__, type_start_p, (int) matched_flag));
 
 							if (matched_flag)
 								{

@@ -4,16 +4,16 @@
 #
 # Project: libgen
 #
-# Created on: 02-10-2014 23:34:25
+# Created on: 14-11-2014 22:26:44
 #
 #
 
 CC = SDK:gcc/bin/gcc
 OBJ = \
 	 src/library_utils.o src/header_definitions.o src/idl_writer.o \
-	 src/memory.o src/main.o src/utils.o \
-	 src/parameter.o src/function_definition.o src/writer.o \
-	 src/c_writer.o src/makefile_utils.o
+	 src/main.o src/utils.o src/parameter.o \
+	 src/function_definition.o src/writer.o src/c_writer.o \
+	 src/makefile_utils.o
 
 BIN = libgen
 
@@ -48,28 +48,25 @@ $(BIN): $(OBJ)
 src/library_utils.o: src/library_utils.c src/library_utils.h
 	$(CC) -c src/library_utils.c -o src/library_utils.o $(CFLAGS)
 
-src/header_definitions.o: src/header_definitions.c src/header_definitions.h src/function_definition.h src/parameter.h src/memory.h src/debugging_utils.h src/utils.h src/makefile_utils.h
+src/header_definitions.o: src/header_definitions.c src/header_definitions.h src/function_definition.h src/parameter.h src/debugging_utils.h src/utils.h src/makefile_utils.h
 	$(CC) -c src/header_definitions.c -o src/header_definitions.o $(CFLAGS)
 
-src/idl_writer.o: src/idl_writer.c src/idl_writer.h src/writer.h src/header_definitions.h src/memory.h src/parameter.h src/function_definition.h src/debugging_utils.h
+src/idl_writer.o: src/idl_writer.c src/idl_writer.h src/writer.h src/header_definitions.h src/parameter.h src/function_definition.h src/debugging_utils.h
 	$(CC) -c src/idl_writer.c -o src/idl_writer.o $(CFLAGS)
 
-src/memory.o: src/memory.c src/memory.h
-	$(CC) -c src/memory.c -o src/memory.o $(CFLAGS)
-
-src/main.o: src/main.c src/utils.h src/header_definitions.h src/function_definition.h src/parameter.h src/memory.h src/debugging_utils.h src/idl_writer.h src/writer.h src/library_utils.h
+src/main.o: src/main.c src/utils.h src/header_definitions.h src/function_definition.h src/parameter.h src/debugging_utils.h src/idl_writer.h src/writer.h src/library_utils.h
 	$(CC) -c src/main.c -o src/main.o $(CFLAGS)
 
-src/utils.o: src/utils.c src/debugging_utils.h src/memory.h src/utils.h src/parameter.h src/header_definitions.h src/function_definition.h
+src/utils.o: src/utils.c src/debugging_utils.h src/utils.h src/parameter.h src/header_definitions.h src/function_definition.h
 	$(CC) -c src/utils.c -o src/utils.o $(CFLAGS)
 
-src/parameter.o: src/parameter.c src/debugging_utils.h src/memory.h src/parameter.h src/utils.h
+src/parameter.o: src/parameter.c src/debugging_utils.h src/parameter.h src/utils.h
 	$(CC) -c src/parameter.c -o src/parameter.o $(CFLAGS)
 
-src/function_definition.o: src/function_definition.c src/function_definition.h src/parameter.h src/debugging_utils.h src/memory.h
+src/function_definition.o: src/function_definition.c src/function_definition.h src/parameter.h src/debugging_utils.h src/utils.h
 	$(CC) -c src/function_definition.c -o src/function_definition.o $(CFLAGS)
 
-src/writer.o: src/writer.c src/writer.h src/header_definitions.h src/function_definition.h src/memory.h
+src/writer.o: src/writer.c src/writer.h src/header_definitions.h src/function_definition.h
 	$(CC) -c src/writer.c -o src/writer.o $(CFLAGS)
 
 src/c_writer.o: src/c_writer.c src/c_writer.h src/writer.h src/header_definitions.h

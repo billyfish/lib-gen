@@ -2,6 +2,7 @@
 #include <proto/exec.h>
 
 #include <string.h>
+#include <stdlib.h>
 
 #include "header_definitions.h"
 #include "function_definition.h"
