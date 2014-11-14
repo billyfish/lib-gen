@@ -260,7 +260,7 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 
 	if (prototype_pattern_s)
 		{
-			prototype_regexp_s = CreateRegEx (prototype_pattern_s, FALSE);
+			prototype_regexp_s = CreateRegEx (prototype_pattern_s, TRUE);
 			
 			if (!prototype_regexp_s)
 				{
@@ -429,13 +429,37 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, str
 			success_flag = TRUE;
 			memset (capture_p, 0, sizeof (struct CapturedExpression));
 			
+			DB (KPRINTF ("%s %ld - GetMatchingPrototypes: pattern \"%s\"\n", __FILE__, __LINE__, pattern_s));	
+			
 			while ((count = IDOS->FReadLine (handle_p, line_p)) > 0)
 				{
-					if (IDOS->CapturePattern (pattern_s, line_p -> frld_Line, TRUE, &capture_p) == 0)
+					/* DB (KPRINTF ("%s %ld - GetMatchingPrototypes: line \"%s\"\n", __FILE__, __LINE__, line_p -> frld_Line));	*/
+					
+					if (IDOS->CapturePattern (pattern_s, line_p -> frld_Line, TRUE, &capture_p) != 0)
 						{
 							/* we only want the first match */
-							STRPTR prototype_s = CopyToNewString (capture_p -> cape_Start, (capture_p -> cape_End) - 1, FALSE);
+							STRPTR prototype_s = capture_p -> cape_Match;
 							
+							if (capture_p)
+								{
+									DB (KPRINTF ("%s %ld - GetMatchingPrototypes: cap match %8X start %8X end %8X next %8X\n", __FILE__, __LINE__, capture_p -> cape_Match,  capture_p -> cape_Start, capture_p -> cape_End, capture_p -> cape_Next));	
+								
+								if  (capture_p -> cape_Start)
+								{
+									DB (KPRINTF ("%s %ld - GetMatchingPrototypes: start \"%s\" end \"%s\" match \"%s\"\n", __FILE__, __LINE__, capture_p -> cape_Start, capture_p -> cape_End, capture_p -> cape_Match));							
+								}
+							else
+								{
+									DB (KPRINTF ("%s %ld - GetMatchingPrototypes: start NULL\n", __FILE__, __LINE__));		
+								}
+							}
+						else
+							{
+								DB (KPRINTF ("%s %ld - GetMatchingPrototypes: capture_p NULL\n", __FILE__, __LINE__));
+							}
+						
+														
+							//prototype_s = CopyToNewString (capture_p -> cape_Start, (capture_p -> cape_End) - 1, FALSE);
 							if (prototype_s)
 								{		
 									struct FunctionDefinition *fn_def_p = NULL;
@@ -472,7 +496,7 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, str
 								}
 
 							/* Clear the capture list */
-							ClearCapturedExpression (capture_p);
+							//ClearCapturedExpression (capture_p);
 							
 						}
 					else

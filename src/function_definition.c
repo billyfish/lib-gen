@@ -88,25 +88,28 @@ const char *FindParameterEnd (const char *start_p, BOOL function_flag)
 						break;
 
 					case ')':
-						switch (bracket_count)
+						if (function_pointer_parameter_flag)
 							{
-								case 1:
-								case 0:
-									if (function_pointer_parameter_flag)
-										{
-											 function_pointer_parameter_flag = FALSE;
-											 -- bracket_count;
-										}
-									else
-										{
-											end_p = data_p - 1;
-											res_p = data_p + 1;
-										}
-									break;
-
-								default:
-									-- bracket_count;
-									break;
+								if (bracket_count == 0)
+									{
+										function_pointer_parameter_flag = FALSE;
+									}
+								else
+									{
+										-- bracket_count;
+									}
+							}
+						else
+							{
+								if (bracket_count == 0)
+									{
+										end_p = data_p - 1;
+										res_p = data_p + 1;									
+									}
+								else
+									{
+										-- bracket_count;
+									}							
 							}
 						break;
 
@@ -213,6 +216,8 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 										{
 											success_flag = AddParameterAtBack (fd_p, param_p);
 										}
+										
+									start_p = end_p + 1;
 								}
 							else
 								{
@@ -262,7 +267,7 @@ uint32 GetFunctionDefinitionsListSize (struct List * const list_p)
 
 struct FunctionDefinition *AllocateFunctionDefinition (void)
 {
-	struct FunctionDefinition *fd_p = (struct FunctionDefinition *) AllocMemory (sizeof (struct FunctionDefinition));
+	struct FunctionDefinition *fd_p = (struct FunctionDefinition *) IExec->AllocVecTags (sizeof (struct FunctionDefinition), TAG_DONE);
 
 	if (fd_p)
 		{
@@ -278,7 +283,7 @@ struct FunctionDefinition *AllocateFunctionDefinition (void)
 					return fd_p;
 				}
 
-			FreeMemory (fd_p);
+			IExec->FreeVec (fd_p);
 		}
 
 	return NULL;
@@ -294,7 +299,7 @@ void FreeFunctionDefinition (struct FunctionDefinition *fd_p)
 
 	FreeParameterList (fd_p -> fd_args_p);
 
-	FreeMemory (fd_p);
+	IExec->FreeVec (fd_p);
 }
 
 

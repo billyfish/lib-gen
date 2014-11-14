@@ -24,11 +24,13 @@ typedef enum
 	MF_ALREADY_FREED
 } MEM_FLAG;
 
+/*
 void *AllocMemory (size_t size);
 
 void FreeMemory (void *mem_p);
 
 void *AllocMemoryArray (size_t num, size_t size);
+*/
 
 #ifdef __cplusplus
 }

@@ -45,7 +45,7 @@ static CONST_STRPTR GetIDLWriterFileSuffix (struct Writer *writer_p)
 
 Writer *AllocateIDLWriter (void)
 {
-	IDLWriter *idl_p = (IDLWriter *) AllocMemory (sizeof (IDLWriter));
+	IDLWriter *idl_p = (IDLWriter *) IExec->AllocVecTags (sizeof (IDLWriter), TAG_DONE);
 
 	if (idl_p)
 		{
@@ -61,7 +61,7 @@ void FreeIDLWriter (Writer *writer_p)
 {
 	IDLWriter *idl_p = (IDLWriter *) writer_p;
 
-	FreeMemory (idl_p);
+	IExec->FreeVec (idl_p);
 }
 
 

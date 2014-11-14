@@ -67,7 +67,6 @@ BOOL WriteParameterAsSource (BPTR out_p, const struct Parameter * const param_p)
 
 BOOL IsVoidParameter (const struct Parameter *param_p);
 
-BOOL IsParameterFunctionPointer (const char *start_p, const char *end_p);
 
 
 #ifdef __cplusplus

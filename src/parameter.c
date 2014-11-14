@@ -20,35 +20,6 @@ static BOOL SetParameterValue (char **param_value_ss, const char *start_p, const
 /**************************/
 
 
-BOOL IsParameterFunctionPointer (const char *start_p, const char *end_p)
-{
-	BOOL is_param_function_pointer_flag = FALSE;
-	char *data_p = strchr (data_p, '(');
-
-	if (data_p)
-		{
-			BOOL loop_flag = data_p && (data_p < end_p);
-
-			++ data_p;
-
-			while (loop_flag)
-				{
-					if (*data_p == '*')
-						{
-							is_param_function_pointer_flag = TRUE;
-							loop_flag = FALSE;
-						}
-					else if (!isspace (*data_p))
-						{
-							loop_flag = FALSE;
-						}
-				}
-		}
-
-	return is_param_function_pointer_flag;
-}
-
-
 struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 {
 	struct Parameter *param_p = NULL;
@@ -317,7 +288,7 @@ struct ParameterNode *AllocateParameterNode (struct Parameter *param_p)
 
 struct Parameter *AllocateParameter (char *type_s, char *name_s)
 {
-	struct Parameter *param_p = (struct Parameter *) AllocMemory (sizeof (struct Parameter));
+	struct Parameter *param_p = (struct Parameter *) IExec->AllocVecTags (sizeof (struct Parameter));
 
 	if (param_p)
 		{
@@ -334,20 +305,22 @@ struct Parameter *AllocateParameter (char *type_s, char *name_s)
 void FreeParameter (struct Parameter *param_p)
 {
 	ClearParameter (param_p);
-	FreeMemory (param_p);
+	IExec->FreeVec (param_p);
 }
 
 
 void ClearParameter (struct Parameter *param_p)
 {
+	DB (KPRINTF ("%s %ld - freeing \"%s\" \"%s\"\n", __FILE__, __LINE__, param_p -> pa_name_s, param_p -> pa_type_s));
+
 	if (param_p -> pa_name_s)
 		{
-			FreeMemory (param_p -> pa_name_s);
+			IExec->FreeVec (param_p -> pa_name_s);
 		}
 
 	if (param_p -> pa_type_s)
 		{
-			FreeMemory (param_p -> pa_type_s);
+			IExec->FreeVec (param_p -> pa_type_s);
 		}
 
 }
@@ -404,13 +377,13 @@ static BOOL SetParameterValue (char **param_value_ss, const char *start_p, const
 
 	if (start_p != end_p)
 		{
-			copy_s = (char *) AllocMemory (l + 1);
+			copy_s = (char *) IExec->AllocVecTags (l + 1, TAG_DONE);
 
 			if (copy_s)
 				{
 					if (*param_value_ss)
 						{
-							FreeMemory (*param_value_ss);
+							IExec->FreeVec (*param_value_ss);
 						}
 
 					strncpy (copy_s, start_p, l);
