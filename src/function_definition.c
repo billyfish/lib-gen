@@ -25,253 +25,142 @@
 #include "utils.h"
 
 
-#ifdef _DEBUG
-#define FUNCTION_DEFINITIONS_DEBUG (101)
+#ifdef _DBUG
+#define FUNCTION_DEFINITIONS_DEBUG (1)
 #endif
 
 
 void UnitTest (const char *prototype_s)
 {
-	struct FunctionDefinition *fd_p = NULL;
-	
+	const char *start_p = prototype_s;
+	const char *end_p = NULL;
+	BOOL function_flag = TRUE;
+
 	IDOS->Printf ("*** %s ***\n", prototype_s);
 
-	fd_p = TokenizeFunctionPrototype (prototype_s);
-
-	if (fd_p)
+	while (start_p)
 		{
-			PrintFunctionDefinition (IDOS->Output (), fd_p);
-			FreeFunctionDefinition (fd_p);
+			end_p = FindParameterEnd (start_p, function_flag);
+
+			if (end_p)
+				{
+					if (function_flag)
+						{
+							function_flag = FALSE;
+						}
+
+					start_p = end_p + 1;
+				}
+			else
+				{
+					start_p = NULL;
+				}
 		}
 
 	IDOS->Printf ("\n");
 }
 
 
-const char *Scroll (const char *start_p, BOOL scroll_past_whitespace_flag)
+const char *FindParameterEnd (const char *start_p, BOOL function_flag)
 {
-	/* scroll past any whitespace */
-	while ((*start_p != '\0') && ((isspace (*start_p) != 0) == scroll_past_whitespace_flag))
-		{
-			++ start_p;
-		}
-		
-	if (*start_p != '\0')
-		{
-			return start_p;
-		}
-	else
-		{
-			return NULL;
-		}
-}
-
-
-struct Parameter *GetParameterFromFunctionPointer (const char **definition_start_pp, const char *opening_bracket_p)
-{
-	const char *start_p = opening_bracket_p;
+	const char *data_p = start_p;
 	const char *end_p = NULL;
-	struct Parameter *param_p = NULL;
-	
-	/* scroll past any whitespace */
-	Scroll (start_p, TRUE);
-		
-	/* Is it a function pointer? */
-	if ((start_p != NULL) && (*start_p == '*'))
-		{
-			/* scroll past any whitespace */
-			Scroll (start_p, TRUE);
-			
-			if (start_p)
-				{
-					BOOL success_flag = ((isalpha (*start_p) != 0) || (*start_p == '_'));
-					const char *data_p = start_p + 1;
-					BOOL loop_flag = ((isalnum (*data_p) != 0) || (*data_p == '_'));
-					
-					while (loop_flag && success_flag)
-						{
-							++ data_p;
-							
-							if (*data_p == '\0')
-								{
-									success_flag = FALSE;
-								}
-							else if (*data_p == ')')
-								{
-									end_p = data_p - 1;
-									loop_flag = FALSE;
-								} 
-							else if (isspace (*data_p) != 0)
-								{
-									const char *temp_p = data_p;
-									
-									Scroll (temp_p, TRUE);
-									
-									if (temp_p && (*temp_p == ')'))
-										{
-											end_p = data_p - 1;
-											success_flag = TRUE;
-										}
-									else
-										{
-											success_flag = FALSE;
-										}
-										
-									loop_flag = FALSE;
-								}
-							else
-								{
-									loop_flag = ((isalnum (*data_p) != 0) || (*data_p == '_'));
-								}
-						
-						}		/* while (loop_flag && success_flag) */
-					
-					if (success_flag)
-						{
-							const char *definition_start_p = *definition_start_pp;
-							/* start_p -> end_p is the param name, we now extract the type */
-							size_t def_length = strlen (definition_start_p);
-							size_t name_length = end_p - start_p;
-							size_t type_length = def_length - name_length ;
-							
-							char *type_s = (char *) IExec->AllocVecTags (type_length, TAG_DONE);
-							
-							if (type_s)
-								{
-									char *temp_p = type_s;
-									size_t l = start_p - definition_start_p;
-									char *name_s = CopyToNewString (start_p, end_p, FALSE);
-									
-									if (name_s)
-										{
-											memcpy (temp_p, definition_start_p, l);
-											temp_p += l;
-										
-											strcpy (temp_p, end_p + 1);		
-											
-											param_p = AllocateParameter	(type_s, name_s);		
-											
-											if (!param_p)
-												{
-													IExec->FreeVec (name_s);
-													IExec->FreeVec (type_s);
-												}						
-										}
-									else
-										{
-											IExec->FreeVec (type_s);	
-										}
-									 
-								}		/* if (type_s) */
-							
-						}		/* if (success_flag) */
-					
-				}		/* if (start_p) */
-			
-		}
-
-	
-	return param_p;
-}
-
-
-BOOL GetNextParameter (const char **start_pp, struct Parameter **param_pp, BOOL function_flag)
-{
-	BOOL success_flag = FALSE;
-	BOOL loop_flag = TRUE;
-	struct Parameter *param_p = NULL;
-	const char *data_p = *start_pp;
+	const char *res_p = NULL;
 	uint8 bracket_count = 0;
+	BOOL function_pointer_parameter_flag = FALSE;
 
-
-	#if FUNCTION_DEFINITIONS_DEBUG >= 1
-	DB (KPRINTF ("%s %ld - getting param1  \"%s\"\n", __FILE__, __LINE__, data_p));
-	#endif
-
-	Scroll (data_p, TRUE);
-
-	#if FUNCTION_DEFINITIONS_DEBUG >= 1
-	DB (KPRINTF ("%s %ld - getting param2  \"%s\"\n", __FILE__, __LINE__, data_p));
-	#endif
-
-	
-	if (data_p)
+	while ((*data_p != '\0') && (!res_p))
 		{
-			while (loop_flag && !success_flag)
-				{				
-					const char c = *data_p;
-		
-					#if FUNCTION_DEFINITIONS_DEBUG >= 1
-					DB (KPRINTF ("%s %ld - data  \"%c\"\n", __FILE__, __LINE__, c));
-					#endif
-									
-					if (isspace (c) == 0)
-						{
-							switch (*data_p)
-								{						
-									case '(':
-										if (function_flag)
-											{										
-												success_flag = TRUE;											
-												loop_flag = FALSE;
-											}
-										else
-											{
-												param_p  = GetParameterFromFunctionPointer (start_pp, data_p);
-												
-												
-											//struct Parameter *GetParameterFromFunctionPointer (const char *definition_start_p, const char *opening_bracket_p)
-												loop_flag = FALSE; 
-											}
-										break;
-				
-									case ')':
-										
-										
+			switch (*data_p)
+				{
+					case '(':
+						if (function_flag)
+							{
+								end_p = data_p - 1;
+								res_p = data_p;
+							}
+						else
+							{
+								function_pointer_parameter_flag = TRUE;
+								++ bracket_count;
+							}
+						break;
+
+					case ')':
+						if (function_pointer_parameter_flag)
+							{
+								if (bracket_count == 0)
+									{
+										function_pointer_parameter_flag = FALSE;
+									}
+								else
+									{
 										-- bracket_count;
-										break;
-				
-									case ',':
-										if (bracket_count == 0)
-											{
-												success_flag = TRUE;
-											}
-										break;
-				
-									default:
-										break;
-								}		/* switch (data_p) */	
-												
-						}		/* if (isspace (c) == 0) */
-		
-					if (!success_flag)
-						{
-							++ data_p;
-							
-							loop_flag = (*data_p != '\0');
-						}
-				}		
-		}		
+									}
+							}
+						else
+							{
+								if (bracket_count == 0)
+									{
+										end_p = data_p - 1;
+										res_p = data_p + 1;									
+									}
+								else
+									{
+										-- bracket_count;
+									}							
+							}
+						break;
 
+					case ',':
+						if (bracket_count == 0)
+							{
+								end_p = data_p - 1;
+								res_p = data_p + 1;
+							}
+						break;
 
+					default:
+						break;
+				}		/* switch (data_p) */
 
-	if (success_flag && !param_p)
-		{
-			param_p = GetNormalParameter (*start_pp, data_p - 1);
-			
-			if (param_p)
+			if (!res_p)
 				{
-					*param_pp = param_p;
-					*start_pp = data_p + 1;
-				}
-			else
-				{
-					success_flag = FALSE;
+					++ data_p;
 				}
 		}
 
+	if (end_p)
+		{
+			const char *temp_p = end_p;
 
-	return success_flag;
+			#ifdef FUNCTION_DEFINITIONS_DEBUG
+			char *param_s = NULL;
+			#endif
+
+			while (isspace (*temp_p))
+				{
+					-- temp_p;
+				}
+
+			while (isspace (*start_p))
+				{
+					++ start_p;
+				}
+
+
+			#ifdef FUNCTION_DEFINITIONS_DEBUG
+			param_s = CopyToNewString (start_p, temp_p, FALSE);
+
+			if (param_s)
+				{
+					DB (KPRINTF ("%s %ld - param \"%s\"\n", __FILE__, __LINE__, param_s));
+					IExec->FreeVecTags (param_s);
+				}
+			#endif
+		}
+
+	return res_p;
 }
 
 
@@ -295,38 +184,48 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 {
 	BOOL success_flag = FALSE;
 	struct FunctionDefinition *fd_p = AllocateFunctionDefinition ();
-		
-	#if FUNCTION_DEFINITIONS_DEBUG >= 1
+
 	DB (KPRINTF ("%s %ld - Tokenizing \"%s\"\n", __FILE__, __LINE__, prototype_s));
-	#endif
-	
+
 	if (fd_p)
 		{
 			const char *start_p = prototype_s;
+			const char *end_p = NULL;
 			BOOL function_flag = TRUE;
 			BOOL loop_flag = TRUE;
-			struct Parameter *param_p = NULL;
+			
 			success_flag = TRUE;
 			
 			while (loop_flag && success_flag)
-				{						
-					if (GetNextParameter (&start_p, &param_p, function_flag))
+				{
+					end_p = FindParameterEnd (start_p, function_flag);
+		
+					if (end_p)
 						{
-							if (function_flag)
+							struct Parameter *param_p = ParseParameter (start_p, end_p);
+							
+							if (param_p)
 								{
-									fd_p -> fd_definition_p = param_p;
-									function_flag = FALSE;
+									if (function_flag)
+										{
+											fd_p -> fd_definition_p = param_p;
+											function_flag = FALSE;
+										}
+									else
+										{
+											success_flag = AddParameterAtBack (fd_p, param_p);
+										}
+										
+									start_p = end_p + 1;
 								}
 							else
 								{
-									success_flag = AddParameterAtBack (fd_p, param_p);
+									success_flag = FALSE;
 								}
-								
-							++ start_p;
 						}
 					else
 						{
-							success_flag = FALSE;
+							loop_flag = FALSE;
 						}
 				
 				}		/* while (start_p) */		

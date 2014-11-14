@@ -1,8 +1,8 @@
 #include <proto/dos.h>
 #include <proto/exec.h>
 
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "header_definitions.h"
 #include "function_definition.h"

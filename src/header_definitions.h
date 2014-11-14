@@ -7,7 +7,6 @@
 #include "function_definition.h"
 
 
-
 enum InterfaceFlag
 {
 	IF_PUBLIC,
