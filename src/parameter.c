@@ -18,6 +18,110 @@ static BOOL SetParameterValue (char **param_value_ss, const char *start_p, const
 
 /**************************/
 
+struct Parameter *ParseFunctionPointerParameter (const char *start_p, const char *end_p)
+{
+	struct Parameter *param_p = NULL;
+	const char *opening_bracket_p = strchr (start_p, '(');
+	
+	if (opening_bracket_p)
+		{
+			const char *name_start_p = name_start_p;
+
+			/* scroll past any whitespace */
+			while (isspace (*name_start_p))
+				{
+					++ name_start_p;
+				}
+
+			/* do we have the pointer? */
+			if (*name_start_p == '*')
+				{
+					++ name_start_p;
+					
+					if (*name_start_p != '\0')
+						{
+							/* scroll past any whitespace */
+							while (isspace (*name_start_p))
+								{
+									++ name_start_p;
+								}
+										
+							
+							if ((isalpha (*name_start_p)) || (*name_start_p == '_'))
+								{
+									const char *name_end_p = name_start_p + 1;
+									
+									while ((isalnum (*name_end_p)) || (*name_end_p == '_'))
+										{
+											++ name_end_p;
+										}
+										
+									if (*name_end_p != '\0')
+										{	
+											const char *closing_bracket_p = name_end_p;
+											
+											-- name_end_p;
+											
+											/* scroll past any whitespace */
+											while (isspace (*closing_bracket_p))
+												{
+													++ closing_bracket_p;
+												}
+											
+											/* have we reached the clsoing bracket of the name? */
+											if (*closing_bracket_p == ')')
+												{
+													/* we have the bounds of the name */
+													char *name_s = CopyToNewString (name_start_p, name_end_p, FALSE);				
+													
+													if (name_s)
+														{
+															/* Now we need to construct the type */
+															char *type_s = NULL;
+															size_t l = name_start_p - start_p;
+															size_t m = end_p - name_end_p + 3;
+															
+															type_s = (char *) IExec->AllocVecTags (l + m, TAG_DONE);
+															
+															if (type_s)
+																{
+																	char *data_p = type_s;
+																	
+																	IExec->CopyMem (start_p, type_s, l);
+																	data_p += l;
+																	
+																	strcpy (data_p, closing_bracket_p);
+																	
+																	param_p = AllocateParameter (type_s, name_s);
+																	 
+																	if (!param_p)
+																		{
+																			IExec->FreeVec (type_s);
+																		}
+																
+																}		/* if (type_s) */
+																	
+																	if (!param_p)
+																		{
+																			IExec->FreeVec (name_s);
+																		}															
+															
+															
+														}		/* if (name_s) */
+																					
+												}		/* if (*closing_bracket_p == ')') */
+										
+										}
+								}
+						}
+					
+				}			
+		
+		}		/* if (opening_bracket_p) */	
+
+	return param_p;
+}
+
 
 struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 {
@@ -310,7 +414,7 @@ void FreeParameter (struct Parameter *param_p)
 
 void ClearParameter (struct Parameter *param_p)
 {
-	DB (KPRINTF ("%s %ld - freeing \"%s\" \"%s\"\n", __FILE__, __LINE__, param_p -> pa_name_s, param_p -> pa_type_s));
+	//DB (KPRINTF ("%s %ld - freeing \"%s\" \"%s\"\n", __FILE__, __LINE__, param_p -> pa_name_s, param_p -> pa_type_s));
 
 	if (param_p -> pa_name_s)
 		{

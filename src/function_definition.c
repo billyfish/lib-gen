@@ -25,7 +25,7 @@
 #include "utils.h"
 
 
-#ifdef _DBUG
+#ifdef _DEBUG
 #define FUNCTION_DEFINITIONS_DEBUG (1)
 #endif
 
@@ -40,7 +40,7 @@ void UnitTest (const char *prototype_s)
 
 	while (start_p)
 		{
-			end_p = FindParameterEnd (start_p, function_flag);
+		//	end_p = FindParameterEnd (start_p, function_flag);
 
 			if (end_p)
 				{
@@ -61,14 +61,16 @@ void UnitTest (const char *prototype_s)
 }
 
 
-const char *FindParameterEnd (const char *start_p, BOOL function_flag)
+struct Parameter *GetNextParameter (const char **start_pp, BOOL function_flag)
 {
+	const char *start_p = *start_pp;
 	const char *data_p = start_p;
 	const char *end_p = NULL;
 	const char *res_p = NULL;
+	struct Parameter *param_p = NULL;	
+	uint8 function_pointer_status = 0;
 	uint8 bracket_count = 0;
-	BOOL function_pointer_parameter_flag = FALSE;
-
+	
 	while ((*data_p != '\0') && (!res_p))
 		{
 			switch (*data_p)
@@ -81,34 +83,25 @@ const char *FindParameterEnd (const char *start_p, BOOL function_flag)
 							}
 						else
 							{
-								function_pointer_parameter_flag = TRUE;
+								++ function_pointer_status;
 								++ bracket_count;
 							}
 						break;
 
 					case ')':
-						if (function_pointer_parameter_flag)
+						switch (function_pointer_status)
 							{
-								if (bracket_count == 0)
-									{
-										function_pointer_parameter_flag = FALSE;
-									}
-								else
-									{
-										-- bracket_count;
-									}
-							}
-						else
-							{
-								if (bracket_count == 0)
+								case 0:
+								case 2:
 									{
 										end_p = data_p - 1;
 										res_p = data_p + 1;									
 									}
-								else
-									{
-										-- bracket_count;
-									}							
+									break;
+									
+								default: 
+									-- bracket_count;
+									break;			
 							}
 						break;
 
@@ -133,7 +126,7 @@ const char *FindParameterEnd (const char *start_p, BOOL function_flag)
 	if (end_p)
 		{
 			const char *temp_p = end_p;
-
+			
 			#ifdef FUNCTION_DEFINITIONS_DEBUG
 			char *param_s = NULL;
 			#endif
@@ -148,6 +141,23 @@ const char *FindParameterEnd (const char *start_p, BOOL function_flag)
 					++ start_p;
 				}
 
+			if (function_pointer_status == 0)
+				{
+					param_p = ParseParameter (start_p, end_p);
+				}
+			else if (function_pointer_status == 2)
+				{
+					param_p = ParseFunctionPointerParameter (start_p, end_p);
+				}
+				
+			if (param_p)
+				{
+					*start_pp = res_p;
+				}
+			else
+				{
+					*start_pp = NULL;
+				}
 
 			#ifdef FUNCTION_DEFINITIONS_DEBUG
 			param_s = CopyToNewString (start_p, temp_p, FALSE);
@@ -155,12 +165,12 @@ const char *FindParameterEnd (const char *start_p, BOOL function_flag)
 			if (param_s)
 				{
 					DB (KPRINTF ("%s %ld - param \"%s\"\n", __FILE__, __LINE__, param_s));
-					IExec->FreeVecTags (param_s);
+					IExec->FreeVec (param_s);
 				}
 			#endif
 		}
 
-	return res_p;
+	return param_p;
 }
 
 
@@ -198,32 +208,28 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 			
 			while (loop_flag && success_flag)
 				{
-					end_p = FindParameterEnd (start_p, function_flag);
-		
-					if (end_p)
+					struct Parameter *param_p = GetNextParameter (&start_p, function_flag);
+
+					if (param_p)
 						{
-							struct Parameter *param_p = ParseParameter (start_p, end_p);
-							
-							if (param_p)
+							if (function_flag)
 								{
-									if (function_flag)
-										{
-											fd_p -> fd_definition_p = param_p;
-											function_flag = FALSE;
-										}
-									else
-										{
-											success_flag = AddParameterAtBack (fd_p, param_p);
-										}
-										
-									start_p = end_p + 1;
+									fd_p -> fd_definition_p = param_p;
+									function_flag = FALSE;
 								}
 							else
 								{
-									success_flag = FALSE;
+									success_flag = AddParameterAtBack (fd_p, param_p);
 								}
+								
+							start_p = end_p + 1;
 						}
 					else
+						{
+							success_flag = FALSE;
+						}
+						
+					if (!start_p)
 						{
 							loop_flag = FALSE;
 						}
