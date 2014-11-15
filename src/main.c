@@ -105,7 +105,7 @@ int main (int argc, char *argv [])
 						}
 
 
-					if (args [AR_PROTOTYPE_PATTERN])
+					if ((args [AR_PROTOTYPE_PATTERN]) && (strlen ((CONST_STRPTR) args [AR_PROTOTYPE_PATTERN]) > 0))
 						{
 							prototype_pattern_s = (CONST_STRPTR) args [AR_PROTOTYPE_PATTERN];
 						}
@@ -341,9 +341,7 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 			if (output_dir_s)
 				{
 					if (EnsureDirectoryExists (output_dir_s))
-						{
-							IDOS->Printf ("Generating source");
-				
+						{	
 							if (WriteSourceForAllHeaderDefinitions (&headers_list, output_dir_s, library_s))
 								{
 									IDOS->Printf ("Generating source succeeded");
@@ -355,14 +353,14 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 						}
 					else
 						{
-							IDOS->Printf ("Could not create output directory \"%s\"\n", output_dir_s);
+							IDOS->Printf ("Could not create source output directory \"%s\"\n", output_dir_s);
 						}
 						
 					IExec->FreeVec (output_dir_s);
 				}
 			else
 				{
-					IDOS->Printf ("Not enough memory for output directory name\n");
+					IDOS->Printf ("Not enough memory for source output directory name\n");
 				}			
 		
 	
@@ -487,7 +485,7 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, str
 											success_flag = FALSE;
 										}
 										
-									IExec->FreeVec (prototype_s);
+									IDOS->ReleaseCapturedExpressions (capture_p);
 								}		/* if (protoype_s) */
 							else
 								{

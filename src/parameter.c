@@ -1,16 +1,19 @@
 #include <ctype.h>
 #include <string.h>
 
-#ifdef AMIGA
 #include <proto/dos.h>
 #include <proto/exec.h>
-#endif
 
 #include "debugging_utils.h"
 
 #include "parameter.h"
 #include "utils.h"
 
+
+
+#ifdef _DEBUG
+#define PARAMETER_DEBUG (1)
+#endif
 
 /**************************/
 
@@ -25,7 +28,7 @@ struct Parameter *ParseFunctionPointerParameter (const char *start_p, const char
 	
 	if (opening_bracket_p)
 		{
-			const char *name_start_p = name_start_p;
+			const char *name_start_p = opening_bracket_p + 1;
 
 			/* scroll past any whitespace */
 			while (isspace (*name_start_p))
@@ -33,6 +36,10 @@ struct Parameter *ParseFunctionPointerParameter (const char *start_p, const char
 					++ name_start_p;
 				}
 
+			#if PARAMETER_DEBUG >= 1
+			DB (KPRINTF ("%s %ld - at pointer name_start \"%s\"\n", __FILE__, __LINE__, name_start_p));
+			#endif
+			
 			/* do we have the pointer? */
 			if (*name_start_p == '*')
 				{
@@ -45,7 +52,10 @@ struct Parameter *ParseFunctionPointerParameter (const char *start_p, const char
 								{
 									++ name_start_p;
 								}
-										
+
+							#if PARAMETER_DEBUG >= 1
+							DB (KPRINTF ("%s %ld - pre name name_start \"%s\"\n", __FILE__, __LINE__, name_start_p));
+							#endif										
 							
 							if ((isalpha (*name_start_p)) || (*name_start_p == '_'))
 								{
@@ -55,6 +65,10 @@ struct Parameter *ParseFunctionPointerParameter (const char *start_p, const char
 										{
 											++ name_end_p;
 										}
+										
+									#if PARAMETER_DEBUG >= 1
+									DB (KPRINTF ("%s %ld - post name  name_start \"%s\"\n", __FILE__, __LINE__, name_start_p));
+									#endif										
 										
 									if (*name_end_p != '\0')
 										{	
@@ -68,46 +82,71 @@ struct Parameter *ParseFunctionPointerParameter (const char *start_p, const char
 													++ closing_bracket_p;
 												}
 											
+			
+												#if PARAMETER_DEBUG >= 1
+												DB (KPRINTF ("%s %ld - closing bracket \"%s\"\n", __FILE__, __LINE__, closing_bracket_p));
+												#endif		
+											
 											/* have we reached the clsoing bracket of the name? */
 											if (*closing_bracket_p == ')')
 												{
 													/* we have the bounds of the name */
 													char *name_s = CopyToNewString (name_start_p, name_end_p, FALSE);				
-													
+
 													if (name_s)
 														{
 															/* Now we need to construct the type */
 															char *type_s = NULL;
 															size_t l = name_start_p - start_p;
-															size_t m = end_p - name_end_p + 3;
+															size_t m = end_p - name_end_p + 1;
+														
+															#if PARAMETER_DEBUG >= 1
+															DB (KPRINTF ("%s %ld - fp name \"%s\"\n", __FILE__, __LINE__, name_s));
+															#endif																
 															
-															type_s = (char *) IExec->AllocVecTags (l + m, TAG_DONE);
+															type_s = (char *) IExec->AllocVecTags (l + m + 2, TAG_DONE);
 															
 															if (type_s)
 																{
 																	char *data_p = type_s;
 																	
-																	IExec->CopyMem (start_p, type_s, l);
+																	IExec->CopyMem (start_p, data_p, l);
 																	data_p += l;
 																	
-																	strcpy (data_p, closing_bracket_p);
+																	IExec->CopyMem (name_end_p + 1, data_p, m);
+																	data_p += m;
+																	*data_p = '\0';
+																	 
+																	#if PARAMETER_DEBUG >= 1
+																	DB (KPRINTF ("%s %ld - fp type \"%s\"\n", __FILE__, __LINE__, type_s));
+																	#endif																	
 																	
 																	param_p = AllocateParameter (type_s, name_s);
 																	 
 																	if (!param_p)
 																		{
+																			IDOS->Printf ("Failed to allocate function pointer parameter");
 																			IExec->FreeVec (type_s);
 																		}
 																
 																}		/* if (type_s) */
-																	
-																	if (!param_p)
-																		{
-																			IExec->FreeVec (name_s);
-																		}															
+															else
+																{
+																	IDOS->Printf ("Failed to allocate function parameter type");
+																}
+																
+															if (!param_p)
+																{
+																	IExec->FreeVec (name_s);
+																}															
 															
 															
 														}		/* if (name_s) */
+													else
+														{
+															IDOS->Printf ("Failed to allocate function parameter name");
+														}
+														
 																					
 												}		/* if (*closing_bracket_p == ')') */
 										
@@ -248,7 +287,7 @@ struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 
 					if (!name_s)
 						{
-							IDOS->Printf ("Failed to allocate memory for param name");
+							IDOS->Printf ("Failed to allocate memory for parameter name starting from \"%s\"\n");
 							matched_flag = FALSE;
 						}
 
@@ -302,7 +341,7 @@ struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 												}
 										}
 
-									DB (KPRINTF ("%s %ld -  type_end_p to: \"%s\" from \"%s\" %ld\n", __FILE__, __LINE__, type_end_p,  start_p, (int) matched_flag));
+									DB (KPRINTF ("%s %ld -  type_start_p to: \"%s\" from \"%s\" %ld\n", __FILE__, __LINE__, type_start_p,  start_p, (int) matched_flag));
 
 								}
 

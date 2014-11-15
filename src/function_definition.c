@@ -96,6 +96,16 @@ struct Parameter *GetNextParameter (const char **start_pp, BOOL function_flag)
 									{
 										end_p = data_p - 1;
 										res_p = data_p + 1;									
+										
+										while (isspace (*res_p))
+											{
+												++ res_p;
+											}
+											
+										if (*res_p == ';')
+											{
+												res_p = NULL;
+											}
 									}
 									break;
 									
@@ -143,24 +153,29 @@ struct Parameter *GetNextParameter (const char **start_pp, BOOL function_flag)
 
 			if (function_pointer_status == 0)
 				{
-					param_p = ParseParameter (start_p, end_p);
+					param_p = ParseParameter (start_p, temp_p);
 				}
 			else if (function_pointer_status == 2)
 				{
-					param_p = ParseFunctionPointerParameter (start_p, end_p);
+					param_p = ParseFunctionPointerParameter (start_p, temp_p);
 				}
+
+			//IDOS->Printf ("fp status %lu\n", function_pointer_status);
+
+			*start_pp = res_p;
 				
 			if (param_p)
 				{
-					*start_pp = res_p;
+					//IDOS->Printf ("param:\n");
+					PrintParameter (IDOS->Output (), param_p);
 				}
 			else
 				{
-					*start_pp = NULL;
+					IDOS->Printf ("Failed to extract parameter from \"%s\"\n", start_p);
 				}
 
 			#ifdef FUNCTION_DEFINITIONS_DEBUG
-			param_s = CopyToNewString (start_p, temp_p, FALSE);
+			param_s = CopyToNewString (start_p, end_p, FALSE);
 
 			if (param_s)
 				{
@@ -200,37 +215,73 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 	if (fd_p)
 		{
 			const char *start_p = prototype_s;
-			const char *end_p = NULL;
 			BOOL function_flag = TRUE;
 			BOOL loop_flag = TRUE;
+			struct Parameter *param_p = NULL;
 			
 			success_flag = TRUE;
 			
 			while (loop_flag && success_flag)
 				{
-					struct Parameter *param_p = GetNextParameter (&start_p, function_flag);
+					//IDOS->Printf ("Getting param from \"%s\"\n", start_p);
+					param_p = GetNextParameter (&start_p, function_flag);
 
 					if (param_p)
 						{
+							//IDOS->Printf ("\nGot next param!\n");
+							//PrintParameter (IDOS->Output (), param_p);
+							//IDOS->Printf ("\n");
+							
 							if (function_flag)
 								{
 									fd_p -> fd_definition_p = param_p;
 									function_flag = FALSE;
+									
+									while (isspace (*start_p))
+										{
+											++ start_p;
+										}
+									
+									if (*start_p == '(')
+										{
+											++ start_p;
+										}
 								}
 							else
 								{
 									success_flag = AddParameterAtBack (fd_p, param_p);
 								}
-								
-							start_p = end_p + 1;
 						}
 					else
 						{
-							success_flag = FALSE;
+							if (start_p)
+								{
+									//IDOS->Printf ("\nNo Param!\n");
+									success_flag = FALSE;
+								}
+							else
+								{
+									loop_flag = FALSE;
+								}
 						}
-						
-					if (!start_p)
+
+					if (start_p)
 						{
+							//IDOS->Printf ("start_p: \"%s\"\n", start_p);
+						
+							while (isspace (*start_p))
+								{
+									++ start_p;
+								}
+							
+							if (*start_p == ')')
+								{
+									loop_flag = FALSE;
+								}				
+						}
+					else
+						{
+							//IDOS->Printf ("\nstart_p = NULL!\n");
 							loop_flag = FALSE;
 						}
 				
