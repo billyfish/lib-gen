@@ -23,6 +23,11 @@
 
 
 
+#ifdef _DEBUG
+#define MAKEFILE_UTILS_DEBUG (1)
+#endif
+
+
 BOOL WriteMakefileHeader (BPTR makefile_p, CONST_STRPTR library_s)
 {
 	BOOL success_flag = FALSE;

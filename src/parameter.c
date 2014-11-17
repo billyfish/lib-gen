@@ -25,7 +25,7 @@ struct Parameter *ParseFunctionPointerParameter (const char *start_p, const char
 {
 	struct Parameter *param_p = NULL;
 	const char *opening_bracket_p = strchr (start_p, '(');
-	
+
 	if (opening_bracket_p)
 		{
 			const char *name_start_p = opening_bracket_p + 1;
@@ -39,12 +39,12 @@ struct Parameter *ParseFunctionPointerParameter (const char *start_p, const char
 			#if PARAMETER_DEBUG >= 1
 			DB (KPRINTF ("%s %ld - at pointer name_start \"%s\"\n", __FILE__, __LINE__, name_start_p));
 			#endif
-			
+
 			/* do we have the pointer? */
 			if (*name_start_p == '*')
 				{
 					++ name_start_p;
-					
+
 					if (*name_start_p != '\0')
 						{
 							/* scroll past any whitespace */
@@ -55,43 +55,43 @@ struct Parameter *ParseFunctionPointerParameter (const char *start_p, const char
 
 							#if PARAMETER_DEBUG >= 1
 							DB (KPRINTF ("%s %ld - pre name name_start \"%s\"\n", __FILE__, __LINE__, name_start_p));
-							#endif										
-							
+							#endif
+
 							if ((isalpha (*name_start_p)) || (*name_start_p == '_'))
 								{
 									const char *name_end_p = name_start_p + 1;
-									
+
 									while ((isalnum (*name_end_p)) || (*name_end_p == '_'))
 										{
 											++ name_end_p;
 										}
-										
+
 									#if PARAMETER_DEBUG >= 1
 									DB (KPRINTF ("%s %ld - post name  name_start \"%s\"\n", __FILE__, __LINE__, name_start_p));
-									#endif										
-										
+									#endif
+
 									if (*name_end_p != '\0')
-										{	
+										{
 											const char *closing_bracket_p = name_end_p;
-											
+
 											-- name_end_p;
-											
+
 											/* scroll past any whitespace */
 											while (isspace (*closing_bracket_p))
 												{
 													++ closing_bracket_p;
 												}
-											
-			
+
+
 												#if PARAMETER_DEBUG >= 1
 												DB (KPRINTF ("%s %ld - closing bracket \"%s\"\n", __FILE__, __LINE__, closing_bracket_p));
-												#endif		
-											
+												#endif
+
 											/* have we reached the clsoing bracket of the name? */
 											if (*closing_bracket_p == ')')
 												{
 													/* we have the bounds of the name */
-													char *name_s = CopyToNewString (name_start_p, name_end_p, FALSE);				
+													char *name_s = CopyToNewString (name_start_p, name_end_p, FALSE);
 
 													if (name_s)
 														{
@@ -99,64 +99,64 @@ struct Parameter *ParseFunctionPointerParameter (const char *start_p, const char
 															char *type_s = NULL;
 															size_t l = name_start_p - start_p;
 															size_t m = end_p - name_end_p + 1;
-														
+
 															#if PARAMETER_DEBUG >= 1
 															DB (KPRINTF ("%s %ld - fp name \"%s\"\n", __FILE__, __LINE__, name_s));
-															#endif																
-															
+															#endif
+
 															type_s = (char *) IExec->AllocVecTags (l + m + 2, TAG_DONE);
-															
+
 															if (type_s)
 																{
 																	char *data_p = type_s;
-																	
+
 																	IExec->CopyMem (start_p, data_p, l);
 																	data_p += l;
-																	
+
 																	IExec->CopyMem (name_end_p + 1, data_p, m);
 																	data_p += m;
 																	*data_p = '\0';
-																	 
+
 																	#if PARAMETER_DEBUG >= 1
 																	DB (KPRINTF ("%s %ld - fp type \"%s\"\n", __FILE__, __LINE__, type_s));
-																	#endif																	
-																	
+																	#endif
+
 																	param_p = AllocateParameter (type_s, name_s);
-																	 
+
 																	if (!param_p)
 																		{
 																			IDOS->Printf ("Failed to allocate function pointer parameter");
 																			IExec->FreeVec (type_s);
 																		}
-																
+
 																}		/* if (type_s) */
 															else
 																{
 																	IDOS->Printf ("Failed to allocate function parameter type");
 																}
-																
+
 															if (!param_p)
 																{
 																	IExec->FreeVec (name_s);
-																}															
-															
-															
+																}
+
+
 														}		/* if (name_s) */
 													else
 														{
 															IDOS->Printf ("Failed to allocate function parameter name");
 														}
-														
-																					
+
+
 												}		/* if (*closing_bracket_p == ')') */
-										
+
 										}
 								}
 						}
-					
-				}			
-		
-		}		/* if (opening_bracket_p) */	
+
+				}
+
+		}		/* if (opening_bracket_p) */
 
 	return param_p;
 }
@@ -244,7 +244,9 @@ struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 				{
 					const char c = *name_start_p;
 
+					#if PARAMETER_DEBUG >= 5
 					DB (KPRINTF ("%s %ld - looking for start of name %c\n", __FILE__, __LINE__, c));
+					#endif
 
 					if (isspace (c) || (c == '*'))
 						{
@@ -262,11 +264,15 @@ struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 						}
 				}
 
+			#if PARAMETER_DEBUG >= 1
 			DB (KPRINTF ("%s %ld -  name_start_p to: \"%s\" from \"%s\" %ld\n", __FILE__, __LINE__, name_start_p,  start_p, (int) matched_flag));
+			#endif
 
 			if (!matched_flag)
 				{
+					#if PARAMETER_DEBUG >= 2
 					DB (KPRINTF ("%s %ld -  checking void match name_start_p: \"%s\" name_end_p: \"%s\" diff %ld\n", __FILE__, __LINE__, name_start_p,  name_end_p, (int) (name_end_p - name_start_p)));
+					#endif
 
 					if ((name_end_p - name_start_p == 3) && (strncmp ("void", name_start_p, 4) == 0))
 						{
@@ -276,14 +282,18 @@ struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 							name_s = NULL;
 						}
 
+					#if PARAMETER_DEBUG >= 2
 					DB (KPRINTF ("%s %ld -  void match %ld\n", __FILE__, __LINE__, (int) matched_flag));
+					#endif
 				}
 			else
 				{
 					// success;
 					name_s = CopyToNewString (name_start_p, name_end_p, FALSE);
 
+					#if PARAMETER_DEBUG >= 2
 					DB (KPRINTF ("%s %ld -  setting param name to: \"%s\" from \"%s\"\n", __FILE__, __LINE__, name_s ? name_s : "NULL", start_p));
+					#endif
 
 					if (!name_s)
 						{
@@ -316,7 +326,9 @@ struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 								}
 
 
+							#if PARAMETER_DEBUG >= 1
 							DB (KPRINTF ("%s %ld -  type_end_p to: \"%s\" from \"%s\" %ld\n", __FILE__, __LINE__, type_end_p,  start_p, (int) matched_flag));
+							#endif
 
 							/* Did we get the end of the type? */
 							if (matched_flag)
@@ -341,7 +353,9 @@ struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 												}
 										}
 
+									#if PARAMETER_DEBUG >= 1
 									DB (KPRINTF ("%s %ld -  type_start_p to: \"%s\" from \"%s\" %ld\n", __FILE__, __LINE__, type_start_p,  start_p, (int) matched_flag));
+									#endif
 
 								}
 
@@ -488,7 +502,9 @@ static BOOL SetParameterValue (char **param_value_ss, const char *start_p, const
 	size_t l;
 	char *copy_s = NULL;
 
+	#if PARAMETER_DEBUG >= 2
 	DB (KPRINTF ("%s %ld -  setting param value to: \"%s\" - \"%s\"\n", __FILE__, __LINE__, start_p ? start_p : "NULL", end_p ? end_p : "NULL"));
+	#endif
 
 	if (end_p)
 		{
@@ -531,7 +547,9 @@ static BOOL SetParameterValue (char **param_value_ss, const char *start_p, const
 					strncpy (copy_s, start_p, l);
 					* (copy_s + l) = '\0';
 
+					#if PARAMETER_DEBUG >= 2
 					DB (KPRINTF ("%s %ld -  setting param value to: \"%s\"\n", __FILE__, __LINE__, copy_s));
+					#endif
 
 					*param_value_ss = copy_s;
 
@@ -619,8 +637,6 @@ BOOL PrintParameterList (BPTR out_p, struct List * const params_p)
 
 			curr_node_p = next_node_p;
 		}
-
-
 
 	return TRUE;
 }
