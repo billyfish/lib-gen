@@ -166,8 +166,13 @@ struct Parameter *GetNextParameter (const char **start_pp, BOOL function_flag)
 				
 			if (param_p)
 				{
-					//IDOS->Printf ("param:\n");
-					PrintParameter (IDOS->Output (), param_p);
+					/*
+					BPTR out_p = IDOS->Output ();
+				
+					IDOS->FPrintf (out_p, "param: ");
+					PrintParameter (out_p, param_p);
+					IDOS->FPrintf (out_p, "\n");
+					*/
 				}
 			else
 				{
@@ -458,7 +463,7 @@ BOOL WriteLibraryFunctionImplementation (BPTR out_p, const struct FunctionDefini
 						}
 
 					if (success_flag)
-						{
+						{						
 							if (strcmp (final_node_p -> pn_param_p -> pa_type_s, "void") != 0)
 								{
 									success_flag = WriteParameterAsSource (out_p, final_node_p -> pn_param_p);

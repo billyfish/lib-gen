@@ -139,7 +139,7 @@ char *CopyToNewString (const char *start_p, const char *end_p, const BOOL trim_f
 				}
 		}
 
-	//DB (KPRINTF ("%s %ld - Copying \"%s\" - \"%s\" to a new string\n", __FILE__, __LINE__, start_p ? start_p : "NULL", end_p ? end_p : "NULL"));
+	DB (KPRINTF ("%s %ld - Copying \"%s\" - \"%s\" to a new string\n", __FILE__, __LINE__, start_p ? start_p : "NULL", end_p ? end_p : "NULL"));
 
 	if (start_p <= end_p)
 		{

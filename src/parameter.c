@@ -297,7 +297,7 @@ struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 
 					if (!name_s)
 						{
-							IDOS->Printf ("Failed to allocate memory for parameter name starting from \"%s\"\n");
+							IDOS->Printf ("Failed to allocate memory for parameter name starting from \"%s\" to \"%s\"\n", name_start_p, name_end_p);
 							matched_flag = FALSE;
 						}
 
