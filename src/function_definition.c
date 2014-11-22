@@ -67,10 +67,10 @@ struct Parameter *GetNextParameter (const char **start_pp, BOOL function_flag)
 	const char *data_p = start_p;
 	const char *end_p = NULL;
 	const char *res_p = NULL;
-	struct Parameter *param_p = NULL;	
+	struct Parameter *param_p = NULL;
 	uint8 function_pointer_status = 0;
 	uint8 bracket_count = 0;
-	
+
 	while ((*data_p != '\0') && (!res_p))
 		{
 			switch (*data_p)
@@ -95,23 +95,23 @@ struct Parameter *GetNextParameter (const char **start_pp, BOOL function_flag)
 								case 2:
 									{
 										end_p = data_p - 1;
-										res_p = data_p + 1;									
-										
+										res_p = data_p + 1;
+
 										while (isspace (*res_p))
 											{
 												++ res_p;
 											}
-											
+
 										if (*res_p == ';')
 											{
 												res_p = NULL;
 											}
 									}
 									break;
-									
-								default: 
+
+								default:
 									-- bracket_count;
-									break;			
+									break;
 							}
 						break;
 
@@ -136,7 +136,7 @@ struct Parameter *GetNextParameter (const char **start_pp, BOOL function_flag)
 	if (end_p)
 		{
 			const char *temp_p = end_p;
-			
+
 			#ifdef FUNCTION_DEFINITIONS_DEBUG
 			char *param_s = NULL;
 			#endif
@@ -163,12 +163,12 @@ struct Parameter *GetNextParameter (const char **start_pp, BOOL function_flag)
 			//IDOS->Printf ("fp status %lu\n", function_pointer_status);
 
 			*start_pp = res_p;
-				
+
 			if (param_p)
 				{
 					/*
 					BPTR out_p = IDOS->Output ();
-				
+
 					IDOS->FPrintf (out_p, "param: ");
 					PrintParameter (out_p, param_p);
 					IDOS->FPrintf (out_p, "\n");
@@ -223,9 +223,9 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 			BOOL function_flag = TRUE;
 			BOOL loop_flag = TRUE;
 			struct Parameter *param_p = NULL;
-			
+
 			success_flag = TRUE;
-			
+
 			while (loop_flag && success_flag)
 				{
 					//IDOS->Printf ("Getting param from \"%s\"\n", start_p);
@@ -236,17 +236,17 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 							//IDOS->Printf ("\nGot next param!\n");
 							//PrintParameter (IDOS->Output (), param_p);
 							//IDOS->Printf ("\n");
-							
+
 							if (function_flag)
 								{
 									fd_p -> fd_definition_p = param_p;
 									function_flag = FALSE;
-									
+
 									while (isspace (*start_p))
 										{
 											++ start_p;
 										}
-									
+
 									if (*start_p == '(')
 										{
 											++ start_p;
@@ -273,24 +273,24 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 					if (start_p)
 						{
 							//IDOS->Printf ("start_p: \"%s\"\n", start_p);
-						
+
 							while (isspace (*start_p))
 								{
 									++ start_p;
 								}
-							
+
 							if (*start_p == ')')
 								{
 									loop_flag = FALSE;
-								}				
+								}
 						}
 					else
 						{
 							//IDOS->Printf ("\nstart_p = NULL!\n");
 							loop_flag = FALSE;
 						}
-				
-				}		/* while (start_p) */		
+
+				}		/* while (start_p) */
 
 			if (!success_flag)
 				{
@@ -436,77 +436,83 @@ BOOL WriteLibraryFunctionImplementation (BPTR out_p, const struct FunctionDefini
 			struct ParameterNode *curr_node_p = (struct ParameterNode *) IExec->GetHead (fd_p -> fd_args_p);
 			struct ParameterNode *final_node_p = (struct ParameterNode *) IExec->GetTail (fd_p -> fd_args_p);
 
-			if (IDOS->FPrintf (out_p, "struct %s *Self", library_s) >= 0)
+			if (curr_node_p)
 				{
-					if (curr_node_p != final_node_p)
+					if (IDOS->FPrintf (out_p, "struct %s *Self", library_s) >= 0)
 						{
-							success_flag = (IDOS->FPrintf (out_p, ", ", library_s) >= 0);
-
-							while ((curr_node_p != final_node_p) && success_flag)
+							if (curr_node_p != final_node_p)
 								{
-									success_flag = WriteParameterAsSource (out_p, curr_node_p -> pn_param_p);
+									success_flag = (IDOS->FPrintf (out_p, ", ", library_s) >= 0);
 
-									if (success_flag)
+									while ((curr_node_p != final_node_p) && success_flag)
 										{
-											success_flag = (IDOS->FPrintf (out_p, ", ") >= 0);
+											success_flag = WriteParameterAsSource (out_p, curr_node_p -> pn_param_p);
 
 											if (success_flag)
 												{
-													curr_node_p = (struct ParameterNode *) IExec->GetSucc ((struct Node *) curr_node_p);
-												}
-										}
-								}
-						}
-					else
-						{
-							success_flag = TRUE;
-						}
-
-					if (success_flag)
-						{						
-							if (strcmp (final_node_p -> pn_param_p -> pa_type_s, "void") != 0)
-								{
-									success_flag = WriteParameterAsSource (out_p, final_node_p -> pn_param_p);
-								}
-
-							if (success_flag)
-								{
-									success_flag = (IDOS->FPrintf (out_p, ")\n{\n\t") >= 0);
-
-									if (success_flag)
-										{
-											if (strcmp (fd_p -> fd_definition_p -> pa_type_s, "void") != 0)
-												{
-													success_flag = (IDOS->FPrintf (out_p, "return ") >= 0);
-												}
-
-											if (success_flag)
-												{
-													success_flag = (IDOS->FPrintf (out_p, "%s (", fd_p -> fd_definition_p -> pa_name_s) >= 0);
+													success_flag = (IDOS->FPrintf (out_p, ", ") >= 0);
 
 													if (success_flag)
 														{
-															curr_node_p = (struct ParameterNode *) IExec->GetHead (fd_p -> fd_args_p);
-
-															while ((curr_node_p != final_node_p) && success_flag)
-																{
-																	success_flag = (IDOS->FPrintf (out_p, "%s, ", curr_node_p -> pn_param_p -> pa_name_s) >= 0);
-
-																	if (success_flag)
-																		{
-																			curr_node_p = (struct ParameterNode *) IExec->GetSucc ((struct Node *) curr_node_p);
-																		}
-																}
-
-
-															if (success_flag)
-																{
-																	success_flag =  (IDOS->FPrintf (out_p, "%s);\n}\n\n", final_node_p -> pn_param_p -> pa_name_s) >= 0);
-																}
+															curr_node_p = (struct ParameterNode *) IExec->GetSucc ((struct Node *) curr_node_p);
 														}
 												}
 										}
 								}
+							else
+								{
+									success_flag = TRUE;
+								}
+
+							if (success_flag)
+								{
+									if (strcmp (final_node_p -> pn_param_p -> pa_type_s, "void") != 0)
+										{
+											success_flag = WriteParameterAsSource (out_p, final_node_p -> pn_param_p);
+										}
+								}
+						}
+
+				}		/* if (curr_node_p) */
+
+			if (success_flag)
+				{
+					success_flag = (IDOS->FPrintf (out_p, ")\n{\n\t") >= 0);
+
+					if (success_flag)
+						{
+							if (strcmp (fd_p -> fd_definition_p -> pa_type_s, "void") != 0)
+								{
+									success_flag = (IDOS->FPrintf (out_p, "return ") >= 0);
+								}
+
+							if (success_flag)
+								{
+									success_flag = (IDOS->FPrintf (out_p, "%s (", fd_p -> fd_definition_p -> pa_name_s) >= 0);
+
+									if (success_flag)
+										{
+											curr_node_p = (struct ParameterNode *) IExec->GetHead (fd_p -> fd_args_p);
+
+											while ((curr_node_p != final_node_p) && success_flag)
+												{
+													success_flag = (IDOS->FPrintf (out_p, "%s, ", curr_node_p -> pn_param_p -> pa_name_s) >= 0);
+
+													if (success_flag)
+														{
+															curr_node_p = (struct ParameterNode *) IExec->GetSucc ((struct Node *) curr_node_p);
+														}
+												}
+
+
+											if (success_flag)
+												{
+													success_flag =  (IDOS->FPrintf (out_p, "%s);\n}\n\n", final_node_p -> pn_param_p -> pa_name_s) >= 0);
+												}
+										}
+								}
+						}
+				}
 						}
 				}
 		}
