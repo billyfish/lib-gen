@@ -213,7 +213,7 @@ int main (int argc, char *argv [])
 STRPTR CreateRegEx (CONST_STRPTR pattern_s, BOOL capture_flag)
 {
 	STRPTR reg_ex_s = NULL;
-	
+
 	if (pattern_s)
 		{
 			size_t l = (2 * strlen (pattern_s)) + 2;
@@ -223,7 +223,7 @@ STRPTR CreateRegEx (CONST_STRPTR pattern_s, BOOL capture_flag)
 			if (reg_ex_s)
 				{
 					int32 is_wild;
-					
+
 					if (capture_flag)
 						{
 							is_wild = IDOS->ParseCapturePattern (pattern_s, reg_ex_s, l, TRUE);
@@ -232,7 +232,7 @@ STRPTR CreateRegEx (CONST_STRPTR pattern_s, BOOL capture_flag)
 						{
 							is_wild = IDOS->ParsePatternNoCase (pattern_s, reg_ex_s, l);
 						}
-						
+
 					if (is_wild < 0)
 						{
 							IDOS->Printf ("Error creating pattern from \"%s\"\n", pattern_s);
@@ -261,23 +261,23 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 	if (prototype_pattern_s)
 		{
 			prototype_regexp_s = CreateRegEx (prototype_pattern_s, TRUE);
-			
+
 			if (!prototype_regexp_s)
 				{
 					return -1;
 				}
 		}
-		
+
 	if (filename_pattern_s)
 		{
 			filename_regexp_s = CreateRegEx (filename_pattern_s, TRUE);
-			
+
 			if (!filename_regexp_s)
 				{
 					return -1;
 				}
 		}
-				
+
 
 	if (GeneratePrototypesList (root_path_s, filename_regexp_s, prototype_regexp_s, recurse_flag, &headers_list))
 		{
@@ -335,13 +335,13 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 
 
 	if (gen_source_flag)
-		{	
+		{
 			STRPTR output_dir_s = ConcatenateStrings (library_s, "_source");
-			
+
 			if (output_dir_s)
 				{
 					if (EnsureDirectoryExists (output_dir_s))
-						{	
+						{
 							if (WriteSourceForAllHeaderDefinitions (&headers_list, output_dir_s, library_s))
 								{
 									IDOS->Printf ("Generating source succeeded");
@@ -349,21 +349,21 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 							else
 								{
 									IDOS->Printf ("Generating source failed");
-								}							
+								}
 						}
 					else
 						{
 							IDOS->Printf ("Could not create source output directory \"%s\"\n", output_dir_s);
 						}
-						
+
 					IExec->FreeVec (output_dir_s);
 				}
 			else
 				{
 					IDOS->Printf ("Not enough memory for source output directory name\n");
-				}			
-		
-	
+				}
+
+
 		}
 
 
@@ -412,9 +412,6 @@ BOOL GeneratePrototypesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_reg
 }
 
 
-
-
-
 BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, struct FReadLineData *line_p, struct HeaderDefinitions *header_defs_p)
 {
 	BOOL success_flag = FALSE;
@@ -425,69 +422,69 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, str
 			int32 count;
 			struct CapturedExpression capture;
 			struct CapturedExpression *capture_p = &capture;
-			
+
 			success_flag = TRUE;
 			memset (capture_p, 0, sizeof (struct CapturedExpression));
-			
-			DB (KPRINTF ("%s %ld - GetMatchingPrototypes: pattern \"%s\"\n", __FILE__, __LINE__, pattern_s));	
-			
+
+			DB (KPRINTF ("%s %ld - GetMatchingPrototypes: pattern \"%s\"\n", __FILE__, __LINE__, pattern_s));
+
 			/*
 			 TODO: Need to be able to read in multi-line function definitions e.g.
-			 
+
 				 int foo (int bar,
 					 int boo);
-			
+
 				or
-					
+
 					int
 					foo (int bar, int boo);
-					
-				etc.	 
+
+				etc.
 		 */
 			while ((count = IDOS->FReadLine (handle_p, line_p)) > 0)
 				{
 					/* DB (KPRINTF ("%s %ld - GetMatchingPrototypes: line \"%s\"\n", __FILE__, __LINE__, line_p -> frld_Line));	*/
-					
+
 					if (IDOS->CapturePattern (pattern_s, line_p -> frld_Line, TRUE, &capture_p) != 0)
 						{
 							/* we only want the first match */
 							STRPTR prototype_s = capture_p -> cape_Match;
-							
+
 							if (capture_p)
 								{
-									DB (KPRINTF ("%s %ld - GetMatchingPrototypes: cap match %8X start %8X end %8X next %8X\n", __FILE__, __LINE__, capture_p -> cape_Match,  capture_p -> cape_Start, capture_p -> cape_End, capture_p -> cape_Next));	
-								
+									DB (KPRINTF ("%s %ld - GetMatchingPrototypes: cap match %8X start %8X end %8X next %8X\n", __FILE__, __LINE__, capture_p -> cape_Match,  capture_p -> cape_Start, capture_p -> cape_End, capture_p -> cape_Next));
+
 								if  (capture_p -> cape_Start)
 								{
-									DB (KPRINTF ("%s %ld - GetMatchingPrototypes: start \"%s\" end \"%s\" match \"%s\"\n", __FILE__, __LINE__, capture_p -> cape_Start, (capture_p -> cape_End) - 1, capture_p -> cape_Match));							
+									DB (KPRINTF ("%s %ld - GetMatchingPrototypes: start \"%s\" end \"%s\" match \"%s\"\n", __FILE__, __LINE__, capture_p -> cape_Start, (capture_p -> cape_End) - 1, capture_p -> cape_Match));
 								}
 							else
 								{
-									DB (KPRINTF ("%s %ld - GetMatchingPrototypes: start NULL\n", __FILE__, __LINE__));		
+									DB (KPRINTF ("%s %ld - GetMatchingPrototypes: start NULL\n", __FILE__, __LINE__));
 								}
 							}
 						else
 							{
 								DB (KPRINTF ("%s %ld - GetMatchingPrototypes: capture_p NULL\n", __FILE__, __LINE__));
 							}
-						
-														
+
+
 							//prototype_s = CopyToNewString (capture_p -> cape_Start, (capture_p -> cape_End) - 1, FALSE);
 							if (prototype_s)
-								{		
+								{
 									struct FunctionDefinition *fn_def_p = NULL;
-		
+
 									//IDOS->Printf (">>> matched line:= %s", line_p -> frld_Line);
-									
+
 									/* For easier debugging, overwrite the \n with a \0 */
 									size_t l = strlen (prototype_s);
 									if (* (prototype_s + l - 1) == '\n')
 										{
 											* (prototype_s + l - 1) = '\0';
 										}
-		
+
 									fn_def_p = TokenizeFunctionPrototype (prototype_s);
-		
+
 									if (fn_def_p)
 										{
 											/* Add the prototype */
@@ -506,18 +503,18 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, str
 											IDOS->Printf ("Failed to tokenize \"%s\"\n", prototype_s);
 											success_flag = FALSE;
 										}
-										
+
 									IDOS->ReleaseCapturedExpressions (capture_p);
 								}		/* if (protoype_s) */
 							else
 								{
 									IDOS->Printf ("Not enough memory to copy prototype\n");
-									success_flag = FALSE;								
+									success_flag = FALSE;
 								}
 
 							/* Clear the capture list */
 							//ClearCapturedExpression (capture_p);
-							
+
 						}
 					else
 						{
@@ -544,7 +541,7 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, str
 void ClearCapturedExpression (struct CapturedExpression *capture_p)
 {
 	struct CapturedExpression *next_p;
-	
+
 	while (capture_p)
 		{
 			next_p = capture_p -> cape_Next;
@@ -552,7 +549,7 @@ void ClearCapturedExpression (struct CapturedExpression *capture_p)
 
 			capture_p = next_p;
 		}
-	
+
 	memset (capture_p, 0, sizeof (struct CapturedExpression));
 }
 
