@@ -145,7 +145,7 @@ char *CopyToNewString (const char *start_p, const char *end_p, const BOOL trim_f
 		{
 			size_t len = end_p - start_p + 1;
 
-			char *dest_p = (char *) IExec->AllocVec (len + 1, TAG_DONE);
+			char *dest_p = (char *) IExec->AllocVecTags (len + 1, TAG_DONE);
 
 			//DB (KPRINTF ("%s %ld - len %ld\n", __FILE__, __LINE__, len));
 
@@ -239,7 +239,7 @@ int32 ScanDirectories (CONST_STRPTR dir_s, struct List *header_definitions_p, CO
 
 			while ((dat_p = IDOS->ExamineDir (context_p)))
 				{
-					if (v >= VB_NORMAL)
+					if (v >= VB_LOUD)
 						{
 							IDOS->Printf ("filename=%s\n", dat_p -> Name);
 						}

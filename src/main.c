@@ -413,6 +413,8 @@ BOOL GeneratePrototypesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_reg
 
 
 
+
+
 BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, struct FReadLineData *line_p, struct HeaderDefinitions *header_defs_p)
 {
 	BOOL success_flag = FALSE;
@@ -429,6 +431,19 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, str
 			
 			DB (KPRINTF ("%s %ld - GetMatchingPrototypes: pattern \"%s\"\n", __FILE__, __LINE__, pattern_s));	
 			
+			/*
+			 TODO: Need to be able to read in multi-line function definitions e.g.
+			 
+				 int foo (int bar,
+					 int boo);
+			
+				or
+					
+					int
+					foo (int bar, int boo);
+					
+				etc.	 
+		 */
 			while ((count = IDOS->FReadLine (handle_p, line_p)) > 0)
 				{
 					/* DB (KPRINTF ("%s %ld - GetMatchingPrototypes: line \"%s\"\n", __FILE__, __LINE__, line_p -> frld_Line));	*/
