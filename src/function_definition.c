@@ -106,6 +106,15 @@ struct Parameter *GetNextParameter (const char **start_pp, BOOL function_flag)
 											{
 												res_p = NULL;
 											}
+										else if (*res_p == ',')
+											{
+												++ res_p;
+
+												while (isspace (*res_p))
+													{
+														++ res_p;
+													}
+											} 
 									}
 									break;
 
@@ -163,7 +172,7 @@ struct Parameter *GetNextParameter (const char **start_pp, BOOL function_flag)
 			//IDOS->Printf ("fp status %lu\n", function_pointer_status);
 
 			*start_pp = res_p;
-
+			
 			if (param_p)
 				{
 					/*
@@ -228,7 +237,10 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 
 			while (loop_flag && success_flag)
 				{
-					//IDOS->Printf ("Getting param from \"%s\"\n", start_p);
+					#ifdef FUNCTION_DEFINITIONS_DEBUG
+					DB (KPRINTF ("%s %ld - Getting next param from \"%s\"\n", __FILE__, __LINE__, start_p));
+					#endif
+
 					param_p = GetNextParameter (&start_p, function_flag);
 
 					if (param_p)
@@ -309,13 +321,13 @@ uint32 GetFunctionDefinitionsListSize (struct List * const list_p)
 {
 	uint32 i = 0;
 	struct FunctionDefinitionNode *node_p;
-	const BOOL verbose_flag = GetVerboseFlag ();
+	const enum Verbosity v = GetVerbosity ();
 
 	for (node_p = (struct FunctionDefinitionNode *) IExec->GetHead (list_p); node_p != NULL; node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p))
 		{
 			++ i;
 
-			if (verbose_flag)
+			if (v >= VB_LOUD)
 				{
 					PrintParameter (IDOS->Output (), node_p -> fdn_function_def_p -> fd_definition_p);
 					IDOS->FPrintf (IDOS->Output (), "\n");
@@ -396,7 +408,7 @@ BOOL AddParameterAtBack (struct FunctionDefinition *fd_p, struct Parameter *para
 		{
 			IExec->AddTail (fd_p -> fd_args_p, (struct Node *) node_p);
 
-			if (GetVerboseFlag ())
+			if (GetVerbosity () >= VB_LOUD)
 				{
 					IDOS->FPrintf (IDOS->Output (), "Added %s - %s to %s\n", param_p -> pa_type_s, param_p -> pa_name_s, fd_p -> fd_definition_p -> pa_name_s);
 				}
@@ -474,7 +486,11 @@ BOOL WriteLibraryFunctionImplementation (BPTR out_p, const struct FunctionDefini
 						}
 
 				}		/* if (curr_node_p) */
-
+			else
+				{
+					success_flag = TRUE;
+				}
+				
 			if (success_flag)
 				{
 					success_flag = (IDOS->FPrintf (out_p, ")\n{\n\t") >= 0);
@@ -511,8 +527,6 @@ BOOL WriteLibraryFunctionImplementation (BPTR out_p, const struct FunctionDefini
 												}
 										}
 								}
-						}
-				}
 						}
 				}
 		}

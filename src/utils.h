@@ -4,14 +4,13 @@
 #include <exec/types.h>
 #include <exec/lists.h>
 
-enum SpaceBehaviour
+enum Verbosity 
 {
-	SB_IGNORE = 0,
-	
-	SB_WHITESPACE,
-	
-	SB_NON_WHITESPACE
+	VB_QUIET,
+	VB_NORMAL,
+	VB_LOUD
 };
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -19,25 +18,19 @@ extern "C" {
 
 char *CopyToNewString (const char *start_p, const char *end_p, const BOOL trim_flag);
 
-
 STRPTR ConcatenateStrings (CONST_STRPTR first_s, CONST_STRPTR second_s);
-
 
 STRPTR MakeFilename (CONST_STRPTR first_s, CONST_STRPTR second_s);
 
-
 int32 ScanDirectories (CONST_STRPTR name_s, struct List *matching_files_list_p, CONST_STRPTR filename_pattern_s, const BOOL recurse_flag);
-
 
 BOOL AddFullHeaderPathToList (struct List *header_definitions_p, CONST_STRPTR dir_s, CONST_STRPTR name_s);
 
-void SetVerboseFlag (BOOL b);
+void SetVerbosity (enum Verbosity v);
 
-
-BOOL GetVerboseFlag (void);
+enum Verbosity GetVerbosity (void);
 
 BPTR GetMakefileHandle (CONST_STRPTR library_s);
-
 
 BOOL EnsureDirectoryExists (CONST_STRPTR dir_s);
 

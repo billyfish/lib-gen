@@ -87,7 +87,7 @@ int main (int argc, char *argv [])
 
 			memset (args, 0, AR_NUM_ARGS * sizeof (int32));
 
-			args_p = IDOS->ReadArgs ("I=Input/A,R=Recurse/S,L=LibraryName/A,IP=InputPattern/K,PP=PrototypePattern/K,VER=Version/N,FL=Flags/K,GC=GenerateCode/S,FMT=Format/K,V=Verbose/S", args, NULL);
+			args_p = IDOS->ReadArgs ("I=Input/A,R=Recurse/S,L=LibraryName/A,IP=InputPattern/K,PP=PrototypePattern/K,VER=Version/N,FL=Flags/K,GC=GenerateCode/S,FMT=Format/K,V=Verbose/N", args, NULL);
 
 			if (args_p != NULL)
 				{
@@ -144,11 +144,11 @@ int main (int argc, char *argv [])
 
 					if (args [AR_VERBOSE])
 						{
-							SetVerboseFlag (TRUE);
+							SetVerbosity (* ((int32 *) args [AR_VERBOSE]));
 						}
 					else
 						{
-							SetVerboseFlag (FALSE);
+							SetVerbosity (VB_NORMAL);
 						}
 
 
@@ -158,7 +158,7 @@ int main (int argc, char *argv [])
 						}
 
 
-					if (GetVerboseFlag ())
+					if (GetVerbosity () >= VB_LOUD)
 						{
 							IDOS->Printf ("Input Dir = \"%s\"\n", input_dir_s);
 							IDOS->Printf ("Library Name  = \"%s\"\n", library_s);
@@ -444,7 +444,7 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, str
 								
 								if  (capture_p -> cape_Start)
 								{
-									DB (KPRINTF ("%s %ld - GetMatchingPrototypes: start \"%s\" end \"%s\" match \"%s\"\n", __FILE__, __LINE__, capture_p -> cape_Start, capture_p -> cape_End, capture_p -> cape_Match));							
+									DB (KPRINTF ("%s %ld - GetMatchingPrototypes: start \"%s\" end \"%s\" match \"%s\"\n", __FILE__, __LINE__, capture_p -> cape_Start, (capture_p -> cape_End) - 1, capture_p -> cape_Match));							
 								}
 							else
 								{
@@ -463,6 +463,13 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, str
 									struct FunctionDefinition *fn_def_p = NULL;
 		
 									//IDOS->Printf (">>> matched line:= %s", line_p -> frld_Line);
+									
+									/* For easier debugging, overwrite the \n with a \0 */
+									size_t l = strlen (prototype_s);
+									if (* (prototype_s + l - 1) == '\n')
+										{
+											* (prototype_s + l - 1) = '\0';
+										}
 		
 									fn_def_p = TokenizeFunctionPrototype (prototype_s);
 		
@@ -547,7 +554,7 @@ BOOL ParseFile (CONST_STRPTR function_regexp_s, CONST_STRPTR filename_s, struct 
 
 			if (success_flag)
 				{
-					if (GetVerboseFlag ())
+					if (GetVerbosity () > VB_NORMAL)
 						{
 							IDOS->Printf ("read \"%s\" successfully\n", filename_s);
 						}

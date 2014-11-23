@@ -15,18 +15,18 @@
 #endif
 
 
-static BOOL s_verbose_flag = FALSE;
+static enum Verbosity s_verbosity = VB_NORMAL;
 
 
-void SetVerboseFlag (BOOL b)
+void SetVerbosity (enum Verbosity v)
 {
-	s_verbose_flag = b;
+	s_verbosity = v;
 }
 
 
-BOOL GetVerboseFlag (void)
+enum Verbosity GetVerbosity (void)
 {
-	return s_verbose_flag;
+	return s_verbosity;
 }
 
 
@@ -230,16 +230,16 @@ int32 ScanDirectories (CONST_STRPTR dir_s, struct List *header_definitions_p, CO
 	if (context_p)
 		{
 			struct ExamineData *dat_p;
-			const BOOL verbose_flag = GetVerboseFlag ();
+			const enum Verbosity v = GetVerbosity ();
 
-			if (verbose_flag)
+			if (v >= VB_NORMAL)
 				{
 					IDOS->Printf ("Scanning %s\n", dir_s);
 				}
 
 			while ((dat_p = IDOS->ExamineDir (context_p)))
 				{
-					if (verbose_flag)
+					if (v >= VB_NORMAL)
 						{
 							IDOS->Printf ("filename=%s\n", dat_p -> Name);
 						}
