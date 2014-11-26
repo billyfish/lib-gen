@@ -21,19 +21,19 @@ struct ByteBuffer *AllocateByteBuffer (size_t initial_size);
 void FreeByteBuffer (struct ByteBuffer *buffer_p);
 
 
-bool ResizeByteBuffer (struct ByteBuffer *buffer_p, size_t new_size);
+BOOL ResizeByteBuffer (struct ByteBuffer *buffer_p, size_t new_size);
 
 
-bool ExtendByteBuffer (struct ByteBuffer *buffer_p, size_t increment);
+BOOL ExtendByteBuffer (struct ByteBuffer *buffer_p, size_t increment);
 
 
-bool AppendToByteBuffer (struct ByteBuffer *buffer_p, const void *data_p, const size_t data_length);
+BOOL AppendToByteBuffer (struct ByteBuffer *buffer_p, const void *data_p, const size_t data_length);
 
 
 void ResetByteBuffer (struct ByteBuffer *buffer_p);
 
 
-bool MakeByteBufferDataValidString (struct ByteBuffer *buffer_p);
+BOOL MakeByteBufferDataValidString (struct ByteBuffer *buffer_p);
 
 
 size_t GetRemainingSpaceInByteBuffer (const struct ByteBuffer * const buffer_p);

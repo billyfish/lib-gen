@@ -1,7 +1,8 @@
 #include <string.h>
 
+#include <proto/exec.h>
+
 #include "byte_buffer.h"
-#include "memory_allocations.h"
 
 
 ByteBuffer *AllocateByteBuffer (size_t initial_size)

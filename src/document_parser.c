@@ -1,54 +1,68 @@
+#include <string.h>
+
+#include "document_parser.h"
 
 
-struct DocumentParser
+
+BOOL StripComments (struct DocumentParser *parser_p, STRPTR line_p)
 {
-	struct ByteBuffer *dp_buffer_p;
-	BOOL dp_matched_flag;
-	BOOL dp_comment_flag;
-
-};
-
-
-STRPTR StripComments (struct DocumentParser *parser_p, STRPTR line_p)
-{
-	/* are we already in a comment? */
-	if (parser_p -> dp_comment_flag)
+	STRPTR cpp_comment_p = strstr (line_p, "//");		
+	STRPTR data_start_p = line_p;
+	BOOL loop_flag = TRUE;
+	BOOL success_flag = TRUE;
+	
+	while (loop_flag && success_flag)
 		{
-			STRPTR comment_end_p = strstr (line_p, "*/");
-
-			if (comment_end_p)
+			if (parser_p -> dp_comment_flag)
 				{
-					/* Is there a new starting comment? */
-					STRPTR c_comment_p = strstr (comment_end_p, "/*");
-					STRPTR cpp_comment_p = strstr (comment_end_p, "//");
-					STRPTR comment_start_p = NULL;
-
-					if (c_comment_p)
+					STRPTR comment_p = strstr (line_p, "*/");
+					
+					if (comment_p)
 						{
-							if (cpp_comment_p)
-								{
-									comment_start_p = (c_comment_p < cpp_comment_p) ? c_comment_p : cpp_comment_p;
-								}
-							else
-								{
-									comment_start_p = c_comment_p;
-								}
+							data_start_p = comment_p + 2;
+							parser_p -> dp_comment_flag = FALSE;
+							loop_flag = ((*data_start_p) != '\0');
 						}
-					else
-						{
-							comment_start_p = cpp_comment_p;
-						}
-
-					if (comment_start_p)
-						{
-						}
-
 				}
 			else
 				{
-					/* still in comment */
-				}
-		}
+					STRPTR comment_p = strstr (line_p, "/*");
+					
+					if (comment_p)
+						{
+							parser_p -> dp_comment_flag = TRUE;
 
+							success_flag = AppendToByteBuffer (parser_p -> dp_buffer_p, data_start_p, (size_t) (comment_p - data_start_p));
+							loop_flag = ((* (comment_p + 2)) != '\0');
+						}				
+				}		
+		}		/* while (loop_flag && success_flag) */ 
+	
+
+	return success_flag;
 }
 
+
+
+BOOL DoStuff (struct DocumentParser *parser_p, STRPTR line_p)
+{
+	BOOL success_flag = FALSE;
+	
+	if (StripComments (parser_p, line_p))
+		{
+			if (MakeByteBufferDataValidString (parser_p -> dp_buffer_p))
+				{
+					char *delim_p = strchr (parser_p -> dp_buffer_p, ';');				
+				
+					if (delim_p)
+						{
+							/* cut the string from the buffer */
+							
+						}
+				}
+
+		
+		}
+
+	return success_flag;
+}

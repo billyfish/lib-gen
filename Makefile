@@ -4,16 +4,17 @@
 #
 # Project: libgen
 #
-# Created on: 23-11-2014 06:17:52
+# Created on: 25-11-2014 23:04:32
 #
 #
 
 CC = SDK:gcc/bin/gcc
 OBJ = \
-	 src/library_utils.o src/header_definitions.o src/idl_writer.o \
-	 src/main.o src/utils.o src/parameter.o \
-	 src/function_definition.o src/writer.o src/c_writer.o \
-	 src/makefile_utils.o
+	 src/byte_buffer.o src/document_parser.o src/library_utils.o \
+	 src/header_definitions.o src/idl_writer.o src/main.o \
+	 src/utils.o src/parameter.o src/function_definition.o \
+	 src/writer.o src/c_writer.o src/makefile_utils.o \
+	
 
 BIN = libgen
 
@@ -44,6 +45,12 @@ $(BIN): $(OBJ)
 #	You may also need to move the LDFLAGS variable depending on the contents
 	$(CC) -o $(BIN).debug $(OBJ) $(LDFLAGS) $(LIBS)
 	strip $(BIN).debug -o $(BIN)
+
+src/byte_buffer.o: src/byte_buffer.c src/byte_buffer.h
+	$(CC) -c src/byte_buffer.c -o src/byte_buffer.o $(CFLAGS)
+
+src/document_parser.o: src/document_parser.c 
+	$(CC) -c src/document_parser.c -o src/document_parser.o $(CFLAGS)
 
 src/library_utils.o: src/library_utils.c src/library_utils.h
 	$(CC) -c src/library_utils.c -o src/library_utils.o $(CFLAGS)
