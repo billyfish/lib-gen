@@ -1,6 +1,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <dos/dos.h>
 #include <exec/types.h>
 #include <exec/lists.h>
 

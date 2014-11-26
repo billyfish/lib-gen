@@ -4,7 +4,7 @@
 #
 # Project: libgen
 #
-# Created on: 25-11-2014 23:04:32
+# Created on: 26-11-2014 18:49:48
 #
 #
 
@@ -49,7 +49,7 @@ $(BIN): $(OBJ)
 src/byte_buffer.o: src/byte_buffer.c src/byte_buffer.h
 	$(CC) -c src/byte_buffer.c -o src/byte_buffer.o $(CFLAGS)
 
-src/document_parser.o: src/document_parser.c 
+src/document_parser.o: src/document_parser.c src/document_parser.h src/byte_buffer.h
 	$(CC) -c src/document_parser.c -o src/document_parser.o $(CFLAGS)
 
 src/library_utils.o: src/library_utils.c src/library_utils.h

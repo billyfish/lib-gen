@@ -3,6 +3,7 @@
 #include <proto/exec.h>
 
 #include "byte_buffer.h"
+#include "utils.h"
 
 
 ByteBuffer *AllocateByteBuffer (size_t initial_size)
@@ -118,3 +119,33 @@ BOOL MakeByteBufferDataValidString (struct ByteBuffer *buffer_p)
 
 	return success_flag;
 }
+
+
+STRPTR ExtractSubstring (struct ByteBuffer *buffer_p, char *end_p)
+{
+	char *substring_s = NULL;
+	char *delim_p = strchr (buffer_p -> bb_data_p, ';');				
+
+	if (delim_p)
+		{	
+			size_t sub_length = (size_t) (delim_p - (buffer_p -> bb_data_p));
+			/* cut the string from the buffer */
+			substring_s = CopyToNewString (buffer_p -> bb_data_p, delim_p, FALSE);
+			
+			if (substring_s)
+				{
+					size_t remaining_length = (buffer_p -> bb_size) - sub_length;
+					char *dest_p = memmove (buffer_p -> bb_data_p, delim_p + 1, remaining_length); 
+					
+					if (dest_p)
+						{
+							* (dest_p + remaining_length) = '\0';
+							buffer_p -> bb_current_index = remaining_length + 1;
+						}
+				}
+		}	
+		
+	return substring_s;
+}
+
+

@@ -52,12 +52,17 @@ BOOL DoStuff (struct DocumentParser *parser_p, STRPTR line_p)
 		{
 			if (MakeByteBufferDataValidString (parser_p -> dp_buffer_p))
 				{
-					char *delim_p = strchr (parser_p -> dp_buffer_p, ';');				
+					char *delim_p = strchr (parser_p -> dp_buffer_p -> bb_data_p, ';');				
 				
 					if (delim_p)
 						{
 							/* cut the string from the buffer */
+							char *prototype_s = CopyToNewString (parser_p -> dp_buffer_p -> bb_data_p, delim_p, FALSE);
 							
+							if (prototype_s)
+								{
+									
+								}
 						}
 				}
 
