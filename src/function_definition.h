@@ -68,7 +68,7 @@ BOOL PrintFunctionDefinition (BPTR out_p, const struct FunctionDefinition * cons
 BOOL WriteLibraryFunctionImplementation (BPTR out_p, const struct FunctionDefinition * const fd_p, CONST_STRPTR interface_struct_s);
 
 
-const char *FindParameterEnd (const char *start_p, BOOL function_flag, BOOL *function_pointer_flag_p);
+const char *FindParameterEnd (const char *start_p, BOOL function_flag);
 
 
 #ifdef __cplusplus
