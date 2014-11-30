@@ -19,7 +19,7 @@ struct DocumentParser *AllocateDocumentParser (void)
 	if (buffer_p)
 		{
 			struct FReadLineData *line_data_p = IDOS->AllocDosObject (DOS_FREADLINEDATA, 0);
-		
+
 			if (line_data_p)
 				{
 					struct DocumentParser *parser_p = (struct DocumentParser *) IExec->AllocVecTags (sizeof (struct DocumentParser), TAG_DONE);
@@ -31,11 +31,11 @@ struct DocumentParser *AllocateDocumentParser (void)
 							parser_p -> dp_comment_flag = FALSE;
 							parser_p -> dp_matched_flag = FALSE;
 							parser_p -> dp_file_handle_p = ZERO;
-			
+
 							return parser_p;
 						}
-				
-					IDOS->FreeDosObject (DOS_FREADLINEDATA, line_data_p);		
+
+					IDOS->FreeDosObject (DOS_FREADLINEDATA, line_data_p);
 				}
 			FreeByteBuffer (buffer_p);
 		}
@@ -46,7 +46,7 @@ struct DocumentParser *AllocateDocumentParser (void)
 
 void FreeDocumentParser (struct DocumentParser *parser_p)
 {
-	IDOS->FreeDosObject (DOS_FREADLINEDATA, parser_p -> dp_line_p);	
+	IDOS->FreeDosObject (DOS_FREADLINEDATA, parser_p -> dp_line_p);
 	FreeByteBuffer (parser_p -> dp_buffer_p);
 	IExec->FreeVec (parser_p);
 }
@@ -58,26 +58,33 @@ void SetDocumentToParse (struct DocumentParser *parser_p, BPTR handle_p)
 }
 
 
-int8 GetNextPrototype (struct DocumentParser *parser_p, STRPTR *prototype_ss)
+int32 GetNextPrototype (struct DocumentParser *parser_p, STRPTR *prototype_ss)
 {
-	int8 res = 0;
+	int32 count = 0;
 	BOOL loop_flag = TRUE;
-	
+
 	while (loop_flag)
 		{
-			int32 count = IDOS->FReadLine (parser_p -> dp_file_handle_p, parser_p -> dp_line_p);
-			
+			count = IDOS->FReadLine (parser_p -> dp_file_handle_p, parser_p -> dp_line_p);
+
 			if (count > 0)
 				{
 					char *prototype_s = ParseDocument (parser_p);
+
+					if (prototype_s)
+						{
+							*prototype_ss = prototype_s;
+							loop_flag = FALSE;
+							res = 1;
+						}
 				}
 			else
 				{
 					loop_flag = FALSE;
 				}
 		}
-		
-	return res;
+
+	return count;
 }
 
 
@@ -155,7 +162,7 @@ BOOL StripComments (struct DocumentParser *parser_p, STRPTR line_p)
 char *ParseDocument (struct DocumentParser *parser_p, STRPTR line_p)
 {
 	char *prototype_s = NULL;
-	
+
 	if (StripComments (parser_p, line_p))
 		{
 			if (MakeByteBufferDataValidString (parser_p -> dp_buffer_p))

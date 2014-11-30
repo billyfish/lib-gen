@@ -363,17 +363,12 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 				{
 					IDOS->Printf ("Not enough memory for source output directory name\n");
 				}
-
-
 		}
-
 
 	ClearHeaderDefinitionsList (&headers_list);
 
 	return res;
 }
-
-
 
 
 
@@ -385,58 +380,43 @@ BOOL GeneratePrototypesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_reg
 	if (ScanDirectories (root_path_s, header_definitions_p, filename_regexp_s, recurse_flag))
 		{
 			uint32 num_header_files = GetHeaderDefinitionsListSize (header_definitions_p);
-			
+
 			if (num_header_files > 0)
 				{
 					struct DocumentParser *document_parser_p = AllocateDocumentParser ();
-				
+
 					if (document_parser_p)
 						{
-							struct FReadLineData *line_data_p = IDOS->AllocDosObject (DOS_FREADLINEDATA, 0);
+							struct HeaderDefinitionsNode *node_p;
 
-							if (line_data_p)
+							success_flag = TRUE;
+							IDOS->Printf ("Found %lu header files\n", num_header_files);
+
+							for (node_p = (struct HeaderDefinitionsNode *) IExec->GetHead (header_definitions_p); node_p != NULL; node_p = (struct HeaderDefinitionsNode *) IExec->GetSucc ((struct Node *) node_p))
 								{
-									struct HeaderDefinitionsNode *node_p;
-									
-									success_flag = TRUE;
-									
-						
-									IDOS->Printf ("Found %lu header files\n", num_header_files);
-						
-									for (node_p = (struct HeaderDefinitionsNode *) IExec->GetHead (header_definitions_p); node_p != NULL; node_p = (struct HeaderDefinitionsNode *) IExec->GetSucc ((struct Node *) node_p))
+									struct HeaderDefinitions *header_defs_p = node_p -> hdn_defs_p;
+									CONST_STRPTR filename_s = header_defs_p -> hd_filename_s;
+
+									IDOS->Printf ("Parsing \"%s\"\n", filename_s);
+
+									/* Get the list of matching prototypes in each file */
+									if (!ParseFile (function_regexp_s, filename_s, header_defs_p, document_parser_p))
 										{
-											struct HeaderDefinitions *header_defs_p = node_p -> hdn_defs_p;
-											CONST_STRPTR filename_s = header_defs_p -> hd_filename_s;
-						
-											IDOS->Printf ("Parsing \"%s\"\n", filename_s);
-						
-											/* Get the list of matching prototypes in each file */
-											if (!ParseFile (function_regexp_s, filename_s, header_defs_p, document_parser_p))
-												{
-													success_flag = FALSE;
-												}
-												
-											
-										}			
-										
-									
+											success_flag = FALSE;
+										}
 
-									
-								}		/* if (line_data_p) */
-							else
-								{
-								
-								}	
-								
+
+								}
+
 							FreeDocumentParser (document_parser_p);
 						}
 					else
 						{
-						
+
 						}
-				
+
 				}		/* if (num_header_files > 0) */
-			
+
 
 
 		}
@@ -457,7 +437,7 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, str
 			int32 count;
 			struct CapturedExpression capture;
 			struct CapturedExpression *capture_p = &capture;
-
+			STRPTR full_prototype_s = NULL;
 			success_flag = TRUE;
 			memset (capture_p, 0, sizeof (struct CapturedExpression));
 
@@ -476,14 +456,14 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, str
 
 				etc.
 		  */
-		 
+
 			SetDocumentToParse (document_parser_p, handle_p);
-		 
-			while ((count = IDOS->FReadLine (handle_p, line_p)) > 0)
+
+			while ((count = GetNextPrototype (parser_p, &full_prototype_s)) > 0)
 				{
 					/* DB (KPRINTF ("%s %ld - GetMatchingPrototypes: line \"%s\"\n", __FILE__, __LINE__, line_p -> frld_Line));	*/
 
-					if (IDOS->CapturePattern (pattern_s, line_p -> frld_Line, TRUE, &capture_p) != 0)
+					if (IDOS->CapturePattern (pattern_s, full_prototype_s, TRUE, &capture_p) != 0)
 						{
 							/* we only want the first match */
 							STRPTR prototype_s = capture_p -> cape_Match;
@@ -492,19 +472,19 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, str
 								{
 									DB (KPRINTF ("%s %ld - GetMatchingPrototypes: cap match %8X start %8X end %8X next %8X\n", __FILE__, __LINE__, capture_p -> cape_Match,  capture_p -> cape_Start, capture_p -> cape_End, capture_p -> cape_Next));
 
-								if  (capture_p -> cape_Start)
-								{
-									DB (KPRINTF ("%s %ld - GetMatchingPrototypes: start \"%s\" end \"%s\" match \"%s\"\n", __FILE__, __LINE__, capture_p -> cape_Start, (capture_p -> cape_End) - 1, capture_p -> cape_Match));
+									if  (capture_p -> cape_Start)
+										{
+											DB (KPRINTF ("%s %ld - GetMatchingPrototypes: start \"%s\" end \"%s\" match \"%s\"\n", __FILE__, __LINE__, capture_p -> cape_Start, (capture_p -> cape_End) - 1, capture_p -> cape_Match));
+										}
+									else
+										{
+											DB (KPRINTF ("%s %ld - GetMatchingPrototypes: start NULL\n", __FILE__, __LINE__));
+										}
 								}
 							else
 								{
-									DB (KPRINTF ("%s %ld - GetMatchingPrototypes: start NULL\n", __FILE__, __LINE__));
+									DB (KPRINTF ("%s %ld - GetMatchingPrototypes: capture_p NULL\n", __FILE__, __LINE__));
 								}
-							}
-						else
-							{
-								DB (KPRINTF ("%s %ld - GetMatchingPrototypes: capture_p NULL\n", __FILE__, __LINE__));
-							}
 
 
 							//prototype_s = CopyToNewString (capture_p -> cape_Start, (capture_p -> cape_End) - 1, FALSE);
@@ -558,6 +538,9 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, str
 						{
 							//IDOS->Printf ("line:= %s", line_p -> frld_Line);
 						}
+
+					IExec->FreeVec (full_prototype_s);
+					prototype_s = NULL;
 				}
 
 			success_flag = (count == 0);
@@ -635,5 +618,3 @@ static void CloseLibs (void)
 	CloseLib (UtilityBase, (struct Interface *) IUtility);
 	CloseLib (DOSBase, (struct Interface *) IDOS);
 }
-
-
