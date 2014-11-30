@@ -6,7 +6,7 @@
 **
 ** Project: libgen
 **
-** File: 
+** File:
 **
 ** Date: 25-11-2014 23:03:17
 **
@@ -28,6 +28,15 @@ struct DocumentParser
 	BOOL dp_comment_flag;
 
 };
+
+
+struct DocumentParser *AllocateDocumentParser (void);
+
+void FreeDocumentParser (struct DocumentParser *parser_p);
+
+BOOL StripComments (struct DocumentParser *parser_p, STRPTR line_p);
+
+BOOL ParseDocument (struct DocumentParser *parser_p, STRPTR line_p);
 
 
 #endif

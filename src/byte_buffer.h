@@ -29,7 +29,6 @@ BOOL ExtendByteBuffer (struct ByteBuffer *buffer_p, size_t increment);
 
 BOOL AppendToByteBuffer (struct ByteBuffer *buffer_p, const void *data_p, const size_t data_length);
 
-
 void ResetByteBuffer (struct ByteBuffer *buffer_p);
 
 
@@ -37,6 +36,9 @@ BOOL MakeByteBufferDataValidString (struct ByteBuffer *buffer_p);
 
 
 size_t GetRemainingSpaceInByteBuffer (const struct ByteBuffer * const buffer_p);
+
+
+STRPTR ExtractSubstring (struct ByteBuffer *buffer_p, char *end_p);
 
 
 #endif		/* #ifndef BYTE_BUFFER_H */
