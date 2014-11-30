@@ -29,6 +29,7 @@
 
 #include "utils.h"
 #include "header_definitions.h"
+#include "document_parser.h"
 #include "debugging_utils.h"
 #include "idl_writer.h"
 #include "library_utils.h"
@@ -37,8 +38,8 @@ static BOOL OpenLibs (void);
 static void CloseLibs (void);
 
 
-BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, struct FReadLineData *line_p, struct HeaderDefinitions *hdr_defs_p);
-BOOL ParseFile (CONST_STRPTR pattern_s, CONST_STRPTR filename_s, struct HeaderDefinitions *header_defs_p);
+BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, struct DocumentParser *document_parser_p, struct HeaderDefinitions *header_defs_p);
+BOOL ParseFile (CONST_STRPTR pattern_s, CONST_STRPTR filename_s, struct HeaderDefinitions *header_defs_p, struct DocumentParser *document_parser_p);
 BOOL GeneratePrototypesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR function_pattern_s, const BOOL recurse_flag, struct List *header_definitions_p);
 
 STRPTR CreateRegEx (CONST_STRPTR pattern_s, BOOL capture_flag);
@@ -383,26 +384,60 @@ BOOL GeneratePrototypesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_reg
 	/* Get a list of the header filenames */
 	if (ScanDirectories (root_path_s, header_definitions_p, filename_regexp_s, recurse_flag))
 		{
-			struct HeaderDefinitionsNode *node_p;
-
-			success_flag = TRUE;
-
-
-			IDOS->Printf ("Found %lu header files\n", GetHeaderDefinitionsListSize (header_definitions_p));
-
-			for (node_p = (struct HeaderDefinitionsNode *) IExec->GetHead (header_definitions_p); node_p != NULL; node_p = (struct HeaderDefinitionsNode *) IExec->GetSucc ((struct Node *) node_p))
+			uint32 num_header_files = GetHeaderDefinitionsListSize (header_definitions_p);
+			
+			if (num_header_files > 0)
 				{
-					struct HeaderDefinitions *header_defs_p = node_p -> hdn_defs_p;
-					CONST_STRPTR filename_s = header_defs_p -> hd_filename_s;
-
-					IDOS->Printf ("Parsing \"%s\"\n", filename_s);
-
-					/* Get the list of matching prototypes in each file */
-					if (!ParseFile (function_regexp_s, filename_s, header_defs_p))
+					struct DocumentParser *document_parser_p = AllocateDocumentParser ();
+				
+					if (document_parser_p)
 						{
-							success_flag = FALSE;
+							struct FReadLineData *line_data_p = IDOS->AllocDosObject (DOS_FREADLINEDATA, 0);
+
+							if (line_data_p)
+								{
+									struct HeaderDefinitionsNode *node_p;
+									
+									success_flag = TRUE;
+									
+						
+									IDOS->Printf ("Found %lu header files\n", num_header_files);
+						
+									for (node_p = (struct HeaderDefinitionsNode *) IExec->GetHead (header_definitions_p); node_p != NULL; node_p = (struct HeaderDefinitionsNode *) IExec->GetSucc ((struct Node *) node_p))
+										{
+											struct HeaderDefinitions *header_defs_p = node_p -> hdn_defs_p;
+											CONST_STRPTR filename_s = header_defs_p -> hd_filename_s;
+						
+											IDOS->Printf ("Parsing \"%s\"\n", filename_s);
+						
+											/* Get the list of matching prototypes in each file */
+											if (!ParseFile (function_regexp_s, filename_s, header_defs_p, document_parser_p))
+												{
+													success_flag = FALSE;
+												}
+												
+											
+										}			
+										
+									
+
+									
+								}		/* if (line_data_p) */
+							else
+								{
+								
+								}	
+								
+							FreeDocumentParser (document_parser_p);
 						}
-				}
+					else
+						{
+						
+						}
+				
+				}		/* if (num_header_files > 0) */
+			
+
 
 		}
 
@@ -412,7 +447,7 @@ BOOL GeneratePrototypesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_reg
 }
 
 
-BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, struct FReadLineData *line_p, struct HeaderDefinitions *header_defs_p)
+BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, struct DocumentParser *document_parser_p, struct HeaderDefinitions *header_defs_p)
 {
 	BOOL success_flag = FALSE;
 	BPTR handle_p = IDOS->FOpen (filename_s, MODE_OLDFILE, 0);
@@ -440,7 +475,10 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, str
 					foo (int bar, int boo);
 
 				etc.
-		 */
+		  */
+		 
+			SetDocumentToParse (document_parser_p, handle_p);
+		 
 			while ((count = IDOS->FReadLine (handle_p, line_p)) > 0)
 				{
 					/* DB (KPRINTF ("%s %ld - GetMatchingPrototypes: line \"%s\"\n", __FILE__, __LINE__, line_p -> frld_Line));	*/
@@ -555,31 +593,21 @@ void ClearCapturedExpression (struct CapturedExpression *capture_p)
 
 
 
-BOOL ParseFile (CONST_STRPTR function_regexp_s, CONST_STRPTR filename_s, struct HeaderDefinitions *header_defs_p)
+BOOL ParseFile (CONST_STRPTR function_regexp_s, CONST_STRPTR filename_s, struct HeaderDefinitions *header_defs_p, struct DocumentParser *document_parser_p)
 {
-	struct FReadLineData *line_data_p = IDOS->AllocDosObject (DOS_FREADLINEDATA, 0);
-	BOOL success_flag = FALSE;
+	BOOL success_flag = GetMatchingPrototypes (filename_s, function_regexp_s, document_parser_p, header_defs_p);
 
-	if (line_data_p)
+	if (success_flag)
 		{
-			success_flag = GetMatchingPrototypes (filename_s, function_regexp_s, line_data_p, header_defs_p);
-
-			if (success_flag)
+			if (GetVerbosity () > VB_NORMAL)
 				{
-					if (GetVerbosity () > VB_NORMAL)
-						{
-							IDOS->Printf ("read \"%s\" successfully\n", filename_s);
-						}
+					IDOS->Printf ("read \"%s\" successfully\n", filename_s);
 				}
-			else
-				{
-					IDOS->Printf ("failed to read \"%s\"\n", filename_s);
-				}
-
-
-			IDOS->FreeDosObject (DOS_FREADLINEDATA, line_data_p);
-		}		/* if (line_data_p) */
-
+		}
+	else
+		{
+			IDOS->Printf ("failed to read \"%s\"\n", filename_s);
+		}
 
 	DB (KPRINTF ("%s %ld - ParseFile %ld\n", __FILE__, __LINE__, success_flag));
 

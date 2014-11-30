@@ -24,9 +24,10 @@
 struct DocumentParser
 {
 	struct ByteBuffer *dp_buffer_p;
+	struct FReadLineData *dp_line_p;
 	BOOL dp_matched_flag;
 	BOOL dp_comment_flag;
-
+	BPTR dp_file_handle_p;
 };
 
 
@@ -36,7 +37,8 @@ void FreeDocumentParser (struct DocumentParser *parser_p);
 
 BOOL StripComments (struct DocumentParser *parser_p, STRPTR line_p);
 
-BOOL ParseDocument (struct DocumentParser *parser_p, STRPTR line_p);
+char *ParseDocument (struct DocumentParser *parser_p, STRPTR line_p);
 
+int8 GetNextPrototype (struct DocumentParser *parser_p);
 
 #endif

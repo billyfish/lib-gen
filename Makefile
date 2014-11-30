@@ -4,7 +4,7 @@
 #
 # Project: libgen
 #
-# Created on: 26-11-2014 18:49:48
+# Created on: 30-11-2014 15:24:00
 #
 #
 
@@ -46,10 +46,10 @@ $(BIN): $(OBJ)
 	$(CC) -o $(BIN).debug $(OBJ) $(LDFLAGS) $(LIBS)
 	strip $(BIN).debug -o $(BIN)
 
-src/byte_buffer.o: src/byte_buffer.c src/byte_buffer.h
+src/byte_buffer.o: src/byte_buffer.c src/byte_buffer.h src/utils.h
 	$(CC) -c src/byte_buffer.c -o src/byte_buffer.o $(CFLAGS)
 
-src/document_parser.o: src/document_parser.c src/document_parser.h src/byte_buffer.h
+src/document_parser.o: src/document_parser.c src/document_parser.h src/byte_buffer.h src/utils.h
 	$(CC) -c src/document_parser.c -o src/document_parser.o $(CFLAGS)
 
 src/library_utils.o: src/library_utils.c src/library_utils.h

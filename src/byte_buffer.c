@@ -1,6 +1,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <proto/exec.h>
+
 #include "byte_buffer.h"
 #include "utils.h"
 

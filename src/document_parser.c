@@ -2,6 +2,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+
+
+#include <proto/dos.h>
+#include <proto/exec.h>
+
+
 #include "document_parser.h"
 #include "utils.h"
 
@@ -11,20 +17,28 @@ struct DocumentParser *AllocateDocumentParser (void)
 	ByteBuffer *buffer_p = AllocateByteBuffer (1024);
 
 	if (buffer_p)
-	{
-		struct DocumentParser *parser_p = (struct DocumentParser *) IExec->AllocVecTags (sizeof (struct DocumentParser), TAG_DONE);
-
-		if (parser_p)
 		{
-			parser_p -> dp_buffer_p = buffer_p;
-			parser_p -> dp_comment_flag = FALSE;
-			parser_p -> dp_matched_flag = FALSE;
+			struct FReadLineData *line_data_p = IDOS->AllocDosObject (DOS_FREADLINEDATA, 0);
+		
+			if (line_data_p)
+				{
+					struct DocumentParser *parser_p = (struct DocumentParser *) IExec->AllocVecTags (sizeof (struct DocumentParser), TAG_DONE);
 
-			return parser_p;
+					if (parser_p)
+						{
+							parser_p -> dp_buffer_p = buffer_p;
+							parser_p -> dp_line_p = line_data_p;
+							parser_p -> dp_comment_flag = FALSE;
+							parser_p -> dp_matched_flag = FALSE;
+							parser_p -> dp_file_handle_p = ZERO;
+			
+							return parser_p;
+						}
+				
+					IDOS->FreeDosObject (DOS_FREADLINEDATA, line_data_p);		
+				}
+			FreeByteBuffer (buffer_p);
 		}
-
-		FreeByteBuffer (buffer_p);
-	}
 
 	return NULL;
 }
@@ -32,8 +46,38 @@ struct DocumentParser *AllocateDocumentParser (void)
 
 void FreeDocumentParser (struct DocumentParser *parser_p)
 {
+	IDOS->FreeDosObject (DOS_FREADLINEDATA, parser_p -> dp_line_p);	
 	FreeByteBuffer (parser_p -> dp_buffer_p);
 	IExec->FreeVec (parser_p);
+}
+
+
+void SetDocumentToParse (struct DocumentParser *parser_p, BPTR handle_p)
+{
+	parser_p -> dp_file_handle_p = handle_p;
+}
+
+
+int8 GetNextPrototype (struct DocumentParser *parser_p, STRPTR *prototype_ss)
+{
+	int8 res = 0;
+	BOOL loop_flag = TRUE;
+	
+	while (loop_flag)
+		{
+			int32 count = IDOS->FReadLine (parser_p -> dp_file_handle_p, parser_p -> dp_line_p);
+			
+			if (count > 0)
+				{
+					char *prototype_s = ParseDocument (parser_p);
+				}
+			else
+				{
+					loop_flag = FALSE;
+				}
+		}
+		
+	return res;
 }
 
 
@@ -108,10 +152,10 @@ BOOL StripComments (struct DocumentParser *parser_p, STRPTR line_p)
 
 
 
-BOOL ParseDocument (struct DocumentParser *parser_p, STRPTR line_p)
+char *ParseDocument (struct DocumentParser *parser_p, STRPTR line_p)
 {
-	BOOL success_flag = FALSE;
-
+	char *prototype_s = NULL;
+	
 	if (StripComments (parser_p, line_p))
 		{
 			if (MakeByteBufferDataValidString (parser_p -> dp_buffer_p))
@@ -121,17 +165,15 @@ BOOL ParseDocument (struct DocumentParser *parser_p, STRPTR line_p)
 					if (delim_p)
 						{
 							/* cut the string from the buffer */
-							char *prototype_s = ExtractSubstring (parser_p -> dp_buffer_p, delim_p);
+							prototype_s = ExtractSubstring (parser_p -> dp_buffer_p, delim_p);
 
-							if (prototype_s)
+							if (!prototype_s)
 								{
-									printf (">>> \"%s\"\n", prototype_s);
-
-									IExec->FreeVec (prototype_s);
+									printf ("Failed to extract prototype from \"%s\"\n", parser_p -> dp_buffer_p);
 								}
 						}
 				}
 		}
 
-	return success_flag;
+	return prototype_s;
 }
