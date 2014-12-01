@@ -4,7 +4,7 @@
 #
 # Project: libgen
 #
-# Created on: 30-11-2014 15:24:00
+# Created on: 01-12-2014 18:40:39
 #
 #
 
@@ -61,7 +61,7 @@ src/header_definitions.o: src/header_definitions.c src/header_definitions.h src/
 src/idl_writer.o: src/idl_writer.c src/idl_writer.h src/writer.h src/header_definitions.h src/parameter.h src/function_definition.h src/debugging_utils.h
 	$(CC) -c src/idl_writer.c -o src/idl_writer.o $(CFLAGS)
 
-src/main.o: src/main.c src/utils.h src/header_definitions.h src/function_definition.h src/parameter.h src/debugging_utils.h src/idl_writer.h src/writer.h src/library_utils.h
+src/main.o: src/main.c src/utils.h src/header_definitions.h src/function_definition.h src/parameter.h src/document_parser.h src/byte_buffer.h src/debugging_utils.h src/idl_writer.h src/writer.h src/library_utils.h
 	$(CC) -c src/main.c -o src/main.o $(CFLAGS)
 
 src/utils.o: src/utils.c src/debugging_utils.h src/utils.h src/parameter.h src/header_definitions.h src/function_definition.h

@@ -75,7 +75,6 @@ int32 GetNextPrototype (struct DocumentParser *parser_p, STRPTR *prototype_ss)
 						{
 							*prototype_ss = prototype_s;
 							loop_flag = FALSE;
-							res = 1;
 						}
 				}
 			else
@@ -88,10 +87,10 @@ int32 GetNextPrototype (struct DocumentParser *parser_p, STRPTR *prototype_ss)
 }
 
 
-BOOL StripComments (struct DocumentParser *parser_p, STRPTR line_p)
+BOOL StripComments (struct DocumentParser *parser_p)
 {
-	STRPTR cpp_comment_p = strstr (line_p, "//");
-	STRPTR data_start_p = line_p;
+	STRPTR data_start_p = parser_p -> dp_line_p -> frld_Line;
+	STRPTR cpp_comment_p = strstr (data_start_p, "//");
 	BOOL loop_flag = TRUE;
 	BOOL success_flag = TRUE;
 
@@ -159,11 +158,11 @@ BOOL StripComments (struct DocumentParser *parser_p, STRPTR line_p)
 
 
 
-char *ParseDocument (struct DocumentParser *parser_p, STRPTR line_p)
+char *ParseDocument (struct DocumentParser *parser_p)
 {
 	char *prototype_s = NULL;
 
-	if (StripComments (parser_p, line_p))
+	if (StripComments (parser_p))
 		{
 			if (MakeByteBufferDataValidString (parser_p -> dp_buffer_p))
 				{
@@ -176,7 +175,7 @@ char *ParseDocument (struct DocumentParser *parser_p, STRPTR line_p)
 
 							if (!prototype_s)
 								{
-									printf ("Failed to extract prototype from \"%s\"\n", parser_p -> dp_buffer_p);
+									printf ("Failed to extract prototype from \"%s\"\n", parser_p -> dp_buffer_p -> bb_data_p);
 								}
 						}
 				}

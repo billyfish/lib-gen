@@ -35,10 +35,13 @@ struct DocumentParser *AllocateDocumentParser (void);
 
 void FreeDocumentParser (struct DocumentParser *parser_p);
 
-BOOL StripComments (struct DocumentParser *parser_p, STRPTR line_p);
+BOOL StripComments (struct DocumentParser *parser_p);
 
-char *ParseDocument (struct DocumentParser *parser_p, STRPTR line_p);
+char *ParseDocument (struct DocumentParser *parser_p);
 
-int8 GetNextPrototype (struct DocumentParser *parser_p);
+int32 GetNextPrototype (struct DocumentParser *parser_p, STRPTR *prototype_ss);
+
+
+void SetDocumentToParse (struct DocumentParser *parser_p, BPTR handle_p);
 
 #endif

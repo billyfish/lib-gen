@@ -427,7 +427,7 @@ BOOL GeneratePrototypesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_reg
 }
 
 
-BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, struct DocumentParser *document_parser_p, struct HeaderDefinitions *header_defs_p)
+BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, struct DocumentParser *parser_p, struct HeaderDefinitions *header_defs_p)
 {
 	BOOL success_flag = FALSE;
 	BPTR handle_p = IDOS->FOpen (filename_s, MODE_OLDFILE, 0);
@@ -457,7 +457,7 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, str
 				etc.
 		  */
 
-			SetDocumentToParse (document_parser_p, handle_p);
+			SetDocumentToParse (parser_p, handle_p);
 
 			while ((count = GetNextPrototype (parser_p, &full_prototype_s)) > 0)
 				{
@@ -540,7 +540,7 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, str
 						}
 
 					IExec->FreeVec (full_prototype_s);
-					prototype_s = NULL;
+					full_prototype_s = NULL;
 				}
 
 			success_flag = (count == 0);
