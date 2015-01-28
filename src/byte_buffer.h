@@ -32,9 +32,6 @@ BOOL AppendToByteBuffer (struct ByteBuffer *buffer_p, const void *data_p, const 
 void ResetByteBuffer (struct ByteBuffer *buffer_p);
 
 
-BOOL MakeByteBufferDataValidString (struct ByteBuffer *buffer_p);
-
-
 size_t GetRemainingSpaceInByteBuffer (const struct ByteBuffer * const buffer_p);
 
 

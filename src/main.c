@@ -461,7 +461,7 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, str
 
 			while ((count = GetNextPrototype (parser_p, &full_prototype_s)) > 0)
 				{
-					/* DB (KPRINTF ("%s %ld - GetMatchingPrototypes: line \"%s\"\n", __FILE__, __LINE__, line_p -> frld_Line));	*/
+					DB (KPRINTF ("%s %ld - GetMatchingPrototypes: line \"%s\"\n", __FILE__, __LINE__, full_prototype_s));	
 
 					if (IDOS->CapturePattern (pattern_s, full_prototype_s, TRUE, &capture_p) != 0)
 						{

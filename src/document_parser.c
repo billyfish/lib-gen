@@ -10,6 +10,11 @@
 
 #include "document_parser.h"
 #include "utils.h"
+#include "debugging_utils.h"
+
+#ifdef _DEBUG
+#define DOCUMENT_PARSER_DEBUG (11)
+#endif
 
 
 struct DocumentParser *AllocateDocumentParser (void)
@@ -18,7 +23,7 @@ struct DocumentParser *AllocateDocumentParser (void)
 
 	if (buffer_p)
 		{
-			struct FReadLineData *line_data_p = IDOS->AllocDosObject (DOS_FREADLINEDATA, 0);
+			struct FReadLineData *line_data_p = IDOS->AllocDosObjectTags (DOS_FREADLINEDATA, TAG_DONE);
 
 			if (line_data_p)
 				{
@@ -66,6 +71,10 @@ int32 GetNextPrototype (struct DocumentParser *parser_p, STRPTR *prototype_ss)
 	while (loop_flag)
 		{
 			count = IDOS->FReadLine (parser_p -> dp_file_handle_p, parser_p -> dp_line_p);
+
+			#if DOCUMENT_PARSER_DEBUG > 10
+			DB (KPRINTF ("%s %ld - \"%s\"\n", __FILE__, __LINE__, parser_p -> dp_line_p -> frld_Line));
+			#endif
 
 			if (count > 0)
 				{
@@ -164,8 +173,6 @@ char *ParseDocument (struct DocumentParser *parser_p)
 
 	if (StripComments (parser_p))
 		{
-			if (MakeByteBufferDataValidString (parser_p -> dp_buffer_p))
-				{
 					char *delim_p = strchr (parser_p -> dp_buffer_p -> bb_data_p, ';');
 
 					if (delim_p)
@@ -178,7 +185,6 @@ char *ParseDocument (struct DocumentParser *parser_p)
 									printf ("Failed to extract prototype from \"%s\"\n", parser_p -> dp_buffer_p -> bb_data_p);
 								}
 						}
-				}
 		}
 
 	return prototype_s;
