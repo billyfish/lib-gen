@@ -124,6 +124,35 @@ BOOL StripComments (struct DocumentParser *parser_p)
 							parser_p -> dp_comment_flag = FALSE;
 							loop_flag = ((*data_start_p) != '\0');
 						}
+					else
+						{
+							char *line_end_p = strrchr (data_start_p, '\n');
+
+							if (line_end_p)
+								{
+									if (line_end_p > data_start_p)
+										{
+											#if DOCUMENT_PARSER_DEBUG > 10
+											DB (KPRINTF ("%s %ld - appended line end\"%s\"\n", __FILE__, __LINE__, line_end_p));
+											#endif
+
+											success_flag = AppendToByteBuffer (parser_p -> dp_buffer_p, data_start_p, (size_t) (line_end_p - data_start_p));
+										}
+									else
+										{
+											#if DOCUMENT_PARSER_DEBUG > 10
+											DB (KPRINTF ("%s %ld - terminating with line end\"%s\"\n", __FILE__, __LINE__, line_end_p));
+											#endif
+
+											loop_flag = FALSE;
+										}
+								}
+							else
+								{
+									success_flag = AppendToByteBuffer (parser_p -> dp_buffer_p, data_start_p, strlen (data_start_p));
+								}
+							loop_flag = FALSE;
+						}						
 				}
 			else
 				{
