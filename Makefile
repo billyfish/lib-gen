@@ -4,7 +4,7 @@
 #
 # Project: libgen
 #
-# Created on: 28-01-2015 23:32:01
+# Created on: 02-02-2015 23:04:12
 #
 #
 
@@ -63,7 +63,7 @@ $(BIN): $(OBJ) $(LIBS)
 	@echo "Compiling $<"
 	@$(CC) -c $< -o $*.o $(CFLAGS)
 
-byte_buffer.o: src/byte_buffer.c src/byte_buffer.h src/utils.h
+byte_buffer.o: src/byte_buffer.c src/byte_buffer.h src/utils.h src/debugging_utils.h
 
 document_parser.o: src/document_parser.c src/document_parser.h src/byte_buffer.h src/utils.h src/debugging_utils.h
 

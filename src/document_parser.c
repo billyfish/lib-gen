@@ -126,31 +126,6 @@ BOOL StripComments (struct DocumentParser *parser_p)
 						}
 					else
 						{
-							char *line_end_p = strrchr (data_start_p, '\n');
-
-							if (line_end_p)
-								{
-									if (line_end_p > data_start_p)
-										{
-											#if DOCUMENT_PARSER_DEBUG > 10
-											DB (KPRINTF ("%s %ld - appended line end\"%s\"\n", __FILE__, __LINE__, line_end_p));
-											#endif
-
-											success_flag = AppendToByteBuffer (parser_p -> dp_buffer_p, data_start_p, (size_t) (line_end_p - data_start_p));
-										}
-									else
-										{
-											#if DOCUMENT_PARSER_DEBUG > 10
-											DB (KPRINTF ("%s %ld - terminating with line end\"%s\"\n", __FILE__, __LINE__, line_end_p));
-											#endif
-
-											loop_flag = FALSE;
-										}
-								}
-							else
-								{
-									success_flag = AppendToByteBuffer (parser_p -> dp_buffer_p, data_start_p, strlen (data_start_p));
-								}
 							loop_flag = FALSE;
 						}						
 				}
@@ -164,23 +139,29 @@ BOOL StripComments (struct DocumentParser *parser_p)
 
 					if (comment_p)
 						{
-							success_flag = AppendToByteBuffer (parser_p -> dp_buffer_p, data_start_p, (size_t) (comment_p - data_start_p));
-
-							#if DOCUMENT_PARSER_DEBUG > 10
-							DB (KPRINTF ("%s %ld - appended c \"%d\" sub \"%s\"\n", __FILE__, __LINE__, success_flag, comment_p));
-							#endif
+							if (data_start_p < comment_p)
+								{
+									success_flag = AppendToByteBuffer (parser_p -> dp_buffer_p, data_start_p, (size_t) (comment_p - data_start_p));
+									
+									#if DOCUMENT_PARSER_DEBUG > 10
+									DB (KPRINTF ("%s %ld - appended c \"%d\" sub \"%s\"\n", __FILE__, __LINE__, success_flag, comment_p));
+									#endif
+								}
 
 							parser_p -> dp_comment_flag = TRUE;
 							data_start_p = comment_p + 2;
 							loop_flag = ((*data_start_p) != '\0');
 						}
-					else if (cpp_comment_p)
+					else if (cpp_comment_p && (data_start_p < cpp_comment_p))
 						{
-							success_flag = AppendToByteBuffer (parser_p -> dp_buffer_p, data_start_p, (size_t) (cpp_comment_p - data_start_p));
-
-							#if DOCUMENT_PARSER_DEBUG > 10
-							DB (KPRINTF ("%s %ld - appended cpp \"%d\" sub \"%s\"\n", __FILE__, __LINE__, success_flag, cpp_comment_p));
-							#endif
+							if (data_start_p < cpp_comment_p)
+								{
+									success_flag = AppendToByteBuffer (parser_p -> dp_buffer_p, data_start_p, (size_t) (cpp_comment_p - data_start_p));
+									
+									#if DOCUMENT_PARSER_DEBUG > 10
+									DB (KPRINTF ("%s %ld - appended c \"%d\" sub \"%s\"\n", __FILE__, __LINE__, success_flag, cpp_comment_p));
+									#endif
+								}
 
 
 							loop_flag = FALSE;

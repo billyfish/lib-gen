@@ -5,7 +5,7 @@
 
 #include "byte_buffer.h"
 #include "utils.h"
-
+#include "debugging_utils.h"
 
 
 #ifdef _DEBUG
@@ -58,7 +58,7 @@ BOOL ResizeByteBuffer (ByteBuffer *buffer_p, size_t new_size)
 
 	#if BYTE_BUFFER_DEBUG >= 10
 	DB (KPRINTF ("%s %ld - Pre-resize:\n", __FILE__, __LINE__));
-	DumpDebugByteBuffer (buffer_p);
+	DebugPrintByteBuffer (buffer_p);
 	#endif
 
 
@@ -79,7 +79,7 @@ BOOL ResizeByteBuffer (ByteBuffer *buffer_p, size_t new_size)
 
 	#if BYTE_BUFFER_DEBUG >= 10
 	DB (KPRINTF ("%s %ld - Post-resize: %ld\n", __FILE__, __LINE__, success_flag));
-	DumpDebugByteBuffer (buffer_p);
+	DebugPrintByteBuffer (buffer_p);
 	#endif
 
 	return success_flag;
@@ -92,8 +92,9 @@ BOOL AppendToByteBuffer (struct ByteBuffer *buffer_p, const void *data_p, const 
 	BOOL success_flag = TRUE;
 
 	#if BYTE_BUFFER_DEBUG >= 10
+	DB (KPRINTF ("%s %ld - data to append \"%s\" length %lu\n", __FILE__, __LINE__, (const char *) data_p, data_length));	
 	DB (KPRINTF ("%s %ld - Pre-append size remaining: %lu\n", __FILE__, __LINE__, space_remaining));
-	DumpDebugByteBuffer (buffer_p);
+	DebugPrintByteBuffer (buffer_p);
 	#endif
 
 	if (space_remaining <= data_length)
@@ -107,11 +108,17 @@ BOOL AppendToByteBuffer (struct ByteBuffer *buffer_p, const void *data_p, const 
 
 			memcpy (current_data_p, data_p, data_length);
 			buffer_p -> bb_current_index += data_length;
+			
+			current_data_p = (buffer_p -> bb_data_p) + ((buffer_p -> bb_current_index) - 1);
+			if ((*current_data_p == '\r') || (*current_data_p == '\n'))
+				{
+					*current_data_p = ' ';
+				}
 		}
 
 	#if BYTE_BUFFER_DEBUG >= 10
 	DB (KPRINTF ("%s %ld - post-append success_flag: %ld\n", __FILE__, __LINE__, success_flag));
-	DumpDebugByteBuffer (buffer_p);
+	DebugPrintByteBuffer (buffer_p);
 	#endif
 
 
@@ -145,8 +152,8 @@ STRPTR ExtractSubstring (struct ByteBuffer *buffer_p, char *end_p)
 			substring_s = CopyToNewString (buffer_p -> bb_data_p, delim_p, FALSE);
 
 			#if BYTE_BUFFER_DEBUG >= 10
-			DB (KPRINTF ("%s %ld - pre-extract: substring \"%s\" length %lu\n", __FILE__, __LINE__, substring_s, sub_length));
-			DumpDebugByteBuffer (buffer_p);
+			DB (KPRINTF ("%s %ld - ********** pre-extract: substring \"%s\" length %lu\n", __FILE__, __LINE__, substring_s, sub_length));
+			DebugPrintByteBuffer (buffer_p);
 			#endif
 
 
@@ -161,7 +168,7 @@ STRPTR ExtractSubstring (struct ByteBuffer *buffer_p, char *end_p)
 							DB (KPRINTF ("%s %ld - pre-extract: remaining_length \"%ld\"\n", __FILE__, __LINE__, remaining_length));
 							#endif
 
-							char *dest_p = memmove (buffer_p -> bb_data_p, delim_p + 1, remaining_length);
+							dest_p = memmove (buffer_p -> bb_data_p, delim_p + 1, remaining_length);
 
 							if (dest_p)
 								{
@@ -173,7 +180,7 @@ STRPTR ExtractSubstring (struct ByteBuffer *buffer_p, char *end_p)
 						{
 							#if BYTE_BUFFER_DEBUG >= 0
 							DB (KPRINTF ("%s %ld - extract failure: sub_length \"%lu\"\n", __FILE__, __LINE__,sub_length));							
-							DumpDebugByteBuffer (buffer_p);
+							DebugPrintByteBuffer (buffer_p);
 							#endif
 						}				
 				}
@@ -185,5 +192,5 @@ STRPTR ExtractSubstring (struct ByteBuffer *buffer_p, char *end_p)
 
 void DebugPrintByteBuffer (const ByteBuffer * const buffer_p)
 {
-	DB (KPRINTF ("%s %ld - ByteBuffer: size %lu index %lu data \"%s\"\n", __FILE__, __LINE__, buffer_p -> bb_size, buffer_p -> bb_current_index, buffer_p -> bb_data_p));
+	DB (KPRINTF ("%s %ld - ByteBuffer: size %lu index %lu data \n\"%s\"\n", __FILE__, __LINE__, buffer_p -> bb_size, buffer_p -> bb_current_index, buffer_p -> bb_data_p));
 }
