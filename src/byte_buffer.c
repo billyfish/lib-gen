@@ -7,6 +7,13 @@
 #include "utils.h"
 
 
+
+#ifdef _DEBUG
+#define BYTE_BUFFER_DEBUG (10)
+#endif
+
+
+
 ByteBuffer *AllocateByteBuffer (size_t initial_size)
 {
 	STRPTR data_p = (STRPTR) IExec->AllocVecTags (initial_size, AVT_ClearWithValue, 0, TAG_DONE);
@@ -47,8 +54,13 @@ BOOL ExtendByteBuffer (ByteBuffer *buffer_p, size_t increment)
 BOOL ResizeByteBuffer (ByteBuffer *buffer_p, size_t new_size)
 {
 	BOOL success_flag = FALSE;
-
 	STRPTR new_data_p = (STRPTR) IExec->AllocVecTags (new_size, AVT_ClearWithValue, 0, TAG_DONE);
+
+	#if BYTE_BUFFER_DEBUG >= 10
+	DB (KPRINTF ("%s %ld - Pre-resize:\n", __FILE__, __LINE__));
+	DumpDebugByteBuffer (buffer_p);
+	#endif
+
 
 	if (new_data_p)
 		{
@@ -65,6 +77,11 @@ BOOL ResizeByteBuffer (ByteBuffer *buffer_p, size_t new_size)
 			success_flag = TRUE;
 		}
 
+	#if BYTE_BUFFER_DEBUG >= 10
+	DB (KPRINTF ("%s %ld - Post-resize: %ld\n", __FILE__, __LINE__, success_flag));
+	DumpDebugByteBuffer (buffer_p);
+	#endif
+
 	return success_flag;
 }
 
@@ -73,6 +90,11 @@ BOOL AppendToByteBuffer (struct ByteBuffer *buffer_p, const void *data_p, const 
 {
 	const size_t space_remaining = GetRemainingSpaceInByteBuffer (buffer_p);
 	BOOL success_flag = TRUE;
+
+	#if BYTE_BUFFER_DEBUG >= 10
+	DB (KPRINTF ("%s %ld - Pre-append size remaining: %lu\n", __FILE__, __LINE__, space_remaining));
+	DumpDebugByteBuffer (buffer_p);
+	#endif
 
 	if (space_remaining <= data_length)
 		{
@@ -86,6 +108,12 @@ BOOL AppendToByteBuffer (struct ByteBuffer *buffer_p, const void *data_p, const 
 			memcpy (current_data_p, data_p, data_length);
 			buffer_p -> bb_current_index += data_length;
 		}
+
+	#if BYTE_BUFFER_DEBUG >= 10
+	DB (KPRINTF ("%s %ld - post-append success_flag: %ld\n", __FILE__, __LINE__, success_flag));
+	DumpDebugByteBuffer (buffer_p);
+	#endif
+
 
 	return success_flag;
 }
@@ -108,22 +136,46 @@ STRPTR ExtractSubstring (struct ByteBuffer *buffer_p, char *end_p)
 	char *substring_s = NULL;
 	char *delim_p = strchr (buffer_p -> bb_data_p, ';');
 
+
 	if (delim_p)
 		{
 			size_t sub_length = (size_t) (delim_p - (buffer_p -> bb_data_p));
+
 			/* cut the string from the buffer */
 			substring_s = CopyToNewString (buffer_p -> bb_data_p, delim_p, FALSE);
 
+			#if BYTE_BUFFER_DEBUG >= 10
+			DB (KPRINTF ("%s %ld - pre-extract: substring \"%s\" length %lu\n", __FILE__, __LINE__, substring_s, sub_length));
+			DumpDebugByteBuffer (buffer_p);
+			#endif
+
+
 			if (substring_s)
 				{
-					size_t remaining_length = (buffer_p -> bb_current_index) - sub_length;
-					char *dest_p = memmove (buffer_p -> bb_data_p, delim_p + 1, remaining_length);
-
-					if (dest_p)
+					if (sub_length >= buffer_p -> bb_current_index)
 						{
-							* (dest_p + remaining_length) = '\0';
-							buffer_p -> bb_current_index -= sub_length + 1;
+							size_t remaining_length = (buffer_p -> bb_current_index) - sub_length;
+							char *dest_p = NULL;
+
+							#if BYTE_BUFFER_DEBUG >= 10
+							DB (KPRINTF ("%s %ld - pre-extract: remaining_length \"%ld\"\n", __FILE__, __LINE__, remaining_length));
+							#endif
+
+							char *dest_p = memmove (buffer_p -> bb_data_p, delim_p + 1, remaining_length);
+
+							if (dest_p)
+								{
+									* (dest_p + remaining_length) = '\0';
+									buffer_p -> bb_current_index -= sub_length + 1;
+								}						
 						}
+					else
+						{
+							#if BYTE_BUFFER_DEBUG >= 0
+							DB (KPRINTF ("%s %ld - extract failure: sub_length \"%lu\"\n", __FILE__, __LINE__,sub_length));							
+							DumpDebugByteBuffer (buffer_p);
+							#endif
+						}				
 				}
 		}
 
@@ -131,3 +183,7 @@ STRPTR ExtractSubstring (struct ByteBuffer *buffer_p, char *end_p)
 }
 
 
+void DebugPrintByteBuffer (const ByteBuffer * const buffer_p)
+{
+	DB (KPRINTF ("%s %ld - ByteBuffer: size %lu index %lu data \"%s\"\n", __FILE__, __LINE__, buffer_p -> bb_size, buffer_p -> bb_current_index, buffer_p -> bb_data_p));
+}

@@ -38,4 +38,6 @@ size_t GetRemainingSpaceInByteBuffer (const struct ByteBuffer * const buffer_p);
 STRPTR ExtractSubstring (struct ByteBuffer *buffer_p, char *end_p);
 
 
+void DebugPrintByteBuffer (const ByteBuffer * const buffer_p);
+
 #endif		/* #ifndef BYTE_BUFFER_H */
