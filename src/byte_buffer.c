@@ -92,7 +92,7 @@ BOOL AppendToByteBuffer (struct ByteBuffer *buffer_p, const void *data_p, const 
 	BOOL success_flag = TRUE;
 
 	#if BYTE_BUFFER_DEBUG >= 10
-	DB (KPRINTF ("%s %ld - data to append \"%s\" length %lu\n", __FILE__, __LINE__, (const char *) data_p, data_length));	
+	DB (KPRINTF ("%s %ld - data to append \"%s\" length %lu\n", __FILE__, __LINE__, (const char *) data_p, data_length));
 	DB (KPRINTF ("%s %ld - Pre-append size remaining: %lu\n", __FILE__, __LINE__, space_remaining));
 	DebugPrintByteBuffer (buffer_p);
 	#endif
@@ -108,7 +108,7 @@ BOOL AppendToByteBuffer (struct ByteBuffer *buffer_p, const void *data_p, const 
 
 			memcpy (current_data_p, data_p, data_length);
 			buffer_p -> bb_current_index += data_length;
-			
+
 			current_data_p = (buffer_p -> bb_data_p) + ((buffer_p -> bb_current_index) - 1);
 			if ((*current_data_p == '\r') || (*current_data_p == '\n'))
 				{
@@ -129,6 +129,7 @@ BOOL AppendToByteBuffer (struct ByteBuffer *buffer_p, const void *data_p, const 
 void ResetByteBuffer (struct ByteBuffer *buffer_p)
 {
 	buffer_p -> bb_current_index = 0;
+	memset (buffer_p -> bb_data_p, 0, buffer_p -> bb_size);
 }
 
 
@@ -138,53 +139,54 @@ size_t GetRemainingSpaceInByteBuffer (const struct ByteBuffer * const buffer_p)
 }
 
 
-STRPTR ExtractSubstring (struct ByteBuffer *buffer_p, char *end_p)
+STRPTR ExtractSubstring (struct ByteBuffer *buffer_p, char *delim_p)
 {
 	char *substring_s = NULL;
-	char *delim_p = strchr (buffer_p -> bb_data_p, ';');
+	size_t sub_length = (size_t) (delim_p - (buffer_p -> bb_data_p));
+
+	/* cut the string from the buffer */
+	substring_s = CopyToNewString (buffer_p -> bb_data_p, delim_p, FALSE);
+
+	#if BYTE_BUFFER_DEBUG >= 10
+	DB (KPRINTF ("%s %ld - ********** pre-extract: substring \"%s\" length %lu\n", __FILE__, __LINE__, substring_s, sub_length));
+	DebugPrintByteBuffer (buffer_p);
+	#endif
 
 
-	if (delim_p)
+	if (substring_s)
 		{
-			size_t sub_length = (size_t) (delim_p - (buffer_p -> bb_data_p));
-
-			/* cut the string from the buffer */
-			substring_s = CopyToNewString (buffer_p -> bb_data_p, delim_p, FALSE);
-
-			#if BYTE_BUFFER_DEBUG >= 10
-			DB (KPRINTF ("%s %ld - ********** pre-extract: substring \"%s\" length %lu\n", __FILE__, __LINE__, substring_s, sub_length));
-			DebugPrintByteBuffer (buffer_p);
-			#endif
-
-
-			if (substring_s)
+			if (sub_length >= buffer_p -> bb_current_index)
 				{
-					if (sub_length >= buffer_p -> bb_current_index)
+					size_t remaining_length = (buffer_p -> bb_current_index) - sub_length;
+					char *dest_p = NULL;
+
+					#if BYTE_BUFFER_DEBUG >= 10
+					DB (KPRINTF ("%s %ld - pre-extract: remaining_length \"%ld\"\n", __FILE__, __LINE__, remaining_length));
+					#endif
+
+					dest_p = memmove (buffer_p -> bb_data_p, delim_p + 1, remaining_length);
+
+					if (dest_p)
 						{
-							size_t remaining_length = (buffer_p -> bb_current_index) - sub_length;
-							char *dest_p = NULL;
-
-							#if BYTE_BUFFER_DEBUG >= 10
-							DB (KPRINTF ("%s %ld - pre-extract: remaining_length \"%ld\"\n", __FILE__, __LINE__, remaining_length));
-							#endif
-
-							dest_p = memmove (buffer_p -> bb_data_p, delim_p + 1, remaining_length);
-
-							if (dest_p)
-								{
-									* (dest_p + remaining_length) = '\0';
-									buffer_p -> bb_current_index -= sub_length + 1;
-								}						
+							* (dest_p + remaining_length) = '\0';
+							buffer_p -> bb_current_index = remaining_length;
 						}
-					else
-						{
-							#if BYTE_BUFFER_DEBUG >= 0
-							DB (KPRINTF ("%s %ld - extract failure: sub_length \"%lu\"\n", __FILE__, __LINE__,sub_length));							
-							DebugPrintByteBuffer (buffer_p);
-							#endif
-						}				
+				}
+			else
+				{
+					#if BYTE_BUFFER_DEBUG >= 0
+					DB (KPRINTF ("%s %ld - extract failure: sub_length \"%lu\"\n", __FILE__, __LINE__,sub_length));
+					DebugPrintByteBuffer (buffer_p);
+					#endif
 				}
 		}
+
+	#if BYTE_BUFFER_DEBUG >= 10
+	DB (KPRINTF ("%s %ld - ********** post-extract\n", __FILE__, __LINE__));
+	DebugPrintByteBuffer (buffer_p);
+	#endif
+
+
 
 	return substring_s;
 }
