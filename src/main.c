@@ -16,6 +16,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
 #include <dos/dos.h>
 
@@ -461,9 +462,23 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, str
 
 			while ((count = GetNextPrototype (parser_p, &full_prototype_s)) > 0)
 				{
+					STRPTR temp_s = full_prototype_s;
+
 					DB (KPRINTF ("%s %ld - GetMatchingPrototypes: line \"%s\"\n", __FILE__, __LINE__, full_prototype_s));	
 
-					if (IDOS->CapturePattern (pattern_s, full_prototype_s, TRUE, &capture_p) != 0)
+					while (*temp_s && (isspace (*temp_s) != 0))
+						{
+							++temp_s;
+						}
+
+					/*
+					if (*temp_s)
+						{
+							-- temp_s;
+						}
+					*/
+
+					if (IDOS->CapturePattern (pattern_s, temp_s, TRUE, &capture_p) != 0)
 						{
 							/* we only want the first match */
 							STRPTR prototype_s = capture_p -> cape_Match;
@@ -536,7 +551,7 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, str
 						}
 					else
 						{
-							//IDOS->Printf ("line:= %s", line_p -> frld_Line);
+							IDOS->Printf ("no match line:= \"%s\"\n", temp_s);
 						}
 
 					IExec->FreeVec (full_prototype_s);

@@ -157,7 +157,7 @@ STRPTR ExtractSubstring (struct ByteBuffer *buffer_p, char *delim_p)
 		{
 			if (sub_length <= buffer_p -> bb_current_index)
 				{
-					size_t remaining_length = (buffer_p -> bb_current_index) - sub_length;
+					size_t remaining_length = (buffer_p -> bb_current_index) - sub_length - 1;
 					char *dest_p = NULL;
 
 					#if BYTE_BUFFER_DEBUG >= 10
