@@ -170,6 +170,7 @@ STRPTR ExtractSubstring (struct ByteBuffer *buffer_p, char *delim_p)
 						{
 							* (dest_p + remaining_length) = '\0';
 							buffer_p -> bb_current_index = remaining_length;
+							memset (dest_p + remaining_length, 0, sub_length);
 						}
 				}
 			else
@@ -194,5 +195,6 @@ STRPTR ExtractSubstring (struct ByteBuffer *buffer_p, char *delim_p)
 
 void DebugPrintByteBuffer (const ByteBuffer * const buffer_p)
 {
-	DB (KPRINTF ("%s %ld - ByteBuffer: size %lu index %lu data \n\"%s\"\n", __FILE__, __LINE__, buffer_p -> bb_size, buffer_p -> bb_current_index, buffer_p -> bb_data_p));
+	DB (KPRINTF ("%s %ld - ByteBuffer: size %lu index %lu data \n\"%s\" %.8X (%ld) %.8X\n", __FILE__, __LINE__, buffer_p -> bb_size, 
+		buffer_p -> bb_current_index, buffer_p -> bb_data_p, buffer_p -> bb_data_p, * (buffer_p -> bb_data_p + 1), (buffer_p -> bb_data_p) + (buffer_p -> bb_current_index)));
 }

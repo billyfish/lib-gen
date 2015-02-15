@@ -73,7 +73,7 @@ int32 GetNextPrototype (struct DocumentParser *parser_p, STRPTR *prototype_ss)
 			count = IDOS->FReadLine (parser_p -> dp_file_handle_p, parser_p -> dp_line_p);
 
 			#if DOCUMENT_PARSER_DEBUG > 10
-			DB (KPRINTF ("%s %ld - \"%s\"\n", __FILE__, __LINE__, parser_p -> dp_line_p -> frld_Line));
+			DB (KPRINTF ("%s %ld - count %ld \"%s\"\n", __FILE__, __LINE__, count, parser_p -> dp_line_p -> frld_Line));
 			#endif
 
 			if (count > 0)
@@ -200,10 +200,21 @@ BOOL StripComments (struct DocumentParser *parser_p)
 
 		}		/* while (loop_flag && success_flag) */
 
+
+											#if DOCUMENT_PARSER_DEBUG > 10
+											DB (KPRINTF ("%s %ld - finished looping with success\"%d\"\n", __FILE__, __LINE__, success_flag));
+											#endif
+
 	if (success_flag)
 		{
 			success_flag = AppendToByteBuffer (parser_p -> dp_buffer_p, " ", 1);
 		}
+
+
+
+											#if DOCUMENT_PARSER_DEBUG > 10
+											DebugPrintByteBuffer (parser_p -> dp_buffer_p);
+											#endif
 
 	return success_flag;
 }
@@ -227,6 +238,12 @@ char *ParseDocument (struct DocumentParser *parser_p)
 						{
 							printf ("Failed to extract prototype from \"%s\"\n", parser_p -> dp_buffer_p -> bb_data_p);
 						}
+				}
+			else
+				{
+					#if DOCUMENT_PARSER_DEBUG > 10
+					DB (KPRINTF ("%s %ld - no delim in \"%s\"\n", __FILE__, __LINE__, parser_p -> dp_buffer_p -> bb_data_p));
+					#endif
 				}
 		}
 

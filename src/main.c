@@ -48,7 +48,7 @@ void ClearCapturedExpression (struct CapturedExpression *capture_p);
 
 int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag, const BOOL gen_source_flag);
 
-
+STRPTR MakePrototypePattern (CONST_STRPTR pattern_s);
 
 
 enum Args
@@ -78,7 +78,7 @@ int main (int argc, char *argv [])
 			CONST_STRPTR input_dir_s = NULL;
 			CONST_STRPTR library_s = NULL;
 			CONST_STRPTR filename_pattern_s = "#?.h";
-			CONST_STRPTR prototype_pattern_s = "#?LIB_API{#?}";
+			STRPTR prototype_pattern_s = NULL;
 			CONST_STRPTR format_s = "idl";
 			int32 version = 1;
 			enum InterfaceFlag flag = IF_PUBLIC;
@@ -109,7 +109,7 @@ int main (int argc, char *argv [])
 
 					if ((args [AR_PROTOTYPE_PATTERN]) && (strlen ((CONST_STRPTR) args [AR_PROTOTYPE_PATTERN]) > 0))
 						{
-							prototype_pattern_s = (CONST_STRPTR) args [AR_PROTOTYPE_PATTERN];
+							prototype_pattern_s = MakePrototypePattern ((CONST_STRPTR) args [AR_PROTOTYPE_PATTERN]);
 						}
 
 					if (args [AR_OUTPUT_FORMAT])
@@ -189,10 +189,16 @@ int main (int argc, char *argv [])
 						}		/* if (verbose_flag) */
 
 
-					if (input_dir_s && filename_pattern_s && library_s)
+					if (input_dir_s && filename_pattern_s && library_s && prototype_pattern_s)
 						{
 							result = Run (input_dir_s, filename_pattern_s, prototype_pattern_s, library_s, recurse_flag, version, flag, generate_code_flag);
 						}		/* if (input_dir_s && filename_pattern_s) */
+
+					
+					if (prototype_pattern_s)
+						{
+							IExec->FreeVec (prototype_pattern_s);
+						}
 
 
 					IDOS->FreeArgs (args_p);
@@ -551,7 +557,7 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, str
 						}
 					else
 						{
-							IDOS->Printf ("no match line:= \"%s\"\n", temp_s);
+							DB (KPRINTF ("%s %ld - no match line:= \"%s\"\n", __FILE__, __LINE__, temp_s));
 						}
 
 					IExec->FreeVec (full_prototype_s);
@@ -610,6 +616,39 @@ BOOL ParseFile (CONST_STRPTR function_regexp_s, CONST_STRPTR filename_s, struct 
 	DB (KPRINTF ("%s %ld - ParseFile %ld\n", __FILE__, __LINE__, success_flag));
 
 	return success_flag;
+}
+
+
+
+STRPTR MakePrototypePattern (CONST_STRPTR pattern_s)
+{
+	STRPTR prototype_pattern_s = NULL;
+	
+	if (pattern_s)
+		{
+			size_t l = strlen (pattern_s);
+			CONST_STRPTR prefix_s = "#?";
+			CONST_STRPTR suffix_s = "{#?}";
+			const size_t prefix_length = strlen (prefix_s);
+			const size_t suffix_length = strlen (suffix_s);
+			
+			prototype_pattern_s = (STRPTR) IExec->AllocVecTags (l + prefix_length + suffix_length + 1);
+			
+			if (prototype_pattern_s)
+				{
+					STRPTR temp_p = prototype_pattern_s;
+					
+					IExec->CopyMem (prefix_s, temp_p, prefix_length);
+					temp_p += prefix_length;
+					IExec->CopyMem (pattern_s, temp_p, l);
+					temp_p += l;
+					IExec->CopyMem (suffix_s, temp_p, suffix_length);
+					temp_p += suffix_length;									
+					*temp_p = '\0';	
+				}
+		}
+	
+	return prototype_pattern_s;
 }
 
 
