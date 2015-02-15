@@ -1,5 +1,5 @@
 #ifndef C_WRITER_H
-#define IDL_WRITER_H
+#define C_WRITER_H
 
 #include "writer.h"
 

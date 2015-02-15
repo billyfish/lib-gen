@@ -78,7 +78,7 @@ int main (int argc, char *argv [])
 			CONST_STRPTR input_dir_s = NULL;
 			CONST_STRPTR library_s = NULL;
 			CONST_STRPTR filename_pattern_s = "#?.h";
-			CONST_STRPTR prototype_pattern_s = "LIB_API{#?}";
+			CONST_STRPTR prototype_pattern_s = "#?LIB_API{#?}";
 			CONST_STRPTR format_s = "idl";
 			int32 version = 1;
 			enum InterfaceFlag flag = IF_PUBLIC;
