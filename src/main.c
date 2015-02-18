@@ -194,7 +194,7 @@ int main (int argc, char *argv [])
 							result = Run (input_dir_s, filename_pattern_s, prototype_pattern_s, library_s, recurse_flag, version, flag, generate_code_flag);
 						}		/* if (input_dir_s && filename_pattern_s) */
 
-					
+
 					if (prototype_pattern_s)
 						{
 							IExec->FreeVec (prototype_pattern_s);
@@ -470,7 +470,7 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, str
 				{
 					STRPTR temp_s = full_prototype_s;
 
-					DB (KPRINTF ("%s %ld - GetMatchingPrototypes: line \"%s\"\n", __FILE__, __LINE__, full_prototype_s));	
+					DB (KPRINTF ("%s %ld - GetMatchingPrototypes: line \"%s\"\n", __FILE__, __LINE__, full_prototype_s));
 
 					while (*temp_s && (isspace (*temp_s) != 0))
 						{
@@ -522,7 +522,7 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, str
 											* (prototype_s + l - 1) = '\0';
 										}
 
-									fn_def_p = TokenizeFunctionPrototype (prototype_s);
+									fn_def_p = TokenizeFunctionPrototype (prototype_s, filename_s, parser_p -> dp_line_number);
 
 									if (fn_def_p)
 										{
@@ -623,7 +623,7 @@ BOOL ParseFile (CONST_STRPTR function_regexp_s, CONST_STRPTR filename_s, struct 
 STRPTR MakePrototypePattern (CONST_STRPTR pattern_s)
 {
 	STRPTR prototype_pattern_s = NULL;
-	
+
 	if (pattern_s)
 		{
 			size_t l = strlen (pattern_s);
@@ -631,23 +631,23 @@ STRPTR MakePrototypePattern (CONST_STRPTR pattern_s)
 			CONST_STRPTR suffix_s = "{#?}";
 			const size_t prefix_length = strlen (prefix_s);
 			const size_t suffix_length = strlen (suffix_s);
-			
+
 			prototype_pattern_s = (STRPTR) IExec->AllocVecTags (l + prefix_length + suffix_length + 1);
-			
+
 			if (prototype_pattern_s)
 				{
 					STRPTR temp_p = prototype_pattern_s;
-					
+
 					IExec->CopyMem (prefix_s, temp_p, prefix_length);
 					temp_p += prefix_length;
 					IExec->CopyMem (pattern_s, temp_p, l);
 					temp_p += l;
 					IExec->CopyMem (suffix_s, temp_p, suffix_length);
-					temp_p += suffix_length;									
-					*temp_p = '\0';	
+					temp_p += suffix_length;
+					*temp_p = '\0';
 				}
 		}
-	
+
 	return prototype_pattern_s;
 }
 

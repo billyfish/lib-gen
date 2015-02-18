@@ -36,6 +36,7 @@ struct DocumentParser *AllocateDocumentParser (void)
 							parser_p -> dp_comment_flag = FALSE;
 							parser_p -> dp_matched_flag = FALSE;
 							parser_p -> dp_file_handle_p = ZERO;
+							parser_p -> dp_line_number = 0;
 
 							return parser_p;
 						}
@@ -60,6 +61,16 @@ void FreeDocumentParser (struct DocumentParser *parser_p)
 void SetDocumentToParse (struct DocumentParser *parser_p, BPTR handle_p)
 {
 	parser_p -> dp_file_handle_p = handle_p;
+	parser_p -> dp_line_number = 0;
+}
+
+
+int32 ParseLine (struct DocumentParser *parser_p)
+{
+	count = IDOS->FReadLine (parser_p -> dp_file_handle_p, parser_p -> dp_line_p);
+	++ (parser_p -> dp_line_number);
+
+	return count;
 }
 
 
@@ -70,7 +81,7 @@ int32 GetNextPrototype (struct DocumentParser *parser_p, STRPTR *prototype_ss)
 
 	while (loop_flag)
 		{
-			count = IDOS->FReadLine (parser_p -> dp_file_handle_p, parser_p -> dp_line_p);
+			count = ParseLine (parser_p);
 
 			#if DOCUMENT_PARSER_DEBUG > 10
 			DB (KPRINTF ("%s %ld - count %ld \"%s\"\n", __FILE__, __LINE__, count, parser_p -> dp_line_p -> frld_Line));
@@ -127,7 +138,7 @@ BOOL StripComments (struct DocumentParser *parser_p)
 					else
 						{
 							loop_flag = FALSE;
-						}						
+						}
 				}
 			else
 				{
@@ -142,7 +153,7 @@ BOOL StripComments (struct DocumentParser *parser_p)
 							if (data_start_p < comment_p)
 								{
 									success_flag = AppendToByteBuffer (parser_p -> dp_buffer_p, data_start_p, (size_t) (comment_p - data_start_p));
-									
+
 									#if DOCUMENT_PARSER_DEBUG > 10
 									DB (KPRINTF ("%s %ld - appended c \"%d\" sub \"%s\"\n", __FILE__, __LINE__, success_flag, comment_p));
 									#endif
@@ -157,7 +168,7 @@ BOOL StripComments (struct DocumentParser *parser_p)
 							if (data_start_p < cpp_comment_p)
 								{
 									success_flag = AppendToByteBuffer (parser_p -> dp_buffer_p, data_start_p, (size_t) (cpp_comment_p - data_start_p));
-									
+
 									#if DOCUMENT_PARSER_DEBUG > 10
 									DB (KPRINTF ("%s %ld - appended c \"%d\" sub \"%s\"\n", __FILE__, __LINE__, success_flag, cpp_comment_p));
 									#endif
@@ -197,24 +208,20 @@ BOOL StripComments (struct DocumentParser *parser_p)
 						}
 				}
 
-
 		}		/* while (loop_flag && success_flag) */
 
-
-											#if DOCUMENT_PARSER_DEBUG > 10
-											DB (KPRINTF ("%s %ld - finished looping with success\"%d\"\n", __FILE__, __LINE__, success_flag));
-											#endif
+	#if DOCUMENT_PARSER_DEBUG > 10
+	DB (KPRINTF ("%s %ld - finished looping with success\"%d\"\n", __FILE__, __LINE__, success_flag));
+	#endif
 
 	if (success_flag)
 		{
 			success_flag = AppendToByteBuffer (parser_p -> dp_buffer_p, " ", 1);
 		}
 
-
-
-											#if DOCUMENT_PARSER_DEBUG > 10
-											DebugPrintByteBuffer (parser_p -> dp_buffer_p);
-											#endif
+	#if DOCUMENT_PARSER_DEBUG > 10
+	DebugPrintByteBuffer (parser_p -> dp_buffer_p);
+	#endif
 
 	return success_flag;
 }

@@ -25,6 +25,8 @@
 
 struct FunctionDefinition
 {
+	STRPTR fd_filename_s;
+	uint32 fd_line_number;
 	struct Parameter *fd_definition_p;
 	struct List *fd_args_p;
 };

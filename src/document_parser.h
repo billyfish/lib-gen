@@ -28,6 +28,7 @@ struct DocumentParser
 	BOOL dp_matched_flag;
 	BOOL dp_comment_flag;
 	BPTR dp_file_handle_p;
+	int32 dp_line_number;
 };
 
 
@@ -41,6 +42,7 @@ char *ParseDocument (struct DocumentParser *parser_p);
 
 int32 GetNextPrototype (struct DocumentParser *parser_p, STRPTR *prototype_ss);
 
+int32 ParseLine (struct DocumentParser *parser_p);
 
 void SetDocumentToParse (struct DocumentParser *parser_p, BPTR handle_p);
 
