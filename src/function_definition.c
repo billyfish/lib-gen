@@ -338,9 +338,29 @@ uint32 GetFunctionDefinitionsListSize (struct List * const list_p)
 }
 
 
-struct FunctionDefinition *AllocateFunctionDefinition(CONST STRPTR header_filename_s, const uint32 line_number)
+BOOL AddFunctionDefinition (struct List *prototypes_p, struct FunctionDefinition *fd_p)
 {
-	STRPTR filename_s = (STRPTR) IExec->AllocVec ((strlen (header_filename_s) + 1) * sizeof (char), TAG_DONE);
+	BOOL success_flag = FALSE;
+
+	struct FunctionDefinitionNode *node_p = IExec->AllocSysObjectTags (ASOT_NODE,
+		ASONODE_Size, sizeof (struct FunctionDefinitionNode),
+		TAG_DONE);
+
+	if (node_p)
+		{
+			node_p -> fdn_function_def_p = fd_p;
+
+			IExec->AddTail (prototypes_p, (struct Node *) node_p);
+			success_flag = TRUE;
+		}
+
+	return success_flag;
+}
+
+
+struct FunctionDefinition *AllocateFunctionDefinition (CONST STRPTR header_filename_s, const uint32 line_number)
+{
+	STRPTR filename_s = (STRPTR) IExec->AllocVecTags ((strlen (header_filename_s) + 1) * sizeof (char), TAG_DONE);
 
 	if (filename_s)
 		{
@@ -359,7 +379,9 @@ struct FunctionDefinition *AllocateFunctionDefinition(CONST STRPTR header_filen
 
 							strcpy (filename_s, header_filename_s);
 							fd_p -> fd_header_filename_s = filename_s;
-
+							
+							fd_p -> fd_line_number = line_number;
+							
 							return fd_p;
 						}
 

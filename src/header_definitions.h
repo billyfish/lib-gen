@@ -22,7 +22,7 @@ struct HeaderDefinitions
 	/** The name of the file. */
 	STRPTR hd_filename_s;
 
-	uint32 hd_num_files;
+	uint32 hd_num_prototypes;
 };
 
 struct HeaderDefinitionsNode

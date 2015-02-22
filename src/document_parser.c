@@ -67,7 +67,7 @@ void SetDocumentToParse (struct DocumentParser *parser_p, BPTR handle_p)
 
 int32 ParseLine (struct DocumentParser *parser_p)
 {
-	count = IDOS->FReadLine (parser_p -> dp_file_handle_p, parser_p -> dp_line_p);
+	int32 count = IDOS->FReadLine (parser_p -> dp_file_handle_p, parser_p -> dp_line_p);
 	++ (parser_p -> dp_line_number);
 
 	return count;

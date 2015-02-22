@@ -50,7 +50,7 @@ uint32 GetFunctionDefinitionsListSize (struct List * const list_p);
 
 void ClearFunctionDefinitionList (struct List *function_definitions_p);
 
-struct FunctionDefinition *AllocateFunctionDefinition(CONST STRPTR header_filename_s, const uint32 line_number);
+struct FunctionDefinition *AllocateFunctionDefinition (CONST STRPTR header_filename_s, const uint32 line_number);
 
 void FreeFunctionDefinition (struct FunctionDefinition *fd_p);
 
@@ -71,6 +71,9 @@ BOOL WriteLibraryFunctionImplementation (BPTR out_p, const struct FunctionDefini
 
 
 const char *FindParameterEnd (CONST STRPTR *start_p, BOOL function_flag);
+
+
+BOOL AddFunctionDefinition (struct List *prototypes_p, struct FunctionDefinition *fd_p);
 
 
 #ifdef __cplusplus
