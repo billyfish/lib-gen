@@ -192,9 +192,9 @@ static BOOL WriteIDLHeaderDefinitions (BPTR out_p, struct HeaderDefinitions * co
 {
 	BOOL success_flag = FALSE;
 
-	if (IDOS->FPrintf (out_p, "\n\t\t<!-- %s = %lu definitions -->\n", header_definitions_p -> hd_filename_s, header_definitions_p -> hd_num_prototypes) >= 0)
+
+	if (IDOS->FPrintf (out_p, "\n\t\t<!-- %s = %lu definitions -->\n", header_definitions_p -> hd_filename_s, GetFunctionDefinitionsListSize (& (header_definitions_p -> hd_function_definitions))) >= 0)
 		{
-			/*
 			struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (& (header_definitions_p -> hd_function_definitions));
 
 			success_flag = TRUE;
@@ -211,7 +211,6 @@ static BOOL WriteIDLHeaderDefinitions (BPTR out_p, struct HeaderDefinitions * co
 							success_flag = FALSE;
 						}
 				}
-			*/
 		}
 
 

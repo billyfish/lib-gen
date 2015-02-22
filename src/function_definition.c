@@ -114,7 +114,7 @@ struct Parameter *GetNextParameter (const char **start_pp, BOOL function_flag)
 													{
 														++ res_p;
 													}
-											}
+											} 
 									}
 									break;
 
@@ -172,7 +172,7 @@ struct Parameter *GetNextParameter (const char **start_pp, BOOL function_flag)
 			//IDOS->Printf ("fp status %lu\n", function_pointer_status);
 
 			*start_pp = res_p;
-
+			
 			if (param_p)
 				{
 					/*
@@ -219,10 +219,10 @@ struct Parameter *GetNextParameter (const char **start_pp, BOOL function_flag)
 
 
 */
-struct FunctionDefinition *TokenizeFunctionPrototype (CONST STRPTR prototype_s, CONST STRPTR header_filename_s, const uint32 line_number)
+struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
 {
 	BOOL success_flag = FALSE;
-	struct FunctionDefinition *fd_p = AllocateFunctionDefinition (header_filename_s, line_number);
+	struct FunctionDefinition *fd_p = AllocateFunctionDefinition ();
 
 	DB (KPRINTF ("%s %ld - Tokenizing \"%s\"\n", __FILE__, __LINE__, prototype_s));
 
@@ -338,58 +338,26 @@ uint32 GetFunctionDefinitionsListSize (struct List * const list_p)
 }
 
 
-BOOL AddFunctionDefinition (struct List *prototypes_p, struct FunctionDefinition *fd_p)
+struct FunctionDefinition *AllocateFunctionDefinition (void)
 {
-	BOOL success_flag = FALSE;
+	struct FunctionDefinition *fd_p = (struct FunctionDefinition *) IExec->AllocVecTags (sizeof (struct FunctionDefinition), TAG_DONE);
 
-	struct FunctionDefinitionNode *node_p = IExec->AllocSysObjectTags (ASOT_NODE,
-		ASONODE_Size, sizeof (struct FunctionDefinitionNode),
-		TAG_DONE);
-
-	if (node_p)
+	if (fd_p)
 		{
-			node_p -> fdn_function_def_p = fd_p;
+			struct List *params_p = (struct List *) IExec->AllocSysObjectTags (ASOT_LIST,
+				ASOLIST_Type, PT_PARAMETER,
+				TAG_DONE);
 
-			IExec->AddTail (prototypes_p, (struct Node *) node_p);
-			success_flag = TRUE;
-		}
-
-	return success_flag;
-}
-
-
-struct FunctionDefinition *AllocateFunctionDefinition (CONST STRPTR header_filename_s, const uint32 line_number)
-{
-	STRPTR filename_s = (STRPTR) IExec->AllocVecTags ((strlen (header_filename_s) + 1) * sizeof (char), TAG_DONE);
-
-	if (filename_s)
-		{
-			struct FunctionDefinition *fd_p = (struct FunctionDefinition *) IExec->AllocVecTags (sizeof (struct FunctionDefinition), TAG_DONE);
-
-			if (fd_p)
+			if (params_p)
 				{
-					struct List *params_p = (struct List *) IExec->AllocSysObjectTags (ASOT_LIST,
-						ASOLIST_Type, PT_PARAMETER,
-						TAG_DONE);
+					fd_p -> fd_definition_p = NULL;
+					fd_p -> fd_args_p = params_p;
 
-					if (params_p)
-						{
-							fd_p -> fd_definition_p = NULL;
-							fd_p -> fd_args_p = params_p;
-
-							strcpy (filename_s, header_filename_s);
-							fd_p -> fd_header_filename_s = filename_s;
-							
-							fd_p -> fd_line_number = line_number;
-							
-							return fd_p;
-						}
-
-					IExec->FreeVec (fd_p);
+					return fd_p;
 				}
 
-			IExec->FreeVec (filename_s);
-		}		/* if (filename_s) */
+			IExec->FreeVec (fd_p);
+		}
 
 	return NULL;
 }
@@ -403,8 +371,6 @@ void FreeFunctionDefinition (struct FunctionDefinition *fd_p)
 		}
 
 	FreeParameterList (fd_p -> fd_args_p);
-
-	IExec->FreeVec (fd_p -> fd_header_filename_s);
 
 	IExec->FreeVec (fd_p);
 }
@@ -524,7 +490,7 @@ BOOL WriteLibraryFunctionImplementation (BPTR out_p, const struct FunctionDefini
 				{
 					success_flag = TRUE;
 				}
-
+				
 			if (success_flag)
 				{
 					success_flag = (IDOS->FPrintf (out_p, ")\n{\n\t") >= 0);
