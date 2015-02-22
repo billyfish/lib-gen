@@ -25,7 +25,7 @@
 
 struct FunctionDefinition
 {
-	STRPTR fd_filename_s;
+	STRPTR fd_header_filename_s;
 	uint32 fd_line_number;
 	struct Parameter *fd_definition_p;
 	struct List *fd_args_p;
@@ -50,7 +50,7 @@ uint32 GetFunctionDefinitionsListSize (struct List * const list_p);
 
 void ClearFunctionDefinitionList (struct List *function_definitions_p);
 
-struct FunctionDefinition *AllocateFunctionDefinition (void);
+struct FunctionDefinition *AllocateFunctionDefinition(CONST STRPTR header_filename_s, const uint32 line_number);
 
 void FreeFunctionDefinition (struct FunctionDefinition *fd_p);
 
@@ -62,7 +62,7 @@ BOOL AddParameterAtFront (struct FunctionDefinition *fd_p, struct Parameter *par
 
 BOOL AddParameterAtBack (struct FunctionDefinition *fd_p, struct Parameter *param_p);
 
-struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s);
+struct FunctionDefinition *TokenizeFunctionPrototype (CONST STRPTR prototype_s, CONST STRPTR header_filename_s, const uint32 line_number);
 
 
 BOOL PrintFunctionDefinition (BPTR out_p, const struct FunctionDefinition * const fn_p);
@@ -70,7 +70,7 @@ BOOL PrintFunctionDefinition (BPTR out_p, const struct FunctionDefinition * cons
 BOOL WriteLibraryFunctionImplementation (BPTR out_p, const struct FunctionDefinition * const fd_p, CONST_STRPTR interface_struct_s);
 
 
-const char *FindParameterEnd (const char *start_p, BOOL function_flag);
+const char *FindParameterEnd (CONST STRPTR *start_p, BOOL function_flag);
 
 
 #ifdef __cplusplus

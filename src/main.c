@@ -261,9 +261,13 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 	int res = 0;
 	STRPTR prototype_regexp_s = NULL;
 	STRPTR filename_regexp_s = NULL;
-	/* List of HeaderDefinitionsNodes */
-	struct List headers_list;
+	/* List of FunctionDefinitionsNodes */
+	struct List prototypes_list;
 
+	/* List of HeaderDefinitionsNodes */
+	struct List heaadrs_list;
+
+	IExec->NewList (&prototypes_list);
 	IExec->NewList (&headers_list);
 
 	if (prototype_pattern_s)
@@ -287,7 +291,7 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 		}
 
 
-	if (GeneratePrototypesList (root_path_s, filename_regexp_s, prototype_regexp_s, recurse_flag, &headers_list))
+	if (GeneratePrototypesList (root_path_s, filename_regexp_s, prototype_regexp_s, recurse_flag, &headers_list, &prototypes_list))
 		{
 			Writer *writer_p = AllocateIDLWriter ();
 
@@ -303,7 +307,7 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 								{
 									IDOS->Printf ("%lu headers\n", GetHeaderDefinitionsListSize (&headers_list));
 
-									if (WriteHeaderDefinitionsList (writer_p, &headers_list, library_s, version, flag, out_p))
+									if (WritePrototypesList (writer_p, &prototypes_list, library_s, version, flag, out_p))
 										{
 											IDOS->Printf ("Successfully wrote header definitions to %s\n", output_s);
 										}
@@ -350,7 +354,7 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 				{
 					if (EnsureDirectoryExists (output_dir_s))
 						{
-							if (WriteSourceForAllHeaderDefinitions (&headers_list, output_dir_s, library_s))
+							if (WriteSourceForAllPrototypeDefinitions (&prototypes_list, output_dir_s, library_s))
 								{
 									IDOS->Printf ("Generating source succeeded");
 								}
@@ -379,7 +383,7 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 
 
 
-BOOL GeneratePrototypesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_regexp_s, CONST_STRPTR function_regexp_s, const BOOL recurse_flag, struct List *header_definitions_p)
+BOOL GeneratePrototypesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_regexp_s, CONST_STRPTR function_regexp_s, const BOOL recurse_flag, struct List *header_definitions_p, struct List *function_definitions_p)
 {
 	BOOL success_flag = FALSE;
 

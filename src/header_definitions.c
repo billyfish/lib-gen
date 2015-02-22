@@ -70,7 +70,7 @@ BOOL AddHeaderDefintionsToList (struct List *hdr_defs_list_p, struct HeaderDefin
 
 struct HeaderDefinitionsNode *AllocateHeaderDefinitionsNode (struct HeaderDefinitions *hdr_defs_p)
 {
-	struct HeaderDefinitionsNode *node_p = (struct HeaderDefinitionsNode *) IExec->AllocVecTags (sizeof (struct HeaderDefinitionsNode), TAG_END);
+	struct HeaderDefinitionsNode *node_p = (struct HeaderDefinitionsNode *) IExec->AllocVecTags (sizeof (struct HeaderDefinitionsNode), TAG_END\);
 
 	if (node_p)
 		{

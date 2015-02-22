@@ -22,10 +22,7 @@ struct HeaderDefinitions
 	/** The name of the file. */
 	STRPTR hd_filename_s;
 
-	/**
-	 * List of FunctionDefinitionNodes from this file.
-	 */
-	struct List hd_function_definitions;
+	uint32 hd_num_files;
 };
 
 struct HeaderDefinitionsNode
