@@ -261,10 +261,20 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 	int res = 0;
 	STRPTR prototype_regexp_s = NULL;
 	STRPTR filename_regexp_s = NULL;
+
 	/* List of HeaderDefinitionsNodes */
 	struct List headers_list;
 
+	/*
+		List of the ordering of a previous version
+		of the library so that we remain compatible
+		e.g. the LVOs remain the same with any new
+		functions added at the end
+	*/
+	struct List previous_fns_ordering_list;
+
 	IExec->NewList (&headers_list);
+	IExec->NewList (&previous_fns_ordering_list);
 
 	if (prototype_pattern_s)
 		{
@@ -298,6 +308,8 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 					if (output_s)
 						{
 							BPTR out_p = IDOS->FOpen (output_s, MODE_NEWFILE, 0);
+
+
 
 							if (out_p)
 								{
