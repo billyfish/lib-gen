@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE library SYSTEM "library.dtd">
+<library name="test" basename="TestBase">
+	<include>test/loader1.h</include>
+
+	<interface name="test" version="1.0" flags="none" prefix="_test_" struct="TestIFace">
+		<method name="Obtain" result="uint32"></method>
+		<method name="Release" result="uint32"></method>
+		<method name="Expunge" result="void" status="unimplemented"></method>
+		<method name="Clone" result="struct Interface *" status="unimplemented"></method>
+
+		<!-- test/loader1.h = 9 definitions -->
+		<method name="InitialiseLoaderData" result="BOOLEAN">
+			<arg name="data_p" type="LoaderModuleData *" />
+			<arg name="config_p" type="const HashTable * const" />
+		</method>
+		<method name="InitialiseLoaderData" result="BOOLEAN">
+			<arg name="data_p" type="LoaderModuleData *" />
+			<arg name="config_p" type="const HashTable * const" />
+		</method>
+		<method name="InitialiseLoaderData" result="BOOLEAN">
+			<arg name="data_p" type="LoaderModuleData *" />
+			<arg name="config_p" type="const HashTable * const" />
+		</method>
+		<method name="ClearLoaderData" result="void">
+			<arg name="data_p" type="LoaderModuleData *" />
+		</method>
+		<method name="ClearLoaderData" result="void">
+			<arg name="data_p" type="LoaderModuleData *" />
+		</method>
+		<method name="ClearLoaderData" result="void">
+			<arg name="data_p" type="LoaderModuleData *" />
+		</method>
+		<method name="LoadTrajectory" result="Trajectory *">
+			<arg name="loader_p" type="LoaderModule *" />
+			<arg name="path" type="const char * const" />
+			<arg name="first_frame_time" type="const double64" />
+			<arg name="chunk_time" type="const double64" />
+			<arg name="num_frames_to_skip" type="const uint32" />
+			<arg name="events_listener_p" type="EventListener *" />
+		</method>
+		<method name="LoadTrajectory" result="Trajectory *">
+			<arg name="loader_p" type="LoaderModule *" />
+			<arg name="path" type="const char * const" />
+			<arg name="first_frame_time" type="const double64" />
+			<arg name="chunk_time" type="const double64" />
+			<arg name="num_frames_to_skip" type="const uint32" />
+			<arg name="events_listener_p" type="EventListener *" />
+		</method>
+		<method name="LoadTrajectory" result="Trajectory *">
+			<arg name="loader_p" type="LoaderModule *" />
+			<arg name="path" type="const char * const" />
+			<arg name="first_frame_time" type="const double64" />
+			<arg name="chunk_time" type="const double64" />
+			<arg name="num_frames_to_skip" type="const uint32" />
+			<arg name="events_listener_p" type="EventListener *" />
+		</method>
+	</interface>
+</library>
