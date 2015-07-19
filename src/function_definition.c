@@ -219,7 +219,7 @@ struct Parameter *GetNextParameter (const char **start_pp, BOOL function_flag)
 
 
 */
-struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s)
+struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s, CONST_STRPTR filename_s, const int32 line_number)
 {
 	BOOL success_flag = FALSE;
 	struct FunctionDefinition *fd_p = AllocateFunctionDefinition ();

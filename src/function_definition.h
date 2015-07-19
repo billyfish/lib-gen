@@ -62,8 +62,7 @@ BOOL AddParameterAtFront (struct FunctionDefinition *fd_p, struct Parameter *par
 
 BOOL AddParameterAtBack (struct FunctionDefinition *fd_p, struct Parameter *param_p);
 
-struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s);
-
+struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s, CONST_STRPTR filename_s, const int32 line_number);
 
 BOOL PrintFunctionDefinition (BPTR out_p, const struct FunctionDefinition * const fn_p);
 
