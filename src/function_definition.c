@@ -114,7 +114,7 @@ struct Parameter *GetNextParameter (const char **start_pp, BOOL function_flag)
 													{
 														++ res_p;
 													}
-											} 
+											}
 									}
 									break;
 
@@ -172,7 +172,7 @@ struct Parameter *GetNextParameter (const char **start_pp, BOOL function_flag)
 			//IDOS->Printf ("fp status %lu\n", function_pointer_status);
 
 			*start_pp = res_p;
-			
+
 			if (param_p)
 				{
 					/*
@@ -222,7 +222,7 @@ struct Parameter *GetNextParameter (const char **start_pp, BOOL function_flag)
 struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s, CONST_STRPTR filename_s, const int32 line_number)
 {
 	BOOL success_flag = FALSE;
-	struct FunctionDefinition *fd_p = AllocateFunctionDefinition ();
+	struct FunctionDefinition *fd_p = AllocateFunctionDefinition (filename_s, line_number);
 
 	DB (KPRINTF ("%s %ld - Tokenizing \"%s\"\n", __FILE__, __LINE__, prototype_s));
 
@@ -338,7 +338,7 @@ uint32 GetFunctionDefinitionsListSize (struct List * const list_p)
 }
 
 
-struct FunctionDefinition *AllocateFunctionDefinition (void)
+struct FunctionDefinition *AllocateFunctionDefinition (CONST STRPTR filename_s, const int32 line_number)
 {
 	struct FunctionDefinition *fd_p = (struct FunctionDefinition *) IExec->AllocVecTags (sizeof (struct FunctionDefinition), TAG_DONE);
 
@@ -352,6 +352,9 @@ struct FunctionDefinition *AllocateFunctionDefinition (void)
 				{
 					fd_p -> fd_definition_p = NULL;
 					fd_p -> fd_args_p = params_p;
+					fd_p -> fd_filename_s = filename_s;
+					fd_p -> fd_line_number = line_number;
+
 
 					return fd_p;
 				}
@@ -490,7 +493,7 @@ BOOL WriteLibraryFunctionImplementation (BPTR out_p, const struct FunctionDefini
 				{
 					success_flag = TRUE;
 				}
-				
+
 			if (success_flag)
 				{
 					success_flag = (IDOS->FPrintf (out_p, ")\n{\n\t") >= 0);
@@ -534,3 +537,45 @@ BOOL WriteLibraryFunctionImplementation (BPTR out_p, const struct FunctionDefini
 	return success_flag;
 }
 
+
+BOOL AddFunctionDefinitionToList (struct FunctionDefinition *fd_p, struct List *functions_list_p)
+{
+	BOOL success_flag = FALSE;
+
+	struct FunctionDefinitionNode *node_p = IExec->AllocSysObjectTags (ASOT_NODE,
+		ASONODE_Size, sizeof (struct FunctionDefinitionNode),
+		TAG_DONE);
+
+	if (node_p)
+		{
+			node_p -> fdn_function_def_p = fd_p;
+
+			IExec->AddTail (functions_list_p, (struct Node *) node_p);
+			success_flag = TRUE;
+		}
+
+	return success_flag;
+}
+
+
+int CompareFunctionDefinitionNodes (const void *v0_p, const void *v1_p)
+{
+	struct FunctionDefinition *fd0_p = ((struct FunctionDefinitionNode *) v0_p) -> fdn_function_def_p;
+	struct FunctionDefinition *fd1_p = ((struct FunctionDefinitionNode *) v1_p) -> fdn_function_def_p;
+
+	int res = strcmp (fd0_p -> fd_filename_s, fd1_p -> fd_filename_s);
+
+	if (res == 0)
+		{
+			if (fd0_p -> fd_line_number > fd1_p -> fd_line_number)
+				{
+					res = 1;
+				}
+			else if (fd0_p -> fd_line_number < fd1_p -> fd_line_number)
+				{
+					res = -1;
+				}
+		}
+
+	return res;
+}

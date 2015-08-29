@@ -15,13 +15,13 @@
 
 
 
-static BOOL WriteIDL (struct Writer *writer_p, struct List *header_definitions_list_p, CONST_STRPTR library_s, const int32 version, const enum InterfaceFlag flag, BPTR out_p);
+static BOOL WriteIDL (struct Writer *writer_p, struct List *function_definitions_p, CONST_STRPTR library_s, const int32 version, const enum InterfaceFlag flag, BPTR out_p);
 
 static CONST_STRPTR GetIDLWriterFileSuffix (struct Writer *writer_p);
 
-static BOOL WriteIDLHeader (BPTR out_p, CONST CONST_STRPTR library_s, const int32 version, const enum InterfaceFlag flag, struct List *header_definitions_list_p);
+static BOOL WriteIDLHeader (BPTR out_p, CONST CONST_STRPTR library_s, const int32 version, const enum InterfaceFlag flag, struct List *function_definitions_list_p);
 
-static BOOL WriteIDLFunction (BPTR out_p, const struct FunctionDefinition * const fd_p);
+static BOOL WriteIDLFunctionDefinition (BPTR out_p, const struct FunctionDefinition * const fd_p);
 static BOOL WriteIDLParameter (BPTR out_p, const struct Parameter * const param_p);
 
 static BOOL WriteIDLDefaultFunctions (BPTR out_p);
@@ -29,11 +29,7 @@ static BOOL WriteIDLIncludes (BPTR out_p, struct List *includes_p);
 static BOOL WriteIDLFooter (BPTR out_p);
 
 
-static BOOL WriteIDLHeaderDefinitionsList (BPTR out_p, struct List * const header_definitions_list_p);
-
-
-
-static BOOL WriteIDLHeaderDefinitions (BPTR out_p, struct HeaderDefinitions * const header_definitions_p);
+static BOOL WriteIDLFunctionDefinitionsList (BPTR out_p, struct List * const function_definitions_list_p);
 
 
 static CONST_STRPTR GetIDLWriterFileSuffix (struct Writer *writer_p)
@@ -64,15 +60,15 @@ void FreeIDLWriter (Writer *writer_p)
 }
 
 
-static BOOL WriteIDL (struct Writer *writer_p, struct List *header_definitions_list_p, CONST_STRPTR library_s, const int32 version, const enum InterfaceFlag flag, BPTR out_p)
+static BOOL WriteIDL (struct Writer *writer_p, struct List *function_definitions_p, CONST_STRPTR library_s, const int32 version, const enum InterfaceFlag flag, BPTR out_p)
 {
 	BOOL success_flag = FALSE;
 
-	if (WriteIDLHeader (out_p, library_s, version, flag, header_definitions_list_p))
+	if (WriteIDLHeader (out_p, library_s, version, flag, function_definitions_p))
 		{
 			if (WriteIDLDefaultFunctions (out_p))
 				{
-					if (WriteIDLHeaderDefinitionsList (out_p, header_definitions_list_p))
+					if (WriteIDLFunctionDefinitionsList (out_p, function_definitions_p))
 						{
 							if (WriteIDLFooter (out_p))
 								{
@@ -104,7 +100,7 @@ static BOOL WriteIDL (struct Writer *writer_p, struct List *header_definitions_l
 
 
 
-static BOOL WriteIDLHeader (BPTR out_p, CONST CONST_STRPTR library_s, const int32 version, const enum InterfaceFlag flag, struct List *header_definitions_list_p)
+static BOOL WriteIDLHeader (BPTR out_p, CONST CONST_STRPTR library_s, const int32 version, const enum InterfaceFlag flag, struct List *function_definitions_p)
 {
 	BOOL success_flag = FALSE;
 
@@ -140,7 +136,7 @@ static BOOL WriteIDLHeader (BPTR out_p, CONST CONST_STRPTR library_s, const int3
 																break;
 														}
 
-													if (WriteIDLIncludes (out_p, header_definitions_list_p))
+													if (WriteIDLIncludes (out_p, function_definitions_p))
 														{
 															if (IDOS->FPrintf (out_p, "\n\t<interface name=\"%s\" version=\"%lu.0\" flags=\"%s\" prefix=\"_%s_\" struct=\"", library_s, version, flags_s, library_s) >= 0)
 																{
@@ -164,16 +160,16 @@ static BOOL WriteIDLHeader (BPTR out_p, CONST CONST_STRPTR library_s, const int3
 }
 
 
-static BOOL WriteIDLHeaderDefinitionsList (BPTR out_p, struct List * const header_definitions_list_p)
+static BOOL WriteIDLFunctionDefinitionsList (BPTR out_p, struct List * const function_definitions_list_p)
 {
 	BOOL success_flag = TRUE;
-	struct HeaderDefinitionsNode *node_p = (struct HeaderDefinitionsNode *) IExec->GetHead (header_definitions_list_p);
+	struct FunctionDefinitionsNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (function_definitions_list_p);
 
 	while ((node_p != NULL) && success_flag)
 		{
-			if (WriteIDLHeaderDefinitions (out_p, node_p -> hdn_defs_p))
+			if (WriteIDLFunctionDefintion (out_p, node_p -> hdn_defs_p))
 				{
-					node_p = (struct HeaderDefinitionsNode *) IExec->GetSucc ((struct Node *) node_p);
+					node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p);
 				}
 			else
 				{
@@ -186,69 +182,43 @@ static BOOL WriteIDLHeaderDefinitionsList (BPTR out_p, struct List * const heade
 }
 
 
-
-
-static BOOL WriteIDLHeaderDefinitions (BPTR out_p, struct HeaderDefinitions * const header_definitions_p)
+static BOOL WriteIDLFunctionDefintion (BPTR out_p, const struct FunctionDefinition * const fd_p)
 {
 	BOOL success_flag = FALSE;
 
-
-	if (IDOS->FPrintf (out_p, "\n\t\t<!-- %s = %lu definitions -->\n", header_definitions_p -> hd_filename_s, GetFunctionDefinitionsListSize (& (header_definitions_p -> hd_function_definitions))) >= 0)
+	if (IDOS->FPrintf (out_p, "\n\t\t<!-- %s:%ld -->\n", fd_p -> fd_filename_s, fd_p -> fd_line_number) >= 0)
 		{
-			struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (& (header_definitions_p -> hd_function_definitions));
-
-			success_flag = TRUE;
-
-
-			while ((node_p != NULL) && success_flag)
+			if (IDOS->FPrintf (out_p, "\t\t<method name=\"%s\" result=\"%s\">\n", fd_p -> fd_definition_p -> pa_name_s, fd_p -> fd_definition_p -> pa_type_s) >= 0)
 				{
-					if (WriteIDLFunction (out_p, node_p -> fdn_function_def_p))
+					if (fd_p -> fd_args_p)
 						{
-							node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p);
-						}
-					else
-						{
-							success_flag = FALSE;
-						}
-				}
-		}
+							struct ParameterNode *node_p = (struct ParameterNode *) IExec->GetHead (fd_p -> fd_args_p);
 
+							success_flag = TRUE;
 
-	return success_flag;
-}
-
-
-static BOOL WriteIDLFunction (BPTR out_p, const struct FunctionDefinition * const fd_p)
-{
-	BOOL success_flag = FALSE;
-
-	if (IDOS->FPrintf (out_p, "\t\t<method name=\"%s\" result=\"%s\">\n", fd_p -> fd_definition_p -> pa_name_s, fd_p -> fd_definition_p -> pa_type_s) >= 0)
-		{
-			if (fd_p -> fd_args_p)
-				{
-					struct ParameterNode *node_p = (struct ParameterNode *) IExec->GetHead (fd_p -> fd_args_p);
-					
-					success_flag = TRUE;
-					
-					while (node_p && success_flag)
-						{
-							if (WriteIDLParameter (out_p, node_p -> pn_param_p))
+							while (node_p && success_flag)
 								{
-									node_p = (struct ParameterNode *) IExec->GetSucc ((struct Node *) node_p);
+									if (WriteIDLParameter (out_p, node_p -> pn_param_p))
+										{
+											node_p = (struct ParameterNode *) IExec->GetSucc ((struct Node *) node_p);
+										}
+									else
+										{
+											success_flag = FALSE;
+										}
 								}
-							else
+
+
+							if (success_flag)
 								{
-									success_flag = FALSE;
+									success_flag = (IDOS->FPrintf (out_p, "\t\t</method>\n") >= 0);
 								}
 						}
 
+				}		/* if (IDOS->FPrintf (out_p, "\t\t<method name=\"%s\" result=\"%s\">\n", fd_p -> fd_definition_p -> pa_name_s, fd_p -> fd_definition_p -> pa_type_s) >= 0) */
 
-					if (success_flag)
-						{
-							success_flag = (IDOS->FPrintf (out_p, "\t\t</method>\n") >= 0);
-						}
-				}
-		}
+		}		/* if (IDOS->FPrintf (out_p, "\n\t\t<!-- %s:%ld -->\n", fd_p -> fd_filename_s, fd_p -> fd_line_number) >= 0) */
+
 
 	return success_flag;
 }
@@ -257,9 +227,9 @@ static BOOL WriteIDLFunction (BPTR out_p, const struct FunctionDefinition * cons
 static BOOL WriteIDLParameter (BPTR out_p, const struct Parameter * const param_p)
 {
 	BOOL success_flag = TRUE;
-	
+
 	if (!IsVoidParameter (param_p))
-		{		
+		{
 			success_flag = (IDOS->FPrintf (out_p, "\t\t\t<arg name=\"%s\" type=\"%s\" />\n", param_p -> pa_name_s, param_p -> pa_type_s) >= 0);
 		}
 

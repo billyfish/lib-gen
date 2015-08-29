@@ -50,7 +50,9 @@ uint32 GetFunctionDefinitionsListSize (struct List * const list_p);
 
 void ClearFunctionDefinitionList (struct List *function_definitions_p);
 
-struct FunctionDefinition *AllocateFunctionDefinition (void);
+
+struct FunctionDefinition *AllocateFunctionDefinition (CONST STRPTR filename_s, const int32 line_number);
+
 
 void FreeFunctionDefinition (struct FunctionDefinition *fd_p);
 
@@ -58,18 +60,28 @@ void FreeFunctionDefinition (struct FunctionDefinition *fd_p);
 void FreeFunctionDefinitionNode (struct FunctionDefinitionNode *node_p);
 
 
+BOOL AddFunctionDefinitionToList (struct FunctionDefinition *fd_p, struct List *functions_list_p);
+
+
 BOOL AddParameterAtFront (struct FunctionDefinition *fd_p, struct Parameter *param_p);
+
 
 BOOL AddParameterAtBack (struct FunctionDefinition *fd_p, struct Parameter *param_p);
 
+
 struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s, CONST_STRPTR filename_s, const int32 line_number);
 
+
 BOOL PrintFunctionDefinition (BPTR out_p, const struct FunctionDefinition * const fn_p);
+
 
 BOOL WriteLibraryFunctionImplementation (BPTR out_p, const struct FunctionDefinition * const fd_p, CONST_STRPTR interface_struct_s);
 
 
 const char *FindParameterEnd (const char *start_p, BOOL function_flag);
+
+
+int CompareFunctionDefinitionNodes (const void *v0_p, const void *v1_p);
 
 
 #ifdef __cplusplus

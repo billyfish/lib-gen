@@ -12,7 +12,7 @@ CC = SDK:gcc/bin/gcc
 LD = SDK:gcc/bin/gcc
 OBJ = \
 	 src/byte_buffer.o src/document_parser.o src/library_utils.o \
-	 src/header_definitions.o src/idl_writer.o src/main.o \
+	 src/idl_writer.o src/main.o \
 	 src/utils.o src/parameter.o src/function_definition.o \
 	 src/writer.o src/c_writer.o src/makefile_utils.o \
 	 src/module_utils.o
@@ -68,8 +68,6 @@ byte_buffer.o: src/byte_buffer.c src/byte_buffer.h src/utils.h src/debugging_uti
 document_parser.o: src/document_parser.c src/document_parser.h src/byte_buffer.h src/utils.h src/debugging_utils.h
 
 library_utils.o: src/library_utils.c src/library_utils.h
-
-header_definitions.o: src/header_definitions.c src/header_definitions.h src/function_definition.h src/parameter.h src/debugging_utils.h src/utils.h src/makefile_utils.h
 
 idl_writer.o: src/idl_writer.c src/idl_writer.h src/writer.h src/header_definitions.h src/parameter.h src/function_definition.h src/debugging_utils.h
 

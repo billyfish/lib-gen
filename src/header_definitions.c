@@ -90,21 +90,6 @@ void FreeHeaderDefinitionsNode (struct HeaderDefinitionsNode *node_p)
 }
 
 
-uint32 GetHeaderDefinitionsListSize (struct List * const list_p)
-{
-	uint32 i = 0;
-	struct HeaderDefinitionsNode *node_p = NULL;
-
-	for (node_p = (struct HeaderDefinitionsNode *) IExec->GetHead (list_p); node_p != NULL; node_p = (struct HeaderDefinitionsNode *) IExec->GetSucc ((struct Node *) node_p))
-		{
-			++ i;
-			DB (KPRINTF ("%s %ld - GetHeaderDefinitionsListSize i: %lu node filename %s\n", __FILE__, __LINE__, i, node_p -> hdn_defs_p -> hd_filename_s));
-		}
-
-	return i;
-}
-
-
 BOOL AddFunctionDefinitionToHeaderDefinitions (struct HeaderDefinitions *header_defs_p, struct FunctionDefinition *fd_p)
 {
 	BOOL success_flag = FALSE;
@@ -178,10 +163,10 @@ static BOOL WriteFunctionImplementations (BPTR out_p, const struct HeaderDefinit
 }
 
 
-BOOL WriteSourceForAllHeaderDefinitions (struct List *hdr_defs_list_p, CONST_STRPTR output_dir_s, CONST_STRPTR library_s)
+BOOL WriteSourceForAllFunctionDefinitions (struct List *fn_defs_p, CONST_STRPTR output_dir_s, CONST_STRPTR library_s)
 {
 	BOOL success_flag = TRUE;
-	struct HeaderDefinitionsNode *node_p = (struct HeaderDefinitionsNode *) IExec->GetHead (hdr_defs_list_p);
+	struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (fn_defs_p);
 	BPTR makefile_p = GetMakefileHandle (library_s);
 
 	while (node_p && success_flag)

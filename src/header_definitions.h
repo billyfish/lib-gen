@@ -17,22 +17,22 @@ enum InterfaceFlag
 /**
  * All of the functions defined in a given header file.
  */
-struct HeaderDefinitions
-{
+//struct HeaderDefinitions
+//{
 	/** The name of the file. */
-	STRPTR hd_filename_s;
+//	STRPTR hd_filename_s;
 
 	/**
 	 * List of FunctionDefinitionNodes from this file.
 	 */
-	struct List hd_function_definitions;
-};
+//	struct List hd_function_definitions;
+//};
 
-struct HeaderDefinitionsNode
-{
-	struct Node hdn_node;
-	struct HeaderDefinitions *hdn_defs_p;
-};
+//struct HeaderDefinitionsNode
+//{
+//	struct Node hdn_node;
+//	struct HeaderDefinitions *hdn_defs_p;
+//};
 
 
 void ClearHeaderDefinitionsList (struct List *hdr_defs_list_p);

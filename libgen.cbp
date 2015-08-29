@@ -15,7 +15,6 @@
 	<headers>
 		<file name="src/byte_buffer.h" open="0" />
 		<file name="src/library_utils.h" open="1" top="0" left="0" line="0" row="0" />
-		<file name="src/header_definitions.h" open="0" />
 		<file name="src/utils.h" open="1" top="0" left="0" line="0" row="0" />
 		<file name="src/debugging_utils.h" open="0" />
 		<file name="src/parameter.h" open="0" />
@@ -30,7 +29,6 @@
 		<file name="src/byte_buffer.c" open="1" top="0" left="0" line="0" row="0" />
 		<file name="src/document_parser.c" open="1" top="0" left="0" line="0" row="0" />
 		<file name="src/library_utils.c" open="0" />
-		<file name="src/header_definitions.c" open="1" top="165" left="0" line="194" row="5" />
 		<file name="src/idl_writer.c" open="1" top="208" left="0" line="229" row="10" />
 		<file name="src/main.c" open="1" top="638" left="0" line="648" row="30" />
 		<file name="src/utils.c" open="1" top="0" left="0" line="0" row="0" />
