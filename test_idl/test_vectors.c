@@ -20,12 +20,7 @@ extern uint32               VARARGS68K _test_Obtain(struct TestIFace *);
 extern uint32               VARARGS68K _test_Release(struct TestIFace *);
 extern BOOLEAN              VARARGS68K _test_InitialiseLoaderData(struct TestIFace *, LoaderModuleData * data_p, const HashTable * const config_p);
 extern BOOLEAN              VARARGS68K _test_InitialiseLoaderData(struct TestIFace *, LoaderModuleData * data_p, const HashTable * const config_p);
-extern BOOLEAN              VARARGS68K _test_InitialiseLoaderData(struct TestIFace *, LoaderModuleData * data_p, const HashTable * const config_p);
 extern void                 VARARGS68K _test_ClearLoaderData(struct TestIFace *, LoaderModuleData * data_p);
-extern void                 VARARGS68K _test_ClearLoaderData(struct TestIFace *, LoaderModuleData * data_p);
-extern void                 VARARGS68K _test_ClearLoaderData(struct TestIFace *, LoaderModuleData * data_p);
-extern Trajectory *         VARARGS68K _test_LoadTrajectory(struct TestIFace *, LoaderModule * loader_p, const char * const path, const double64 first_frame_time, const double64 chunk_time, const uint32 num_frames_to_skip, EventListener * events_listener_p);
-extern Trajectory *         VARARGS68K _test_LoadTrajectory(struct TestIFace *, LoaderModule * loader_p, const char * const path, const double64 first_frame_time, const double64 chunk_time, const uint32 num_frames_to_skip, EventListener * events_listener_p);
 extern Trajectory *         VARARGS68K _test_LoadTrajectory(struct TestIFace *, LoaderModule * loader_p, const char * const path, const double64 first_frame_time, const double64 chunk_time, const uint32 num_frames_to_skip, EventListener * events_listener_p);
 
 
@@ -37,12 +32,7 @@ STATIC CONST APTR test_vectors[] =
     NULL,
     _test_InitialiseLoaderData,
     _test_InitialiseLoaderData,
-    _test_InitialiseLoaderData,
     _test_ClearLoaderData,
-    _test_ClearLoaderData,
-    _test_ClearLoaderData,
-    _test_LoadTrajectory,
-    _test_LoadTrajectory,
     _test_LoadTrajectory,
     (APTR)-1
 };

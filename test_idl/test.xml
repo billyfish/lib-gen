@@ -18,34 +18,8 @@
 			<arg name="data_p" type="LoaderModuleData *" />
 			<arg name="config_p" type="const HashTable * const" />
 		</method>
-		<method name="InitialiseLoaderData" result="BOOLEAN">
-			<arg name="data_p" type="LoaderModuleData *" />
-			<arg name="config_p" type="const HashTable * const" />
-		</method>
 		<method name="ClearLoaderData" result="void">
 			<arg name="data_p" type="LoaderModuleData *" />
-		</method>
-		<method name="ClearLoaderData" result="void">
-			<arg name="data_p" type="LoaderModuleData *" />
-		</method>
-		<method name="ClearLoaderData" result="void">
-			<arg name="data_p" type="LoaderModuleData *" />
-		</method>
-		<method name="LoadTrajectory" result="Trajectory *">
-			<arg name="loader_p" type="LoaderModule *" />
-			<arg name="path" type="const char * const" />
-			<arg name="first_frame_time" type="const double64" />
-			<arg name="chunk_time" type="const double64" />
-			<arg name="num_frames_to_skip" type="const uint32" />
-			<arg name="events_listener_p" type="EventListener *" />
-		</method>
-		<method name="LoadTrajectory" result="Trajectory *">
-			<arg name="loader_p" type="LoaderModule *" />
-			<arg name="path" type="const char * const" />
-			<arg name="first_frame_time" type="const double64" />
-			<arg name="chunk_time" type="const double64" />
-			<arg name="num_frames_to_skip" type="const uint32" />
-			<arg name="events_listener_p" type="EventListener *" />
 		</method>
 		<method name="LoadTrajectory" result="Trajectory *">
 			<arg name="loader_p" type="LoaderModule *" />
