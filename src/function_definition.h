@@ -22,10 +22,16 @@
 
 #include "parameter.h"
 
+enum InterfaceFlag
+{
+	IF_PUBLIC,
+	IF_PROTECTED,
+	IF_PRIVATE
+};
 
 struct FunctionDefinition
 {
-	STRPTR fd_filename_s;
+	CONST_STRPTR fd_filename_s;
 	uint32 fd_line_number;
 	struct Parameter *fd_definition_p;
 	struct List *fd_args_p;
@@ -48,10 +54,10 @@ extern "C" {
 
 uint32 GetFunctionDefinitionsListSize (struct List * const list_p);
 
-void ClearFunctionDefinitionList (struct List *function_definitions_p);
+void ClearFunctionDefinitionsList (struct List *function_definitions_p);
 
 
-struct FunctionDefinition *AllocateFunctionDefinition (CONST STRPTR filename_s, const int32 line_number);
+struct FunctionDefinition *AllocateFunctionDefinition (CONST CONST_STRPTR filename_s, const int32 line_number);
 
 
 void FreeFunctionDefinition (struct FunctionDefinition *fd_p);
@@ -77,6 +83,11 @@ BOOL PrintFunctionDefinition (BPTR out_p, const struct FunctionDefinition * cons
 
 BOOL WriteLibraryFunctionImplementation (BPTR out_p, const struct FunctionDefinition * const fd_p, CONST_STRPTR interface_struct_s);
 
+
+BOOL WriteSourceForAllFunctionDefinitions (struct List *fn_defs_p, CONST_STRPTR output_dir_s, CONST_STRPTR library_s);
+
+
+BOOL WriteSourceForFunctionDefinition (const struct FunctionDefinition *fn_def_p, CONST_STRPTR output_dir_s, CONST_STRPTR library_s);
 
 const char *FindParameterEnd (const char *start_p, BOOL function_flag);
 

@@ -15,6 +15,7 @@
 */
 
 #include <string.h>
+#include <stdlib.h>
 #include <ctype.h>
 
 #include <proto/exec.h>
@@ -28,6 +29,10 @@
 #ifdef _DEBUG
 #define FUNCTION_DEFINITIONS_DEBUG (1)
 #endif
+
+
+static BOOL WriteIncludes (BPTR out_p, CONST_STRPTR header_name_s);
+
 
 
 void UnitTest (const char *prototype_s)
@@ -338,7 +343,7 @@ uint32 GetFunctionDefinitionsListSize (struct List * const list_p)
 }
 
 
-struct FunctionDefinition *AllocateFunctionDefinition (CONST STRPTR filename_s, const int32 line_number)
+struct FunctionDefinition *AllocateFunctionDefinition (CONST CONST_STRPTR filename_s, const int32 line_number)
 {
 	struct FunctionDefinition *fd_p = (struct FunctionDefinition *) IExec->AllocVecTags (sizeof (struct FunctionDefinition), TAG_DONE);
 
@@ -579,3 +584,136 @@ int CompareFunctionDefinitionNodes (const void *v0_p, const void *v1_p)
 
 	return res;
 }
+
+
+void ClearFunctionDefinitionsList (struct List *function_defs_p)
+{
+	struct FunctionDefinitionNode *curr_node_p = (struct FunctionDefinitionNode *) IExec->GetHead (function_defs_p);
+	struct FunctionDefinitionNode *next_node_p = NULL;
+
+	while (curr_node_p != NULL)
+		{
+			next_node_p = (struct FunctionDefinitionNode *) IExec->GetSucc (& (curr_node_p -> fdn_node));
+			FreeFunctionDefinitionNode (curr_node_p);
+			curr_node_p = next_node_p;
+		}
+}
+
+
+
+BOOL WriteSourceForAllFunctionDefinitions (struct List *fn_defs_p, CONST_STRPTR output_dir_s, CONST_STRPTR library_s)
+{
+	BOOL success_flag = TRUE;
+	struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (fn_defs_p);
+	//BPTR makefile_p = GetMakefileHandle (library_s);
+
+	while (node_p && success_flag)
+		{
+			success_flag  = WriteSourceForFunctionDefinition (node_p -> fdn_function_def_p, output_dir_s, library_s);
+
+			if (success_flag)
+				{
+					node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p);
+				}
+		}
+
+	/*
+	if (makefile_p)
+		{
+			if (!WriteMakefileFooter (makefile_p))
+				{
+					IDOS->Printf ("Failed to write footer block to makefile\n");
+				}
+
+			if (!CloseMakefile (makefile_p))
+				{
+					IDOS->Printf ("Failed to close makefile\n");
+				}
+		}
+	*/
+	
+	return success_flag;
+}
+
+
+BOOL WriteSourceForFunctionDefinition (const struct FunctionDefinition *fn_def_p, CONST_STRPTR output_dir_s, CONST_STRPTR library_s)
+{
+	BOOL success_flag = FALSE;
+
+	/* Get the .c filename */
+	STRPTR filename_s = strdup (IDOS->FilePart (fn_def_p -> fd_filename_s));
+
+	if (filename_s)
+		{
+			STRPTR suffix_p = strrchr (filename_s, '.');
+
+			if (suffix_p)
+				{
+					++ suffix_p;
+
+					if (*suffix_p != '\0')
+						{
+							STRPTR full_name_s = NULL;
+
+							*suffix_p = 'c';
+							* (++ suffix_p) = '\0';
+
+							/* Make the full filename */
+							/* @TODO Make sure output dir already exists */
+							full_name_s = MakeFilename (output_dir_s, filename_s);
+
+							if (full_name_s)
+								{
+									BPTR c_file_p = IDOS->FOpen (full_name_s, MODE_NEWFILE, 0);
+
+									DB (KPRINTF ("%s %ld - Opened source file %s (%lu)\n", __FILE__, __LINE__, full_name_s, (uint32) c_file_p));
+
+									if (c_file_p)
+										{
+											if (WriteIncludes (c_file_p, fn_def_p -> fd_filename_s))
+												{
+													if (WriteLibraryFunctionImplementation (c_file_p, fn_def_p, library_s))
+														{
+															/*
+															if (!AddFileToMakefileSources (makefile_p, full_name_s))
+																{
+																	IDOS->Printf ("Failed to add %s to list of sources in makefile\n", full_name_s);
+																}
+															*/
+															success_flag = TRUE;
+														}
+													else
+														{
+															DB (KPRINTF ("%s %ld - Failed to write implementation to %s\n", __FILE__, __LINE__, full_name_s));
+														}
+
+												}		/* if (WriteIncludes (c_file_p, hdr_defs_p -> hd_filename_s)) */
+											else
+												{
+													DB (KPRINTF ("%s %ld - Failed to write includes to %s\n", __FILE__, __LINE__, full_name_s));
+												}
+
+											IDOS->FClose (c_file_p);
+										}		/* if (c_file_p) */
+
+									IExec->FreeVec (full_name_s);
+								}		/* if (full_name_s) */
+
+						}		/* if (*suffix_p != '\0') */
+
+				}		/* if (suffix_p) */
+
+			free (filename_s);
+		}		/* if (filename_s) */
+
+	return success_flag;
+}
+
+
+static BOOL WriteIncludes (BPTR out_p, CONST_STRPTR header_name_s)
+{
+	return (IDOS->FPrintf (out_p, "#include \"%s\"\n\n", header_name_s) > 0);
+}
+
+
+

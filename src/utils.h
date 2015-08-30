@@ -25,7 +25,7 @@ STRPTR MakeFilename (CONST_STRPTR first_s, CONST_STRPTR second_s);
 
 int32 ScanDirectories (CONST_STRPTR name_s, struct List *matching_files_list_p, CONST_STRPTR filename_pattern_s, const BOOL recurse_flag);
 
-BOOL AddFullHeaderPathToList (struct List *header_definitions_p, CONST_STRPTR dir_s, CONST_STRPTR name_s);
+BOOL AddFullFilenameToList (struct List *header_definitions_p, CONST_STRPTR dir_s, CONST_STRPTR name_s);
 
 void SetVerbosity (enum Verbosity v);
 

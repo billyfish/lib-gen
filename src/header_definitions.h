@@ -7,12 +7,7 @@
 #include "function_definition.h"
 
 
-enum InterfaceFlag
-{
-	IF_PUBLIC,
-	IF_PROTECTED,
-	IF_PRIVATE
-};
+
 
 /**
  * All of the functions defined in a given header file.
@@ -55,7 +50,6 @@ BOOL HasHeaderDefinitions (const struct HeaderDefinitions *header_defs_p);
 
 uint32 GetHeaderDefinitionsListSize (struct List * const list_p);
 
-void ClearHeaderDefinitionsList (struct List *header_definitions_p);
 
 
 BOOL WriteSourceForHeaderDefinitions (const struct HeaderDefinitions *hdr_defs_p, CONST_STRPTR output_dir_s, CONST_STRPTR library_s, BPTR makefile_p);

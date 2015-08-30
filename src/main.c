@@ -29,19 +29,20 @@
 #include <proto/utility.h>
 
 #include "utils.h"
-#include "header_definitions.h"
+#include "function_definition.h"
 #include "document_parser.h"
 #include "debugging_utils.h"
 #include "idl_writer.h"
 #include "library_utils.h"
+#include "list_utils.h"
 
 static BOOL OpenLibs (void);
 static void CloseLibs (void);
 
 
 BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, struct DocumentParser *document_parser_p, struct List *function_defs_p);
-BOOL ParseFile (CONST_STRPTR pattern_s, CONST_STRPTR filename_s, struct HeaderDefinitions *header_defs_p, struct DocumentParser *document_parser_p);
-BOOL GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR filename_regexp_s, CONST CONST_STRPTR prototype_regexp_s, CONST BOOL recurse_flag, struct List *function_definitions_p)
+BOOL ParseFile (CONST_STRPTR pattern_s, CONST_STRPTR filename_s, struct List *function_defs_p, struct DocumentParser *document_parser_p);
+BOOL GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR filename_regexp_s, CONST CONST_STRPTR prototype_regexp_s, CONST BOOL recurse_flag, struct List *function_definitions_p);
 
 STRPTR CreateRegEx (CONST_STRPTR pattern_s, BOOL capture_flag);
 void ClearCapturedExpression (struct CapturedExpression *capture_p);
@@ -49,6 +50,8 @@ void ClearCapturedExpression (struct CapturedExpression *capture_p);
 int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag, const BOOL gen_source_flag);
 
 STRPTR MakePrototypePattern (CONST_STRPTR pattern_s);
+
+struct List *GetHeaderFilesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_regexp_s, const BOOL recurse_flag);
 
 
 enum Args
@@ -317,6 +320,10 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 									if (WriteFunctionDefinitionsList (writer_p, &function_defs, library_s, version, flag, out_p))
 										{
 											IDOS->Printf ("Successfully wrote header definitions to %s\n", output_s);
+											
+											/*
+												Write the makefile, vectors, init base,obtain and release files
+											*/
 										}
 									else
 										{
@@ -361,7 +368,7 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 				{
 					if (EnsureDirectoryExists (output_dir_s))
 						{
-							if (WriteSourceForAllHeaderDefinitions (&function_defs, output_dir_s, library_s))
+							if (WriteSourceForAllFunctionDefinitions (&function_defs, output_dir_s, library_s))
 								{
 									IDOS->Printf ("Generating source succeeded");
 								}
@@ -383,14 +390,14 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 				}
 		}
 
-	ClearHeaderDefinitionsList (&function_defs);
+	ClearFunctionDefinitionsList (&function_defs);
 
 	return res;
 }
 
 
 
-BOOL GetPreviousLibraryOrder (CONST_STRPTR filename_s, CONST_STRPTR struct_name_s, struct List *ordering_p, DocumentParser *parser_p)
+BOOL GetPreviousLibraryOrder (CONST_STRPTR filename_s, CONST_STRPTR struct_name_s, struct List *ordering_p, struct DocumentParser *parser_p)
 {
 	BOOL success_flag = FALSE;
 	BPTR handle_p = IDOS->FOpen (filename_s, MODE_OLDFILE, 0);
@@ -400,7 +407,6 @@ BOOL GetPreviousLibraryOrder (CONST_STRPTR filename_s, CONST_STRPTR struct_name_
 			int32 count;
 			struct CapturedExpression capture;
 			struct CapturedExpression *capture_p = &capture;
-			STRPTR full_prototype_s = NULL;
 			success_flag = TRUE;
 			memset (capture_p, 0, sizeof (struct CapturedExpression));
 
@@ -421,7 +427,7 @@ BOOL GetPreviousLibraryOrder (CONST_STRPTR filename_s, CONST_STRPTR struct_name_
 
 
 
-			DB (KPRINTF ("%s %ld - GetMatchingPrototypes: pattern \"%s\"\n", __FILE__, __LINE__, pattern_s));
+			DB (KPRINTF ("%s %ld - GetPreviousLibraryOrder: pattern \"%s\"\n", __FILE__, __LINE__, reg_ex_s));
 
 			/*
 			 TODO: Need to be able to read in multi-line function definitions e.g.
@@ -449,7 +455,6 @@ BOOL GetPreviousLibraryOrder (CONST_STRPTR filename_s, CONST_STRPTR struct_name_
 	DB (KPRINTF ("%s %ld - GetMatchingPrototypes %ld\n", __FILE__, __LINE__, success_flag));
 
 	return success_flag;
-
 }
 
 
@@ -457,7 +462,7 @@ BOOL GetPreviousLibraryOrder (CONST_STRPTR filename_s, CONST_STRPTR struct_name_
 BOOL GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR filename_regexp_s, CONST CONST_STRPTR prototype_regexp_s, CONST BOOL recurse_flag, struct List *function_definitions_p)
 {
 	BOOL success_flag = FALSE;
-	struct List *headers_p = GetHeaderFilesList (root_path_s, filename_regexp_s, function_regexp_s, recurse_flag);
+	struct List *headers_p = GetHeaderFilesList (root_path_s, filename_regexp_s, recurse_flag);
 
 	if (headers_p)
 		{
@@ -470,6 +475,8 @@ BOOL GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR 
 					if (document_parser_p)
 						{
 							success_flag = TRUE;
+							struct Node *node_p;
+							
 							IDOS->Printf ("Found %lu header files\n", num_header_files);
 
 							for (node_p = IExec->GetHead (headers_p); node_p != NULL; node_p = IExec->GetSucc (node_p))
@@ -479,7 +486,7 @@ BOOL GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR 
 									IDOS->Printf ("Parsing \"%s\"\n", filename_s);
 
 									/* Get the list of matching prototypes in each file */
-									if (!ParseFile (function_regexp_s, filename_s, function_definitions_p, document_parser_p))
+									if (!ParseFile (prototype_regexp_s, filename_s, function_definitions_p, document_parser_p))
 										{
 											success_flag = FALSE;
 										}
@@ -502,7 +509,7 @@ BOOL GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR 
 
 
 
-struct List *GetHeaderFilesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_regexp_s, CONST_STRPTR function_regexp_s, const BOOL recurse_flag, struct List *header_definitions_p)
+struct List *GetHeaderFilesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_regexp_s, const BOOL recurse_flag)
 {
 	struct List *filenames_p = IExec->AllocSysObjectTags (ASOT_LIST, TAG_DONE);
 
@@ -685,9 +692,9 @@ void ClearCapturedExpression (struct CapturedExpression *capture_p)
 
 
 
-BOOL ParseFile (CONST_STRPTR function_regexp_s, CONST_STRPTR filename_s, struct HeaderDefinitions *header_defs_p, struct DocumentParser *document_parser_p)
+BOOL ParseFile (CONST_STRPTR function_regexp_s, CONST_STRPTR filename_s, struct List *function_defs_p, struct DocumentParser *document_parser_p)
 {
-	BOOL success_flag = GetMatchingPrototypes (filename_s, function_regexp_s, document_parser_p, header_defs_p);
+	BOOL success_flag = GetMatchingPrototypes (filename_s, function_regexp_s, document_parser_p, function_defs_p);
 
 	if (success_flag)
 		{

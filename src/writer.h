@@ -5,7 +5,7 @@
 #include <exec/lists.h>
 #include <exec/types.h>
 
-#include "header_definitions.h"
+#include "function_definition.h"
 
 struct Writer;
 

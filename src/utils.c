@@ -7,7 +7,7 @@
 #include "debugging_utils.h"
 #include "utils.h"
 #include "parameter.h"
-#include "header_definitions.h"
+#include "function_definition.h"
 
 
 #ifdef _DEBUG
@@ -166,7 +166,7 @@ char *CopyToNewString (const char *start_p, const char *end_p, const BOOL trim_f
 }
 
 
-BOOL AddFullHeaderPathToList (struct List *header_definitions_p, CONST_STRPTR dir_s, CONST_STRPTR name_s)
+BOOL AddFullFilenameToList (struct List *filenames_p, CONST_STRPTR dir_s, CONST_STRPTR name_s)
 {
 	BOOL success_flag = FALSE;
 	STRPTR full_path_s = NULL;
@@ -184,27 +184,18 @@ BOOL AddFullHeaderPathToList (struct List *header_definitions_p, CONST_STRPTR di
 
 			if (IDOS->AddPart (full_path_s, name_s, l) != 0)
 				{
-					struct HeaderDefinitions *hdr_defs_p = AllocateHeaderDefinitions (full_path_s);
+					struct Node *node_p = IExec->AllocSysObjectTags (ASOT_NODE,
+						ASONODE_Name, full_path_s,
+						ASONODE_Size, sizeof (struct Node),
+						TAG_DONE);
 
 					#if UTILS_DEBUG >= 1
 					DB (KPRINTF ("%s %ld - full_path_s \"%s\" dir \"%s\" name \"%s\"\n", __FILE__, __LINE__, full_path_s, dir_s, name_s));
 					#endif
 
-					if (hdr_defs_p)
+					if (node_p)
 						{
-							if (AddHeaderDefintionsToList (header_definitions_p, hdr_defs_p))
-								{
-									success_flag = TRUE;
-
-									#if UTILS_DEBUG >= 1
-									DB (KPRINTF ("%s %ld - Added full_path_s \"%s\"\n", __FILE__, __LINE__, full_path_s));
-									#endif
-								}
-							else
-								{
-									FreeHeaderDefinitions (hdr_defs_p);
-									full_path_s = NULL;
-								}
+							IExec->AddTail (filenames_p, node_p);
 						}
 
 				}
@@ -220,7 +211,7 @@ BOOL AddFullHeaderPathToList (struct List *header_definitions_p, CONST_STRPTR di
 }
 
 
-int32 ScanDirectories (CONST_STRPTR dir_s, struct List *header_definitions_p, CONST_STRPTR filename_pattern_s, const BOOL recurse_flag)
+int32 ScanDirectories (CONST_STRPTR dir_s, struct List *filenames_p, CONST_STRPTR filename_pattern_s, const BOOL recurse_flag)
 {
 	int32 success = FALSE;
 	APTR context_p = IDOS->ObtainDirContextTags (EX_StringNameInput, dir_s,
@@ -266,7 +257,7 @@ int32 ScanDirectories (CONST_STRPTR dir_s, struct List *header_definitions_p, CO
 
 							if (add_flag)
 								{
-									if (AddFullHeaderPathToList (header_definitions_p, dir_s, dat_p -> Name))
+									if (AddFullFilenameToList (filenames_p, dir_s, dat_p -> Name))
 										{
 											#if UTILS_DEBUG >= 2
 											DB (KPRINTF ("%s %ld - ScanDirectories; added %s size %lu\n", __FILE__, __LINE__, dat_p -> Name, GetHeaderDefinitionsListSize (header_definitions_p)));
@@ -287,7 +278,7 @@ int32 ScanDirectories (CONST_STRPTR dir_s, struct List *header_definitions_p, CO
 
 									if (path_s)
 										{
-											if (!ScanDirectories (path_s, header_definitions_p, filename_pattern_s, recurse_flag))  /* recurse */
+											if (!ScanDirectories (path_s, filenames_p, filename_pattern_s, recurse_flag))  /* recurse */
 												{
 													break;
 												}

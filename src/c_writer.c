@@ -7,7 +7,7 @@ Writer *AllocateCWriter (void)
 
 	if (cw_p)
 		{
-			cw_p -> cw_base_writer.wr_write_header_definitions_list_fn = NULL;
+			cw_p -> cw_base_writer.wr_write_function_definitions_list_fn = NULL;
 			cw_p -> cw_base_writer.wr_get_file_suffix_fn = NULL;
 		}
 

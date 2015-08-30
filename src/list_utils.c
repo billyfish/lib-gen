@@ -1,5 +1,9 @@
-#include "list_utils.h"
+#include <stdlib.h>
 
+#include <proto/exec.h>
+
+#include "list_utils.h"
+#include "debugging_utils.h"
 
 void FreeList (struct List *list_p)
 {
@@ -15,7 +19,7 @@ void FreeList (struct List *list_p)
 			IExec->FreeSysObject (ASOT_NODE, node_p);
 		}
 
-	IExec->FreeSysObject (ASOT_LIST, (APTR) filenames_p);
+	IExec->FreeSysObject (ASOT_LIST, (APTR) list_p);
 }
 
 
@@ -45,7 +49,7 @@ BOOL SortList (struct List *list_p, int (*compare_fn) (const void *v0_p, const v
 {
 	BOOL success_flag = FALSE;
 	const uint32 size = GetListSize (list_p);
-	struct Node **nodes_pp = IExec->AllocVecTags (size * sizeof (Node *), TAG_DONE);
+	struct Node **nodes_pp = IExec->AllocVecTags (size * sizeof (struct Node *), TAG_DONE);
 
 	if (nodes_pp)
 		{
@@ -57,7 +61,7 @@ BOOL SortList (struct List *list_p, int (*compare_fn) (const void *v0_p, const v
 					*node_pp = IExec->RemHead (list_p);
 				}
 
-			qsort (nodes_pp, size, sizeof (Node *), compare_fn);
+			qsort (nodes_pp, size, sizeof (struct Node *), compare_fn);
 
 			for (i = size, node_pp = nodes_pp; i > 0; -- i, ++ node_pp)
 				{

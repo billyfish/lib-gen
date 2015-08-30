@@ -4,18 +4,18 @@
 #
 # Project: libgen
 #
-# Created on: 29-08-2015 17:31:28
+# Created on: 30-08-2015 23:06:34
 #
 #
 
 CC = SDK:gcc/bin/gcc
 LD = SDK:gcc/bin/gcc
 OBJ = \
-	 src/byte_buffer.o src/document_parser.o src/library_utils.o \
-	 src/idl_writer.o src/main.o \
+	 src/list_utils.o src/byte_buffer.o src/document_parser.o \
+	 src/library_utils.o src/idl_writer.o src/main.o \
 	 src/utils.o src/parameter.o src/function_definition.o \
 	 src/writer.o src/c_writer.o src/makefile_utils.o \
-	 src/module_utils.o
+	
 
 BIN = libgen
 
@@ -63,13 +63,15 @@ $(BIN): $(OBJ) $(LIBS)
 	@echo "Compiling $<"
 	@$(CC) -c $< -o $*.o $(CFLAGS)
 
+list_utils.o: src/list_utils.c src/list_utils.h
+
 byte_buffer.o: src/byte_buffer.c src/byte_buffer.h src/utils.h src/debugging_utils.h
 
 document_parser.o: src/document_parser.c src/document_parser.h src/byte_buffer.h src/utils.h src/debugging_utils.h
 
 library_utils.o: src/library_utils.c src/library_utils.h
 
-idl_writer.o: src/idl_writer.c src/idl_writer.h src/writer.h src/header_definitions.h src/parameter.h src/function_definition.h src/debugging_utils.h
+idl_writer.o: src/idl_writer.c src/idl_writer.h src/writer.h src/parameter.h src/function_definition.h src/header_definitions.h src/debugging_utils.h
 
 main.o: src/main.c src/utils.h src/header_definitions.h src/function_definition.h src/parameter.h src/document_parser.h src/byte_buffer.h src/debugging_utils.h src/idl_writer.h src/writer.h src/library_utils.h
 
@@ -84,6 +86,4 @@ writer.o: src/writer.c src/writer.h src/header_definitions.h src/function_defini
 c_writer.o: src/c_writer.c src/c_writer.h src/writer.h src/header_definitions.h
 
 makefile_utils.o: src/makefile_utils.c src/makefile_utils.h src/utils.h
-
-module_utils.o: src/module_utils.c
 

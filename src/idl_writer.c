@@ -10,7 +10,6 @@
 #include "idl_writer.h"
 #include "parameter.h"
 #include "function_definition.h"
-#include "header_definitions.h"
 #include "debugging_utils.h"
 
 
@@ -22,6 +21,7 @@ static CONST_STRPTR GetIDLWriterFileSuffix (struct Writer *writer_p);
 static BOOL WriteIDLHeader (BPTR out_p, CONST CONST_STRPTR library_s, const int32 version, const enum InterfaceFlag flag, struct List *function_definitions_list_p);
 
 static BOOL WriteIDLFunctionDefinition (BPTR out_p, const struct FunctionDefinition * const fd_p);
+
 static BOOL WriteIDLParameter (BPTR out_p, const struct Parameter * const param_p);
 
 static BOOL WriteIDLDefaultFunctions (BPTR out_p);
@@ -44,7 +44,7 @@ Writer *AllocateIDLWriter (void)
 
 	if (idl_p)
 		{
-			idl_p -> iw_base_writer.wr_write_header_definitions_list_fn = WriteIDL;
+			idl_p -> iw_base_writer.wr_write_function_definitions_list_fn = WriteIDL;
 			idl_p -> iw_base_writer.wr_get_file_suffix_fn = GetIDLWriterFileSuffix;
 		}
 
@@ -163,11 +163,11 @@ static BOOL WriteIDLHeader (BPTR out_p, CONST CONST_STRPTR library_s, const int3
 static BOOL WriteIDLFunctionDefinitionsList (BPTR out_p, struct List * const function_definitions_list_p)
 {
 	BOOL success_flag = TRUE;
-	struct FunctionDefinitionsNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (function_definitions_list_p);
+	struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (function_definitions_list_p);
 
 	while ((node_p != NULL) && success_flag)
 		{
-			if (WriteIDLFunctionDefintion (out_p, node_p -> hdn_defs_p))
+			if (WriteIDLFunctionDefinition (out_p, node_p -> fdn_function_def_p))
 				{
 					node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p);
 				}
@@ -182,7 +182,7 @@ static BOOL WriteIDLFunctionDefinitionsList (BPTR out_p, struct List * const fun
 }
 
 
-static BOOL WriteIDLFunctionDefintion (BPTR out_p, const struct FunctionDefinition * const fd_p)
+static BOOL WriteIDLFunctionDefinition (BPTR out_p, const struct FunctionDefinition * const fd_p)
 {
 	BOOL success_flag = FALSE;
 
@@ -260,16 +260,16 @@ static BOOL WriteIDLDefaultFunctions (BPTR out_p)
 
 
 
-static BOOL WriteIDLIncludes (BPTR out_p, struct List *header_definitions_list_p)
+static BOOL WriteIDLIncludes (BPTR out_p, struct List *function_definitions_list_p)
 {
 	BOOL success_flag = TRUE;
-	struct HeaderDefinitionsNode *node_p = (struct HeaderDefinitionsNode *) IExec->GetHead (header_definitions_list_p);
+	struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (function_definitions_list_p);
 
 	while ((node_p != NULL) && success_flag)
 		{
-			if (IDOS->FPrintf (out_p, "\t<include>%s</include>\n", node_p -> hdn_defs_p -> hd_filename_s) >= 0)
+			if (IDOS->FPrintf (out_p, "\t<include>%s</include>\n", node_p -> fdn_function_def_p -> fd_filename_s) >= 0)
 				{
-					node_p = (struct HeaderDefinitionsNode *) IExec->GetSucc ((struct Node *) node_p);
+					node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p);
 				}
 			else
 				{
