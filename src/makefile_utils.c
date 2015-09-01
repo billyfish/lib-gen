@@ -188,7 +188,7 @@ BOOL WriteVectorsFile (CONST_STRPTR library_s, const struct List *  const functi
 					IDOS->Printf ("Failed to open \"%s\"\n", file_s);
 				}
 
-			IExec->FreeVec (makefile_s);
+			IExec->FreeVec (file_s);
 		}
 	else
 		{
