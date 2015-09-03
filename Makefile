@@ -4,18 +4,19 @@
 #
 # Project: libgen
 #
-# Created on: 30-08-2015 23:06:34
+# Created on: 03-09-2015 14:10:41
 #
 #
 
 CC = SDK:gcc/bin/gcc
 LD = SDK:gcc/bin/gcc
 OBJ = \
-	 src/list_utils.o src/byte_buffer.o src/document_parser.o \
-	 src/library_utils.o src/idl_writer.o src/main.o \
-	 src/utils.o src/parameter.o src/function_definition.o \
-	 src/writer.o src/c_writer.o src/makefile_utils.o \
-	
+	 src/auto_init_writer.o src/init_writer.o src/inline_header_writer.o \
+	 src/makefile_writer.o src/proto_header_writer.o src/list_utils.o \
+	 src/byte_buffer.o src/document_parser.o src/library_utils.o \
+	 src/idl_writer.o src/main.o src/utils.o \
+	 src/parameter.o src/function_definition.o src/writer.o \
+	 src/c_writer.o src/makefile_utils.o
 
 BIN = libgen
 
@@ -63,7 +64,17 @@ $(BIN): $(OBJ) $(LIBS)
 	@echo "Compiling $<"
 	@$(CC) -c $< -o $*.o $(CFLAGS)
 
-list_utils.o: src/list_utils.c src/list_utils.h
+auto_init_writer.o: src/auto_init_writer.c src/auto_init_writer.h src/utils.h
+
+init_writer.o: src/init_writer.c
+
+inline_header_writer.o: src/inline_header_writer.c
+
+makefile_writer.o: src/makefile_writer.c src/makefile_writer.h
+
+proto_header_writer.o: src/proto_header_writer.c
+
+list_utils.o: src/list_utils.c src/list_utils.h src/debugging_utils.h
 
 byte_buffer.o: src/byte_buffer.c src/byte_buffer.h src/utils.h src/debugging_utils.h
 
@@ -71,19 +82,19 @@ document_parser.o: src/document_parser.c src/document_parser.h src/byte_buffer.h
 
 library_utils.o: src/library_utils.c src/library_utils.h
 
-idl_writer.o: src/idl_writer.c src/idl_writer.h src/writer.h src/parameter.h src/function_definition.h src/header_definitions.h src/debugging_utils.h
+idl_writer.o: src/idl_writer.c src/idl_writer.h src/writer.h src/function_definition.h src/parameter.h src/debugging_utils.h
 
-main.o: src/main.c src/utils.h src/header_definitions.h src/function_definition.h src/parameter.h src/document_parser.h src/byte_buffer.h src/debugging_utils.h src/idl_writer.h src/writer.h src/library_utils.h
+main.o: src/main.c src/utils.h src/function_definition.h src/parameter.h src/document_parser.h src/byte_buffer.h src/debugging_utils.h src/idl_writer.h src/writer.h src/library_utils.h src/list_utils.h
 
-utils.o: src/utils.c src/debugging_utils.h src/utils.h src/parameter.h src/header_definitions.h src/function_definition.h
+utils.o: src/utils.c src/debugging_utils.h src/utils.h src/parameter.h src/function_definition.h
 
 parameter.o: src/parameter.c src/debugging_utils.h src/parameter.h src/utils.h
 
 function_definition.o: src/function_definition.c src/function_definition.h src/parameter.h src/debugging_utils.h src/utils.h
 
-writer.o: src/writer.c src/writer.h src/header_definitions.h src/function_definition.h
+writer.o: src/writer.c src/writer.h src/function_definition.h src/parameter.h
 
-c_writer.o: src/c_writer.c src/c_writer.h src/writer.h src/header_definitions.h
+c_writer.o: src/c_writer.c src/c_writer.h src/writer.h src/function_definition.h
 
 makefile_utils.o: src/makefile_utils.c src/makefile_utils.h src/utils.h
 

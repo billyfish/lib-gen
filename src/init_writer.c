@@ -244,5 +244,5 @@
 "	VSTRING,\n"  \
 "	(APTR)libCreateTags\n"  \
 "};\n"  \
-"\n"  \
-")
+"\n"  \)
+

@@ -322,7 +322,7 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 											IDOS->Printf ("Successfully wrote header definitions to %s\n", output_s);
 											
 											/*
-												Write the makefile, vectors, init base,obtain and release files
+												Write the makefile, vectors, init, autoinit_base, obtain and release files
 											*/
 										}
 									else

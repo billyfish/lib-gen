@@ -19,6 +19,7 @@
 
 
 #include "makefile_utils.h"
+#include "function_definition.h"
 #include "utils.h"
 
 
@@ -27,7 +28,7 @@
 #define MAKEFILE_UTILS_DEBUG (1)
 #endif
 
-
+/*
 BOOL WriteMakefileHeader (BPTR makefile_p, CONST_STRPTR library_s)
 {
 	BOOL success_flag = FALSE;
@@ -52,6 +53,7 @@ BOOL WriteMakefileFooter (BPTR makefile_p)
 
 	return success_flag;
 }
+*/
 
 BOOL AddFileToMakefileSources (BPTR makefile_p, CONST_STRPTR filename_s)
 {
@@ -113,7 +115,7 @@ BPTR GetMakefileHandle (CONST_STRPTR library_s)
 
 
 
-BOOL WriteVectorsFile (CONST_STRPTR library_s, const struct List *  const function_defs_p)
+BOOL WriteVectorsFile (CONST_STRPTR library_s, struct List *  const function_defs_p)
 {
 	BOOL success_flag = FALSE;
 	STRPTR file_s = ConcatenateStrings (library_s, "_vectors.h");
@@ -132,7 +134,7 @@ BOOL WriteVectorsFile (CONST_STRPTR library_s, const struct List *  const functi
 
 					if (IDOS->FPrintf (out_p, "%s", header_s) >= 0)
 						{
-							struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (headers_p);
+							struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (function_defs_p);
 							BOOL loop_flag = TRUE;
 
 							while (node_p && loop_flag)
@@ -149,14 +151,14 @@ BOOL WriteVectorsFile (CONST_STRPTR library_s, const struct List *  const functi
 
 							if (!node_p)
 								{
-									if (IDOS->FPrintf (makefile_p, "\n\nSTATIC CONST APTR %s_vectors [] = \n{\n\t%s_Obtain,\n%s_Release,\nNULL,\nNULL,\n", library_s, library_s, library_s) >= 0)
+									if (IDOS->FPrintf (out_p, "\n\nSTATIC CONST APTR %s_vectors [] = \n{\n\t%s_Obtain,\n%s_Release,\nNULL,\nNULL,\n", library_s, library_s, library_s) >= 0)
 										{
-											node_p = (struct FunctionDefinitionNode *) IExec->GetHead (headers_p);
+											node_p = (struct FunctionDefinitionNode *) IExec->GetHead (function_defs_p);
 											loop_flag = TRUE;
 
 											while (node_p && loop_flag)
 												{
-													if (IDOS->FPrintf (makefile_p, "\t_%s_%s,\n", library_s, node_p -> fdn_function_def_p -> fd_definition_p -> pa_name_s) >= 0)
+													if (IDOS->FPrintf (out_p, "\t_%s_%s,\n", library_s, node_p -> fdn_function_def_p -> fd_definition_p -> pa_name_s) >= 0)
 														{
 															node_p = (struct FunctionDefinitionNode *) IExec->GetSucc (& (node_p -> fdn_node));
 														}
@@ -168,7 +170,7 @@ BOOL WriteVectorsFile (CONST_STRPTR library_s, const struct List *  const functi
 
 											if (!node_p)
 												{
-													if (IDOS->FPrintf (makefile_p, "\t(APTR) -1\n};\n") >= 0)
+													if (IDOS->FPrintf (out_p, "\t(APTR) -1\n};\n") >= 0)
 														{
 															success_flag = TRUE;
 														}
@@ -181,7 +183,7 @@ BOOL WriteVectorsFile (CONST_STRPTR library_s, const struct List *  const functi
 						}		/* if (IDOS->FPrintf (out_p, header_s) >= 0) */
 
 
-					IDOS_>FClose (out_p);
+					IDOS->FClose (out_p);
 				}
 			else
 				{
@@ -217,7 +219,7 @@ BOOL WriteAutoInitFile (CONST_STRPTR library_s)
 						"#include <interfaces/test.h>\n"
 						"#include <proto/exec.h>\n"
 						"#include <assert.h>\n\n"
-						"/******************************************/\n"
+						"/******************************************/\n";
 
 					if (IDOS->FPrintf (out_p, "%s", header_s) >= 0)
 						{
@@ -225,34 +227,9 @@ BOOL WriteAutoInitFile (CONST_STRPTR library_s)
 								{
 									if (IDOS->FPrintf (out_p,
 										"void %sConstructor (void)\n{\tif (%sBase != NULL)\n\t\t{\n\t\t\treturn; /* Someone was quicker, e.g. an interface constructor */\n\t\t}\n = NULL;\n ", library_s, library_s) >= 0)
-
-									if
-										"void test_base_constructor(void)
 										{
-												if (TestBase != NULL)
-												{
-														return; /* Someone was quicker, e.g. an interface constructor */
-												}
-												__TestBase = TestBase = (struct Library *)IExec->OpenLibrary("", 0L);
-												assert(TestBase != NULL);
+											
 										}
-										__attribute__((section(".ctors.zzzz"))) static void
-										(*test_base_constructor_ptr)(void) USED = test_base_constructor;
-
-										/****************************************************************************/
-
-										void test_base_destructor(void)
-										{
-												if (__TestBase)
-												{
-														IExec->CloseLibrary((struct Library *)__TestBase);
-												}
-										}
-										__attribute__((section(".dtors.zzzz"))) static void
-										(*test_base_destructor_ptr)(void) USED = test_base_destructor;
-
-										/****************************************************************************/
-
 
 
 
@@ -260,14 +237,14 @@ BOOL WriteAutoInitFile (CONST_STRPTR library_s)
 
 						}		/* if (IDOS->FPrintf (out_p, header_s) >= 0) */
 
-					IDOS_>FClose (out_p);
+					IDOS->FClose (out_p);
 				}
 			else
 				{
 					IDOS->Printf ("Failed to open \"%s\"\n", file_s);
 				}
 
-			IExec->FreeVec (makefile_s);
+			IExec->FreeVec (file_s);
 		}
 	else
 		{

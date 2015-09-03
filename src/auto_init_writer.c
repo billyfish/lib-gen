@@ -1,3 +1,10 @@
+#include <proto/dos.h>
+#include <proto/exec.h>
+
+#include "auto_init_writer.h"
+#include "utils.h"
+
+
 #define AUTO_INIT_CODE(library_s,header_s) ( \
 	"/*\n" \
 	"**	$Id$\n" \
@@ -43,14 +50,14 @@
 	"    }\n" \
 	"}\n" \
 	"__attribute__((section(\".dtors.zzzz\"))) static void\n" \
-	"(*" #header_s "_base_destructor_ptr)(void) USED = " #library_s "BaseDestructor;\n" \		
+	"(*" #header_s "_base_destructor_ptr)(void) USED = " #library_s "BaseDestructor;\n" \
 	"\n" \
-	"/****************************************************************************/\n"
-)
+	"/****************************************************************************/\n")
 
 
 BOOL WriteAutoInitSource (CONST CONST_STRPTR library_s, CONST CONST_STRPTR header_s)
 {
+	BOOL success_flag = FALSE;
 	STRPTR file_s = ConcatenateStrings (header_s, "_auto_init.c");
 
 	if (file_s)
@@ -59,7 +66,7 @@ BOOL WriteAutoInitSource (CONST CONST_STRPTR library_s, CONST CONST_STRPTR heade
 
 			if (out_p)
 				{
-					CONST STRPTR code_s = AUTO_INIT_CODE (library_s, header_s);
+					CONST_STRPTR code_s = AUTO_INIT_CODE (library_s, header_s);
 
 					if (IDOS->FPrintf (out_p, "%s", code_s) >= 0)
 						{
@@ -67,7 +74,7 @@ BOOL WriteAutoInitSource (CONST CONST_STRPTR library_s, CONST CONST_STRPTR heade
 						}		/* if (IDOS->FPrintf (out_p, code_s) >= 0) */
 
 
-					IDOS_>FClose (out_p);
+					IDOS->FClose (out_p);
 				}
 			else
 				{

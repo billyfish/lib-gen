@@ -1,5 +1,4 @@
-#define PROTO_HEADER_CODE(upper_case_s,lower_case_s,capitalized_s) 
-( \
+#define PROTO_HEADER_CODE(upper_case_s,lower_case_s,capitalized_s) ( \
 "#ifndef PROTO_" #upper_case_s "_H\n" \
 "#define PROTO_" #upper_case_s "_H\n" \
 "\n" \
@@ -56,7 +55,6 @@
 "\n" \
 "/****************************************************************************/\n" \
 "\n" \
-"#endif /* PROTO_" #upper_case_s "_H */\n"
-)
+"#endif /* PROTO_" #upper_case_s "_H */\n")
 
 
