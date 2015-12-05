@@ -89,6 +89,10 @@ BOOL WriteSourceForAllFunctionDefinitions (struct List *fn_defs_p, CONST_STRPTR 
 
 BOOL WriteSourceForFunctionDefinition (const struct FunctionDefinition *fn_def_p, CONST_STRPTR output_dir_s, CONST_STRPTR library_s);
 
+
+BOOL WriteFunctionDefinitionDeclaration (const struct FunctionDefinition *fn_def_p, BPTR out_p);
+
+
 const char *FindParameterEnd (const char *start_p, BOOL function_flag);
 
 

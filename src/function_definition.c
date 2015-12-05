@@ -710,10 +710,17 @@ BOOL WriteSourceForFunctionDefinition (const struct FunctionDefinition *fn_def_p
 }
 
 
+BOOL WriteFunctionDefinitionDeclaration (const struct FunctionDefinition *fn_def_p, BPTR out_p)
+{
+	
+}
+
+
 static BOOL WriteIncludes (BPTR out_p, CONST_STRPTR header_name_s)
 {
 	return (IDOS->FPrintf (out_p, "#include \"%s\"\n\n", header_name_s) > 0);
 }
+
 
 
 
