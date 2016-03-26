@@ -196,6 +196,7 @@ BOOL AddFullFilenameToList (struct List *filenames_p, CONST_STRPTR dir_s, CONST_
 					if (node_p)
 						{
 							IExec->AddTail (filenames_p, node_p);
+							success_flag = TRUE;
 						}
 
 				}

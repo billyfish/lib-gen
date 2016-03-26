@@ -712,7 +712,7 @@ BOOL WriteSourceForFunctionDefinition (const struct FunctionDefinition *fn_def_p
 
 BOOL WriteFunctionDefinitionDeclaration (const struct FunctionDefinition *fn_def_p, BPTR out_p)
 {
-	
+	return FALSE;
 }
 
 

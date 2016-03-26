@@ -13,7 +13,7 @@ void FreeList (struct List *list_p)
 		{
 			if (node_p -> ln_Name)
 				{
-					IExec->FreeVec (node_p -> ln_Name);
+					//IExec->FreeVec (node_p -> ln_Name);
 				}
 
 			IExec->FreeSysObject (ASOT_NODE, node_p);
