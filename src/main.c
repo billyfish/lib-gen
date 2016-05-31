@@ -320,7 +320,7 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 									if (WriteFunctionDefinitionsList (writer_p, &function_defs, library_s, version, flag, out_p))
 										{
 											IDOS->Printf ("Successfully wrote header definitions to %s\n", output_s);
-											
+
 											/*
 												Write the makefile, vectors, init, autoinit_base, obtain and release files
 											*/
@@ -476,7 +476,7 @@ BOOL GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR 
 						{
 							success_flag = TRUE;
 							struct Node *node_p;
-							
+
 							IDOS->Printf ("Found %lu header files\n", num_header_files);
 
 							for (node_p = IExec->GetHead (headers_p); node_p != NULL; node_p = IExec->GetSucc (node_p))
@@ -531,7 +531,11 @@ struct List *GetHeaderFilesList (CONST_STRPTR root_path_s, CONST_STRPTR filename
 BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, struct DocumentParser *parser_p, struct List *function_defs_p)
 {
 	BOOL success_flag = FALSE;
-	BPTR handle_p = IDOS->FOpen (filename_s, MODE_OLDFILE, 0);
+	BPTR handle_p = ZERO;
+
+	DB (KPRINTF ("%s %ld - GetMatchingPrototypes: About to open \"%s\"\n", __FILE__, __LINE__, filename_s));
+
+	handle_p = IDOS->FOpen (filename_s, MODE_OLDFILE, 0);
 
 	if (handle_p)
 		{
@@ -542,7 +546,7 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, str
 			success_flag = TRUE;
 			memset (capture_p, 0, sizeof (struct CapturedExpression));
 
-			DB (KPRINTF ("%s %ld - GetMatchingPrototypes: pattern \"%s\"\n", __FILE__, __LINE__, pattern_s));
+			DB (KPRINTF ("%s %ld - GetMatchingPrototypes: file \"%s\" pattern \"%s\"\n", __FILE__, __LINE__, filename_s, pattern_s));
 
 			/*
 			 TODO: Need to be able to read in multi-line function definitions e.g.

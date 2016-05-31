@@ -79,6 +79,8 @@ int32 GetNextPrototype (struct DocumentParser *parser_p, STRPTR *prototype_ss)
 	int32 count = 0;
 	BOOL loop_flag = TRUE;
 
+	DB (KPRINTF ("%s %ld - GetNextPrototype: entered"));
+
 	while (loop_flag)
 		{
 			count = ParseLine (parser_p);
@@ -102,6 +104,9 @@ int32 GetNextPrototype (struct DocumentParser *parser_p, STRPTR *prototype_ss)
 					loop_flag = FALSE;
 				}
 		}
+
+	DB (KPRINTF ("%s %ld - GetNextPrototype: exited with %ld", count));
+
 
 	return count;
 }
