@@ -203,8 +203,8 @@ int main (int argc, char *argv [])
 
 
 
-				
-					
+
+
 					if ((prototype_pattern_s != NULL) && (prototype_pattern_s != S_DEFAULT_PROTOTYPE_PATTERN_S))
 						{
 							DB (KPRINTF ("%s %ld - freeing prototype_pattern_s:= \"%s\"\n", __FILE__, __LINE__, prototype_pattern_s));
@@ -218,7 +218,7 @@ int main (int argc, char *argv [])
 				{
 					IDOS->PrintFault (IDOS->IoErr (), "Unable to parse command-line args");
 				}
-			
+
 			DB (KPRINTF ("%s %ld - closing lins\n", __FILE__, __LINE__));
 			CloseLibs ();
 		}
@@ -314,14 +314,14 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 	if (GeneratePrototypesList (root_path_s, filename_regexp_s, prototype_regexp_s, recurse_flag, &function_defs))
 		{
 			Writer *writer_p = AllocateIDLWriter ();
-	
+
 			DB (KPRINTF ("%s %ld - writer %ld", __FILE__, __LINE__, writer_p));
-	
+
 			if (writer_p)
 				{
 					STRPTR output_s = ConcatenateStrings (library_s, GetWriterFileSuffix (writer_p));
 
-					DB (KPRINTF ("%s %ld - output_s %s", __FILE__, __LINE__, output_s));	
+					DB (KPRINTF ("%s %ld - output_s %s", __FILE__, __LINE__, output_s));
 
 					if (output_s)
 						{
@@ -331,7 +331,7 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 							if (out_p)
 								{
 									DB (KPRINTF ("%s %ld - opened output_s %s", __FILE__, __LINE__, output_s));
-									
+
 									IDOS->Printf ("%lu headers\n", GetListSize (&function_defs));
 
 									if (WriteFunctionDefinitionsList (writer_p, &function_defs, library_s, version, flag, out_p))
@@ -414,7 +414,7 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 	DB (KPRINTF ("%s %ld - pre ClearFunctionDefinitionsList\n", __FILE__, __LINE__));
 	ClearFunctionDefinitionsList (&function_defs);
 	DB (KPRINTF ("%s %ld - post ClearFunctionDefinitionsList\n", __FILE__, __LINE__));
-	
+
 	return res;
 }
 
