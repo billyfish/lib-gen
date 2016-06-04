@@ -33,6 +33,8 @@
 
 static BOOL WriteIncludes (BPTR out_p, CONST_STRPTR header_name_s);
 
+static BPTR GetSourceFileHandle (const struct FunctionDefinition *fn_def_p, CONST_STRPTR output_dir_s);
+
 
 
 void UnitTest (const char *prototype_s)
@@ -451,6 +453,8 @@ BOOL WriteLibraryFunctionImplementation (BPTR out_p, const struct FunctionDefini
 {
 	BOOL success_flag = FALSE;
 
+	DB (KPRINTF ("%s %ld - WriteLibraryFunctionImplementation for  %s\n", __FILE__, __LINE__, fd_p -> fd_definition_p -> pa_name_s));
+
 	if (IDOS->FPrintf (out_p, "%s %s%s (", fd_p -> fd_definition_p -> pa_type_s, library_s, fd_p -> fd_definition_p -> pa_name_s) >= 0)
 		{
 			struct ParameterNode *curr_node_p = (struct ParameterNode *) IExec->GetHead (fd_p -> fd_args_p);
@@ -537,7 +541,10 @@ BOOL WriteLibraryFunctionImplementation (BPTR out_p, const struct FunctionDefini
 								}
 						}
 				}
+				
 		}
+
+	DB (KPRINTF ("%s %ld - WriteLibraryFunctionImplementation for %s = %ld\n", __FILE__, __LINE__, fd_p -> fd_definition_p -> pa_name_s, success_flag));
 
 	return success_flag;
 }
@@ -606,18 +613,69 @@ BOOL WriteSourceForAllFunctionDefinitions (struct List *fn_defs_p, CONST_STRPTR 
 	BOOL success_flag = TRUE;
 	struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (fn_defs_p);
 	//BPTR makefile_p = GetMakefileHandle (library_s);
-
+	CONST_STRPTR current_filename_s = "";
+	BPTR output_f = ZERO;
+	
 	while (node_p && success_flag)
 		{
+			struct FunctionDefinition *fn_def_p = node_p -> fdn_function_def_p;
 			
-			success_flag  = WriteSourceForFunctionDefinition (node_p -> fdn_function_def_p, output_dir_s, library_s);
-
+			/* are we changing the source file that we are writing to? */
+			if (strcmp (current_filename_s, fn_def_p -> fd_filename_s) != 0)
+				{
+					if (output_f)
+						{
+							if (IDOS->FClose (output_f) == 0)
+								{
+									IDOS->Printf ("Error closing %s", current_filename_s);
+								}
+							
+							output_f = ZERO;
+						}
+					
+					success_flag = FALSE;
+						
+					output_f = GetSourceFileHandle (fn_def_p, output_dir_s);
+					
+					if (output_f)
+						{			
+							if (WriteIncludes (output_f, fn_def_p -> fd_filename_s))
+								{
+									success_flag = TRUE;
+								}
+							else
+								{
+									IDOS->Printf ("Error wrintg includes to  %s", fn_def_p -> fd_filename_s);
+								}
+								
+							current_filename_s = fn_def_p -> fd_filename_s;
+						}
+					else
+						{
+							IDOS->Printf ("Error opening %s", fn_def_p -> fd_filename_s);
+						}
+						
+				}		/* if (strcmp (current_filename_s, fn_def_p -> fd_filename_s) != 0) */
+					
 			if (success_flag)
 				{
-					node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p);
+					success_flag  = WriteSourceForFunctionDefinition (fn_def_p, output_f, library_s);
+		
+					if (success_flag)
+						{
+							node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p);
+						}
 				}
 		}
-
+		
+	if (output_f)
+		{
+			if (IDOS->FClose (output_f) == 0)
+				{
+					IDOS->Printf ("Error closing %s", current_filename_s);
+				}
+		}
+	
 	/*
 	if (makefile_p)
 		{
@@ -637,9 +695,9 @@ BOOL WriteSourceForAllFunctionDefinitions (struct List *fn_defs_p, CONST_STRPTR 
 }
 
 
-BOOL WriteSourceForFunctionDefinition (const struct FunctionDefinition *fn_def_p, CONST_STRPTR output_dir_s, CONST_STRPTR library_s)
+static BPTR GetSourceFileHandle (const struct FunctionDefinition *fn_def_p, CONST_STRPTR output_dir_s)
 {
-	BOOL success_flag = FALSE;
+	BPTR src_f = ZERO;
 
 	/* Get the .c filename */
 	STRPTR filename_s = strdup (IDOS->FilePart (fn_def_p -> fd_filename_s));
@@ -661,51 +719,67 @@ BOOL WriteSourceForFunctionDefinition (const struct FunctionDefinition *fn_def_p
 
 							/* Make the full filename */
 							/* @TODO Make sure output dir already exists */
-							full_name_s = MakeFilename (output_dir_s, filename_s);
-
+							full_name_s = MakeFilename (output_dir_s, filename_s);	
+							
 							if (full_name_s)
 								{
-									BPTR c_file_p = IDOS->FOpen (full_name_s, MODE_READWRITE, 0);
-
-									DB (KPRINTF ("%s %ld - Opened source file %s (%lu)\n", __FILE__, __LINE__, full_name_s, (uint32) c_file_p));
-
-									if (c_file_p)
+									src_f = IDOS->FOpen (full_name_s, MODE_NEWFILE, 0);
+									
+									if (!src_f)
 										{
-											if (WriteIncludes (c_file_p, fn_def_p -> fd_filename_s))
-												{
-													if (WriteLibraryFunctionImplementation (c_file_p, fn_def_p, library_s))
-														{
-															/*
-															if (!AddFileToMakefileSources (makefile_p, full_name_s))
-																{
-																	IDOS->Printf ("Failed to add %s to list of sources in makefile\n", full_name_s);
-																}
-															*/
-															success_flag = TRUE;
-														}
-													else
-														{
-															DB (KPRINTF ("%s %ld - Failed to write implementation to %s\n", __FILE__, __LINE__, full_name_s));
-														}
-
-												}		/* if (WriteIncludes (c_file_p, hdr_defs_p -> hd_filename_s)) */
-											else
-												{
-													DB (KPRINTF ("%s %ld - Failed to write includes to %s\n", __FILE__, __LINE__, full_name_s));
-												}
-
-											IDOS->FClose (c_file_p);
-										}		/* if (c_file_p) */
-
+											DB (KPRINTF ("%s %ld - Failed to open %s\n", __FILE__, __LINE__, full_name_s));
+										}
+									
 									IExec->FreeVec (full_name_s);
 								}		/* if (full_name_s) */
-
+							else
+								{
+									DB (KPRINTF ("%s %ld - Failed to make filename from %s and %s\n", __FILE__, __LINE__, output_dir_s, filename_s));
+								}
+								
 						}		/* if (*suffix_p != '\0') */
-
+					else
+						{
+							DB (KPRINTF ("%s %ld - dot followed by NULL in %s\n", __FILE__, __LINE__, filename_s));
+						}
+						
 				}		/* if (suffix_p) */
+			else
+				{
+					DB (KPRINTF ("%s %ld - Failed to get find dot in %s\n", __FILE__, __LINE__, filename_s));
+				}
 
 			free (filename_s);
 		}		/* if (filename_s) */
+	else
+		{
+			DB (KPRINTF ("%s %ld - Failed to get local filename from %s\n", __FILE__, __LINE__, fn_def_p -> fd_filename_s));
+		}
+		
+	return src_f;	
+}
+
+
+BOOL WriteSourceForFunctionDefinition (const struct FunctionDefinition *fn_def_p, BPTR output_f, CONST_STRPTR library_s)
+ {
+	BOOL success_flag = FALSE;
+
+
+	if (WriteLibraryFunctionImplementation (output_f, fn_def_p, library_s))
+		{
+			/*
+			if (!AddFileToMakefileSources (makefile_p, full_name_s))
+				{
+					IDOS->Printf ("Failed to add %s to list of sources in makefile\n", full_name_s);
+				}
+			*/
+			success_flag = TRUE;
+		}
+	else
+		{
+			DB (KPRINTF ("%s %ld - Failed to write implementation to %s\n", __FILE__, __LINE__, fn_def_p -> fd_filename_s));
+		}
+
 
 	return success_flag;
 }

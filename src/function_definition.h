@@ -87,7 +87,7 @@ BOOL WriteLibraryFunctionImplementation (BPTR out_p, const struct FunctionDefini
 BOOL WriteSourceForAllFunctionDefinitions (struct List *fn_defs_p, CONST_STRPTR output_dir_s, CONST_STRPTR library_s);
 
 
-BOOL WriteSourceForFunctionDefinition (const struct FunctionDefinition *fn_def_p, CONST_STRPTR output_dir_s, CONST_STRPTR library_s);
+BOOL WriteSourceForFunctionDefinition (const struct FunctionDefinition *fn_def_p, BPTR output_f, CONST_STRPTR library_s);
 
 
 BOOL WriteFunctionDefinitionDeclaration (const struct FunctionDefinition *fn_def_p, BPTR out_p);
