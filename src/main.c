@@ -36,6 +36,10 @@
 #include "library_utils.h"
 #include "list_utils.h"
 
+static CONST CONST_STRPTR S_DEFAULT_FILENAME_PATTERN_S = "#?.h";
+static CONST CONST_STRPTR S_DEFAULT_PROTOTYPE_PATTERN_S = "LIB_API{#?}";
+
+
 static BOOL OpenLibs (void);
 static void CloseLibs (void);
 
@@ -80,8 +84,8 @@ int main (int argc, char *argv [])
 		{
 			CONST_STRPTR input_dir_s = NULL;
 			CONST_STRPTR library_s = NULL;
-			CONST_STRPTR filename_pattern_s = "#?.h";
-			STRPTR prototype_pattern_s = "LIB_API{#?}";
+			CONST_STRPTR filename_pattern_s = S_DEFAULT_FILENAME_PATTERN_S;
+			STRPTR prototype_pattern_s = S_DEFAULT_PROTOTYPE_PATTERN_S;
 			CONST_STRPTR format_s = "idl";
 			int32 version = 1;
 			enum InterfaceFlag flag = IF_PUBLIC;
@@ -198,18 +202,24 @@ int main (int argc, char *argv [])
 						}		/* if (input_dir_s && filename_pattern_s) */
 
 
-					if (prototype_pattern_s)
+
+				
+					
+					if ((prototype_pattern_s != NULL) && (prototype_pattern_s != S_DEFAULT_PROTOTYPE_PATTERN_S))
 						{
+							DB (KPRINTF ("%s %ld - freeing prototype_pattern_s:= \"%s\"\n", __FILE__, __LINE__, prototype_pattern_s));
 							IExec->FreeVec (prototype_pattern_s);
 						}
 
-
+					DB (KPRINTF ("%s %ld - freeing args\n", __FILE__, __LINE__));
 					IDOS->FreeArgs (args_p);
 				}
 			else
 				{
 					IDOS->PrintFault (IDOS->IoErr (), "Unable to parse command-line args");
 				}
+			
+			DB (KPRINTF ("%s %ld - closing lins\n", __FILE__, __LINE__));
 			CloseLibs ();
 		}
 	else
@@ -217,6 +227,7 @@ int main (int argc, char *argv [])
 			printf ("no libs\n");
 		}
 
+	DB (KPRINTF ("%s %ld - exiting\n", __FILE__, __LINE__));
 	return 0;
 }
 
@@ -303,10 +314,14 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 	if (GeneratePrototypesList (root_path_s, filename_regexp_s, prototype_regexp_s, recurse_flag, &function_defs))
 		{
 			Writer *writer_p = AllocateIDLWriter ();
-
+	
+			DB (KPRINTF ("%s %ld - writer %ld", __FILE__, __LINE__, writer_p));
+	
 			if (writer_p)
 				{
 					STRPTR output_s = ConcatenateStrings (library_s, GetWriterFileSuffix (writer_p));
+
+					DB (KPRINTF ("%s %ld - output_s %s", __FILE__, __LINE__, output_s));	
 
 					if (output_s)
 						{
@@ -315,6 +330,8 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 
 							if (out_p)
 								{
+									DB (KPRINTF ("%s %ld - opened output_s %s", __FILE__, __LINE__, output_s));
+									
 									IDOS->Printf ("%lu headers\n", GetListSize (&function_defs));
 
 									if (WriteFunctionDefinitionsList (writer_p, &function_defs, library_s, version, flag, out_p))
@@ -327,6 +344,7 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 										}
 									else
 										{
+											DB (KPRINTF ("%s %ld - failed to open output_s %s", __FILE__, __LINE__, output_s));
 											IDOS->Printf ("Failed to write header definitions to %s\n", output_s);
 										}
 
@@ -348,12 +366,15 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 				}
 		}
 
+	DB (KPRINTF ("%s %ld - prototype_regexp_s:= \"%s\"\n", __FILE__, __LINE__, prototype_regexp_s));
+
 	if (prototype_regexp_s)
 		{
 			IExec->FreeVec (prototype_regexp_s);
 		}
 
 
+	DB (KPRINTF ("%s %ld - filename_regexp_s:= \"%s\"\n", __FILE__, __LINE__, filename_regexp_s));
 	if (filename_regexp_s)
 		{
 			IExec->FreeVec (filename_regexp_s);
@@ -390,8 +411,10 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 				}
 		}
 
+	DB (KPRINTF ("%s %ld - pre ClearFunctionDefinitionsList\n", __FILE__, __LINE__));
 	ClearFunctionDefinitionsList (&function_defs);
-
+	DB (KPRINTF ("%s %ld - post ClearFunctionDefinitionsList\n", __FILE__, __LINE__));
+	
 	return res;
 }
 
@@ -492,7 +515,7 @@ BOOL GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR 
 										}
 								}
 
-							FreeDocumentParser (document_parser_p);
+							//FreeDocumentParser (document_parser_p);
 						}
 					else
 						{
@@ -501,7 +524,7 @@ BOOL GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR 
 
 				}		/* if (num_header_files > 0) */
 
-			FreeList (headers_p);
+			//FreeList (headers_p);
 		}		/* if (headers_p) */
 
 	return success_flag;

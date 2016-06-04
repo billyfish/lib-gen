@@ -64,6 +64,8 @@ static BOOL WriteIDL (struct Writer *writer_p, struct List *function_definitions
 {
 	BOOL success_flag = FALSE;
 
+	DB (KPRINTF ("%s %ld - Entering WriteIDL", __FILE__, __LINE__));
+
 	if (WriteIDLHeader (out_p, library_s, version, flag, function_definitions_p))
 		{
 			if (WriteIDLDefaultFunctions (out_p))
@@ -83,7 +85,7 @@ static BOOL WriteIDL (struct Writer *writer_p, struct List *function_definitions
 						{
 							DB (KPRINTF ("%s %ld - Failed to write idl header definitions\n", __FILE__, __LINE__));
 						}
-		}
+				}
 			else
 				{
 					DB (KPRINTF ("%s %ld - Failed to write idl default_functions\n", __FILE__, __LINE__));
@@ -93,6 +95,9 @@ static BOOL WriteIDL (struct Writer *writer_p, struct List *function_definitions
 		{
 			DB (KPRINTF ("%s %ld - Failed to write idl header\n", __FILE__, __LINE__));
 		}
+		
+		
+	DB (KPRINTF ("%s %ld - Exiting  WriteIDL %ld", __FILE__, __LINE__, success_flag));
 
 	return success_flag;
 }

@@ -105,7 +105,7 @@ int32 GetNextPrototype (struct DocumentParser *parser_p, STRPTR *prototype_ss)
 				}
 		}
 
-	DB (KPRINTF ("%s %ld - GetNextPrototype: exited with %ld", count));
+	DB (KPRINTF ("%s %ld - GetNextPrototype: exited with %ld", __FILE__, __LINE__, count));
 
 
 	return count;
