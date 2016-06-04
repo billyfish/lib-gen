@@ -609,6 +609,7 @@ BOOL WriteSourceForAllFunctionDefinitions (struct List *fn_defs_p, CONST_STRPTR 
 
 	while (node_p && success_flag)
 		{
+			
 			success_flag  = WriteSourceForFunctionDefinition (node_p -> fdn_function_def_p, output_dir_s, library_s);
 
 			if (success_flag)
@@ -664,7 +665,7 @@ BOOL WriteSourceForFunctionDefinition (const struct FunctionDefinition *fn_def_p
 
 							if (full_name_s)
 								{
-									BPTR c_file_p = IDOS->FOpen (full_name_s, MODE_NEWFILE, 0);
+									BPTR c_file_p = IDOS->FOpen (full_name_s, MODE_READWRITE, 0);
 
 									DB (KPRINTF ("%s %ld - Opened source file %s (%lu)\n", __FILE__, __LINE__, full_name_s, (uint32) c_file_p));
 
