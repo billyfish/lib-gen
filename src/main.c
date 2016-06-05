@@ -35,6 +35,8 @@
 #include "idl_writer.h"
 #include "library_utils.h"
 #include "list_utils.h"
+#include "makefile_writer.h"
+
 
 static CONST CONST_STRPTR S_DEFAULT_FILENAME_PATTERN_S = "#?.h";
 static CONST CONST_STRPTR S_DEFAULT_PROTOTYPE_PATTERN_S = "LIB_API{#?}";
@@ -336,11 +338,37 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 
 									if (WriteFunctionDefinitionsList (writer_p, &function_defs, library_s, version, flag, out_p))
 										{
+											STRPTR makefile_s = ConcatenateStrings (library_s, ".makefile");
+											
 											IDOS->Printf ("Successfully wrote header definitions to %s\n", output_s);
-
+											
+											if (makefile_s)
+												{
+													if (WriteMakefile (makefile_s, library_s, &function_defs))
+														{
+															DB (KPRINTF ("%s %ld - wrote makefile to %s", __FILE__, __LINE__, makefile_s));
+														}
+													else
+														{
+															
+														}
+													
+													IExec->FreeVec (makefile_s);
+												}
+											else
+												{
+													IDOS->Printf ("Failed to create makefile at %s", makefile_s);
+												}
+											
+											
+											
+											
 											/*
 												Write the makefile, vectors, init, autoinit_base, obtain and release files
 											*/
+											
+											
+											
 										}
 									else
 										{

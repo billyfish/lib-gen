@@ -1,7 +1,10 @@
 #include <proto/dos.h>
 #include <proto/exec.h>
 
+#include <string.h>
+
 #include "makefile_writer.h"
+#include "function_definition.h"
 #include "utils.h"
 
 #define MAKEFILE_CODE_HEADER(lower_case_s) ( \
@@ -77,7 +80,7 @@ BOOL WriteMakefileFooter (BPTR makefile_p, CONST CONST_STRPTR library_s);
 BOOL WriteMakefileSources (BPTR makefile_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR dir_s, struct List * const src_files_p);
 
 
-BOOL WriteMakefile (CONST CONST_STRPTR  makefile_s, CONST CONST_STRPTR library_s, struct List * const src_files_p)
+BOOL WriteMakefile (CONST CONST_STRPTR  makefile_s, CONST CONST_STRPTR library_s, struct List * const function_defs_p)
 {
 	BOOL success_flag = FALSE;
 	BPTR makefile_p = IDOS->FOpen (makefile_s, MODE_NEWFILE, 0);
@@ -88,7 +91,7 @@ BOOL WriteMakefile (CONST CONST_STRPTR  makefile_s, CONST CONST_STRPTR library_s
 				{
 					CONST_STRPTR src_dir_s = "src";
 					
-					if (WriteMakefileSources (makefile_p, library_s, src_dir_s, src_files_p))
+					if (WriteMakefileSources (makefile_p, library_s, src_dir_s, function_defs_p))
 						{
 							if (WriteMakefileFooter (makefile_p, library_s))
 								{
@@ -151,33 +154,56 @@ BOOL WriteMakefileFooter (BPTR makefile_p, CONST CONST_STRPTR library_s)
 }
 
 
-BOOL WriteMakefileSources (BPTR makefile_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR dir_s, struct List * const src_files_p)
+BOOL WriteMakefileSources (BPTR makefile_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR dir_s, struct List * const function_defs_p)
 {
 	BOOL success_flag = TRUE;
-	struct Node *node_p = IExec->GetHead (src_files_p);
-
+	struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (function_defs_p);
+	CONST_STRPTR current_source_filename_s = "";
+	
 	while (node_p && success_flag)
 		{
-			STRPTR filename_s = MakeFilename (dir_s, node_p -> ln_Name);
-
-			if (filename_s)
+			CONST_STRPTR function_source_filename_s = node_p -> fdn_function_def_p -> fd_filename_s;
+			
+			if (strcmp (current_source_filename_s, function_source_filename_s) != 0)
 				{
-					if (IDOS->FPrintf (makefile_p, "\t%s \\\n", filename_s) >= 0)
+					STRPTR c_filename_s = GetSourceFilename (function_source_filename_s);
+					
+					if (c_filename_s)
 						{
-							node_p = IExec->GetSucc (node_p);
+							STRPTR filename_s = MakeFilename (dir_s, c_filename_s);
+		
+							if (filename_s)
+								{
+									if (IDOS->FPrintf (makefile_p, "\t%s \\\n", filename_s) >= 0)
+										{
+											current_source_filename_s = function_source_filename_s;
+										}
+									else
+										{
+											IDOS->Printf ("Failed to write src filename %s to makefile\n", filename_s);
+											success_flag = FALSE;
+										}
+				
+									IExec->FreeVec (filename_s);
+								}
+							else
+								{
+									IDOS->Printf ("Failed to generate src filename from %s and %s\n", dir_s, function_source_filename_s);
+									success_flag = FALSE;
+								}
+								
+							free (c_filename_s);
 						}
 					else
 						{
-							IDOS->Printf ("Failed to write src filename %s to makefile\n", filename_s);
-							success_flag = FALSE;
+							IDOS->Printf ("Failed to make src filename from %s\n", function_source_filename_s);
 						}
 
-					IExec->FreeVec (filename_s);
 				}
-			else
+				
+			if (success_flag)
 				{
-					IDOS->Printf ("Failed to generate src filename from %s and %s\n", dir_s, node_p -> ln_Name);
-					success_flag = FALSE;
+					node_p = (struct FunctionDefinitionNode *) IExec->GetSucc (& (node_p -> fdn_node));
 				}
 		}
 

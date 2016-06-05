@@ -1,5 +1,6 @@
 #include <ctype.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include <proto/dos.h>
 #include <proto/utility.h>
@@ -94,6 +95,50 @@ STRPTR ConcatenateStrings (CONST_STRPTR first_s, CONST_STRPTR second_s)
 
 	return result_s;
 }
+
+
+STRPTR GetSourceFilename (CONST CONST_STRPTR header_filename_s)
+{
+	/* Get the .c filename */
+	STRPTR filename_s = strdup (IDOS->FilePart (header_filename_s));
+
+	if (filename_s)
+		{
+			STRPTR suffix_p = strrchr (filename_s, '.');
+
+			if (suffix_p)
+				{
+					++ suffix_p;
+
+					if (*suffix_p != '\0')
+						{
+							*suffix_p = 'c';
+							* (++ suffix_p) = '\0';
+							
+							return filename_s;
+						}		/* if (*suffix_p != '\0') */
+					else
+						{
+							DB (KPRINTF ("%s %ld - dot followed by NULL in %s\n", __FILE__, __LINE__, filename_s));
+						}
+						
+				}		/* if (suffix_p) */
+			else
+				{
+					DB (KPRINTF ("%s %ld - Failed to get find dot in %s\n", __FILE__, __LINE__, filename_s));
+				}		
+				
+			free (filename_s);
+		}
+	else
+		{
+			DB (KPRINTF ("%s %ld - Failed to get copy header filename %s\n", __FILE__, __LINE__, header_filename_s));
+		}
+				
+		
+	return NULL;
+}
+
 
 /**
  * Copy a string to a newly created string.

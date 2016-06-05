@@ -35,6 +35,9 @@ BPTR GetMakefileHandle (CONST_STRPTR library_s);
 
 BOOL EnsureDirectoryExists (CONST_STRPTR dir_s);
 
+STRPTR GetSourceFilename (CONST CONST_STRPTR header_filename_s);
+
+
 #ifdef __cplusplus
 }
 #endif

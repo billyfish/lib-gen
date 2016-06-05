@@ -700,53 +700,31 @@ static BPTR GetSourceFileHandle (const struct FunctionDefinition *fn_def_p, CONS
 	BPTR src_f = ZERO;
 
 	/* Get the .c filename */
-	STRPTR filename_s = strdup (IDOS->FilePart (fn_def_p -> fd_filename_s));
-
+	STRPTR filename_s = GetSourceFilename (fn_def_p -> fd_filename_s);
+	
+	
 	if (filename_s)
 		{
-			STRPTR suffix_p = strrchr (filename_s, '.');
+			STRPTR full_name_s = NULL;;
 
-			if (suffix_p)
+			/* Make the full filename */
+			/* @TODO Make sure output dir already exists */
+			full_name_s = MakeFilename (output_dir_s, filename_s);	
+			
+			if (full_name_s)
 				{
-					++ suffix_p;
-
-					if (*suffix_p != '\0')
+					src_f = IDOS->FOpen (full_name_s, MODE_NEWFILE, 0);
+					
+					if (!src_f)
 						{
-							STRPTR full_name_s = NULL;
-
-							*suffix_p = 'c';
-							* (++ suffix_p) = '\0';
-
-							/* Make the full filename */
-							/* @TODO Make sure output dir already exists */
-							full_name_s = MakeFilename (output_dir_s, filename_s);	
-							
-							if (full_name_s)
-								{
-									src_f = IDOS->FOpen (full_name_s, MODE_NEWFILE, 0);
-									
-									if (!src_f)
-										{
-											DB (KPRINTF ("%s %ld - Failed to open %s\n", __FILE__, __LINE__, full_name_s));
-										}
-									
-									IExec->FreeVec (full_name_s);
-								}		/* if (full_name_s) */
-							else
-								{
-									DB (KPRINTF ("%s %ld - Failed to make filename from %s and %s\n", __FILE__, __LINE__, output_dir_s, filename_s));
-								}
-								
-						}		/* if (*suffix_p != '\0') */
-					else
-						{
-							DB (KPRINTF ("%s %ld - dot followed by NULL in %s\n", __FILE__, __LINE__, filename_s));
+							DB (KPRINTF ("%s %ld - Failed to open %s\n", __FILE__, __LINE__, full_name_s));
 						}
-						
-				}		/* if (suffix_p) */
+					
+					IExec->FreeVec (full_name_s);
+				}		/* if (full_name_s) */
 			else
 				{
-					DB (KPRINTF ("%s %ld - Failed to get find dot in %s\n", __FILE__, __LINE__, filename_s));
+					DB (KPRINTF ("%s %ld - Failed to make filename from %s and %s\n", __FILE__, __LINE__, output_dir_s, filename_s));
 				}
 
 			free (filename_s);
