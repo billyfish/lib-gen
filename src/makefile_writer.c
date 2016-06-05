@@ -54,8 +54,6 @@
 "# -------------------------------------------------------------\n" \
 "# Nothing should need changing below this line\n" \
 "\n" \
-"SRCS = init.c\n" \
-"\n" \
 "OBJS = $(" #lower_case_s "_SRCS:.c=.o)  $(SRCS:.c=.o)\n" \
 "# Rules for building\n" \
 "$(TARGET): $(OBJS)\n" \
@@ -159,6 +157,8 @@ BOOL WriteMakefileSources (BPTR makefile_p, CONST CONST_STRPTR library_s, CONST 
 	BOOL success_flag = TRUE;
 	struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (function_defs_p);
 	CONST_STRPTR current_source_filename_s = "";
+	
+	IDOS->FPrintf (makefile_p, "\nSRCS = init.c \\\n");
 	
 	while (node_p && success_flag)
 		{
