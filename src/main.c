@@ -552,7 +552,7 @@ BOOL GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR 
 
 				}		/* if (num_header_files > 0) */
 
-			//FreeList (headers_p);
+			FreeList (headers_p);
 		}		/* if (headers_p) */
 
 	return success_flag;
