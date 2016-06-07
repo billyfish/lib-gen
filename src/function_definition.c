@@ -449,12 +449,9 @@ BOOL PrintFunctionDefinition (BPTR out_p, const struct FunctionDefinition * cons
 }
 
 
-BOOL WriteLibraryFunctionImplementation (BPTR out_p, const struct FunctionDefinition * const fd_p, CONST_STRPTR library_s)
+
+BOOL WriteLibraryFunctionDefinition (BPTR out_p, const struct FunctionDefinition * const fd_p)
 {
-	BOOL success_flag = FALSE;
-
-	DB (KPRINTF ("%s %ld - WriteLibraryFunctionImplementation for  %s\n", __FILE__, __LINE__, fd_p -> fd_definition_p -> pa_name_s));
-
 	if (IDOS->FPrintf (out_p, "%s %s%s (", fd_p -> fd_definition_p -> pa_type_s, library_s, fd_p -> fd_definition_p -> pa_name_s) >= 0)
 		{
 			struct ParameterNode *curr_node_p = (struct ParameterNode *) IExec->GetHead (fd_p -> fd_args_p);
@@ -502,41 +499,56 @@ BOOL WriteLibraryFunctionImplementation (BPTR out_p, const struct FunctionDefini
 				{
 					success_flag = TRUE;
 				}
+		}
+	
+	if (success_flag)
+		{
+			success_flag = (IDOS->FPrintf (out_p, ")") >= 0);
+		}
+	
+	return success_flag;
+}
+
+
+BOOL WriteLibraryFunctionImplementation (BPTR out_p, const struct FunctionDefinition * const fd_p, CONST_STRPTR library_s)
+{
+	BOOL success_flag = FALSE;
+
+	DB (KPRINTF ("%s %ld - WriteLibraryFunctionImplementation for  %s\n", __FILE__, __LINE__, fd_p -> fd_definition_p -> pa_name_s));
+
+	if (WriteLibraryFunctionDefinition (out_p, fd_p))
+		{
+			success_flag = (IDOS->FPrintf (out_p, "\n{\n\t") >= 0);
 
 			if (success_flag)
 				{
-					success_flag = (IDOS->FPrintf (out_p, ")\n{\n\t") >= 0);
+					if (strcmp (fd_p -> fd_definition_p -> pa_type_s, "void") != 0)
+						{
+							success_flag = (IDOS->FPrintf (out_p, "return ") >= 0);
+						}
 
 					if (success_flag)
 						{
-							if (strcmp (fd_p -> fd_definition_p -> pa_type_s, "void") != 0)
-								{
-									success_flag = (IDOS->FPrintf (out_p, "return ") >= 0);
-								}
+							success_flag = (IDOS->FPrintf (out_p, "%s (", fd_p -> fd_definition_p -> pa_name_s) >= 0);
 
 							if (success_flag)
 								{
-									success_flag = (IDOS->FPrintf (out_p, "%s (", fd_p -> fd_definition_p -> pa_name_s) >= 0);
+									curr_node_p = (struct ParameterNode *) IExec->GetHead (fd_p -> fd_args_p);
 
-									if (success_flag)
+									while ((curr_node_p != final_node_p) && success_flag)
 										{
-											curr_node_p = (struct ParameterNode *) IExec->GetHead (fd_p -> fd_args_p);
-
-											while ((curr_node_p != final_node_p) && success_flag)
-												{
-													success_flag = (IDOS->FPrintf (out_p, "%s, ", curr_node_p -> pn_param_p -> pa_name_s) >= 0);
-
-													if (success_flag)
-														{
-															curr_node_p = (struct ParameterNode *) IExec->GetSucc ((struct Node *) curr_node_p);
-														}
-												}
-
+											success_flag = (IDOS->FPrintf (out_p, "%s, ", curr_node_p -> pn_param_p -> pa_name_s) >= 0);
 
 											if (success_flag)
 												{
-													success_flag =  (IDOS->FPrintf (out_p, "%s);\n}\n\n", final_node_p -> pn_param_p -> pa_name_s) >= 0);
+													curr_node_p = (struct ParameterNode *) IExec->GetSucc ((struct Node *) curr_node_p);
 												}
+										}
+
+
+									if (success_flag)
+										{
+											success_flag =  (IDOS->FPrintf (out_p, "%s);\n}\n\n", final_node_p -> pn_param_p -> pa_name_s) >= 0);
 										}
 								}
 						}
