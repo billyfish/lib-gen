@@ -54,5 +54,5 @@
 	<projectnotes open="0"/>
 	<buildwindow open="1"/>
 	<logfile name="RAM Disk:Build.log"/>
-	<repository plugin="PROGDIR:plugins/svntool.syncplugin" lastcommit="1212882649" lastupdate="1213194270"/>
+	<repository plugin="PROGDIR:plugins/svntool.syncplugin" lastcommit="1213196573" lastupdate="1213194270"/>
 </CodeBench_Project>
