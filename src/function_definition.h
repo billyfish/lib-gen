@@ -99,6 +99,12 @@ const char *FindParameterEnd (const char *start_p, BOOL function_flag);
 int CompareFunctionDefinitionNodes (const void *v0_p, const void *v1_p);
 
 
+BOOL WriteFunctionDefinitionFunctionName (BPTR out_p, CONST CONST_STRPTR library_s, const struct FunctionDefinition * const fd_p);
+
+
+BOOL WriteLibraryFunctionDefinition (BPTR out_p, CONST CONST_STRPTR library_s, const struct FunctionDefinition * const fd_p);
+
+
 #ifdef __cplusplus
 }
 #endif

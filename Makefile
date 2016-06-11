@@ -4,7 +4,7 @@
 #
 # Project: libgen
 #
-# Created on: 07-06-2016 22:57:50
+# Created on: 11-06-2016 14:49:16
 #
 #
 
@@ -16,7 +16,8 @@ OBJ = \
 	 src/byte_buffer.o src/document_parser.o src/library_utils.o \
 	 src/idl_writer.o src/main.o src/utils.o \
 	 src/parameter.o src/function_definition.o src/writer.o \
-	 src/c_writer.o src/makefile_utils.o
+	 src/c_writer.o src/makefile_utils.o src/vectors.o \
+	
 
 BIN = libgen
 
@@ -97,4 +98,6 @@ writer.o: src/writer.c src/writer.h src/function_definition.h src/parameter.h
 c_writer.o: src/c_writer.c src/c_writer.h src/writer.h src/function_definition.h
 
 makefile_utils.o: src/makefile_utils.c src/makefile_utils.h src/function_definition.h src/parameter.h src/utils.h
+
+vectors.o: src/vectors.c src/function_definition.h src/parameter.h src/debugging_utils.h
 

@@ -458,6 +458,8 @@ BOOL WriteFunctionDefinitionFunctionName (BPTR out_p, CONST CONST_STRPTR library
 
 BOOL WriteLibraryFunctionDefinition (BPTR out_p, CONST CONST_STRPTR library_s, const struct FunctionDefinition * const fd_p)
 {
+	BOOL success_flag = FALSE;
+	
 	if (IDOS->FPrintf (out_p, "%s ", fd_p -> fd_definition_p -> pa_type_s) >= 0)
 		{
 			if (WriteFunctionDefinitionFunctionName (out_p, library_s, fd_p))
@@ -548,7 +550,7 @@ BOOL WriteLibraryFunctionImplementation (BPTR out_p, const struct FunctionDefini
 
 	DB (KPRINTF ("%s %ld - WriteLibraryFunctionImplementation for  %s\n", __FILE__, __LINE__, fd_p -> fd_definition_p -> pa_name_s));
 
-	if (WriteLibraryFunctionDefinition (out_p, fd_p))
+	if (WriteLibraryFunctionDefinition (out_p, library_s, fd_p))
 		{
 			success_flag = (IDOS->FPrintf (out_p, "\n{\n\t") >= 0);
 
@@ -565,7 +567,8 @@ BOOL WriteLibraryFunctionImplementation (BPTR out_p, const struct FunctionDefini
 
 							if (success_flag)
 								{
-									curr_node_p = (struct ParameterNode *) IExec->GetHead (fd_p -> fd_args_p);
+									struct ParameterNode *final_node_p = (struct ParameterNode *) IExec->GetTail (fd_p -> fd_args_p);
+									struct ParameterNode * curr_node_p = (struct ParameterNode *) IExec->GetHead (fd_p -> fd_args_p);
 
 									while ((curr_node_p != final_node_p) && success_flag)
 										{
