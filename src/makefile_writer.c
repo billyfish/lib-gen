@@ -27,24 +27,34 @@ BOOL WriteMakefile (CONST CONST_STRPTR  makefile_s, CONST CONST_STRPTR library_s
 		{
 			if (WriteMakefileHeader (makefile_p, library_s))
 				{
-					CONST_STRPTR src_dir_s = "src";
+					STRPTR src_dir_s = ConcatenateStrings (library_s, "_src");
 					
-					if (WriteMakefileSources (makefile_p, library_s, src_dir_s, function_defs_p))
+					if (src_dir_s)
 						{
-							if (WriteMakefileFooter (makefile_p, library_s))
+							if (WriteMakefileSources (makefile_p, library_s, src_dir_s, function_defs_p))
 								{
-									success_flag = TRUE;
+									if (WriteMakefileFooter (makefile_p, library_s))
+										{
+											success_flag = TRUE;
+										}
+									else
+										{
+											IDOS->Printf ("Failed to write footer block to makefile \"%s\"\n", makefile_s);
+										}
+
 								}
 							else
 								{
-									IDOS->Printf ("Failed to write footer block to makefile \"%s\"\n", makefile_s);
+									IDOS->Printf ("Failed to write sources block to makefile \"%s\"\n", makefile_s);
 								}
-
+								
+							IExec->FreeVec (src_dir_s);
 						}
 					else
 						{
-							IDOS->Printf ("Failed to write sources block to makefile \"%s\"\n", makefile_s);
+							IDOS->Printf ("Failed to create sources directory name \"%s\"\n", makefile_s);
 						}
+
 
 				}
 			else
