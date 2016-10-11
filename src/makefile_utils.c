@@ -21,6 +21,7 @@
 #include "makefile_utils.h"
 #include "function_definition.h"
 #include "utils.h"
+#include "debugging_utils.h"
 
 
 
@@ -57,6 +58,7 @@ BOOL WriteMakefileFooter (BPTR makefile_p)
 
 BOOL AddFileToMakefileSources (BPTR makefile_p, CONST_STRPTR filename_s)
 {
+	ENTER ();
 	BOOL success_flag = TRUE;
 
 	if (makefile_p)
@@ -72,18 +74,23 @@ BOOL AddFileToMakefileSources (BPTR makefile_p, CONST_STRPTR filename_s)
 			IDOS->Printf ("makefile handle is null");
 		}
 
+	LEAVE ();
 	return success_flag;
 }
 
 
 BOOL CloseMakefile (BPTR makefile_p)
 {
+	ENTER ();
+
+	LEAVE ();
 	return (IDOS->FClose (makefile_p) != 0);
 }
 
 
 BPTR GetMakefileHandle (CONST_STRPTR library_s)
 {
+	ENTER ();
 	BPTR makefile_p = ZERO;
 	STRPTR makefile_s = ConcatenateStrings (library_s, ".mk");
 
@@ -110,16 +117,14 @@ BPTR GetMakefileHandle (CONST_STRPTR library_s)
 			IDOS->Printf ("Failed to create makefile name for \"%s\"\n", library_s);
 		}
 
+	LEAVE ();
 	return makefile_p;
 }
 
 
-
-
-
-
 BOOL WriteAutoInitFile (CONST_STRPTR library_s)
 {
+	ENTER ();
 	BOOL success_flag = FALSE;
 	STRPTR file_s = ConcatenateStrings (library_s, "_auto_init.c");
 
@@ -143,7 +148,7 @@ BOOL WriteAutoInitFile (CONST_STRPTR library_s)
 									if (IDOS->FPrintf (out_p,
 										"void %sConstructor (void)\n{\tif (%sBase != NULL)\n\t\t{\n\t\t\treturn; /* Someone was quicker, e.g. an interface constructor */\n\t\t}\n = NULL;\n ", library_s, library_s) >= 0)
 										{
-											
+
 										}
 
 
@@ -166,5 +171,6 @@ BOOL WriteAutoInitFile (CONST_STRPTR library_s)
 			IDOS->Printf ("Failed to create vectors file name for \"%s\"\n", library_s);
 		}
 
+	LEAVE ();
 	return success_flag;
 }

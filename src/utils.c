@@ -21,18 +21,27 @@ static enum Verbosity s_verbosity = VB_NORMAL;
 
 void SetVerbosity (enum Verbosity v)
 {
+	ENTER ();
+
 	s_verbosity = v;
+
+	LEAVE ();
 }
 
 
 enum Verbosity GetVerbosity (void)
 {
+	ENTER ();
+
+	LEAVE ();
 	return s_verbosity;
 }
 
 
 BOOL EnsureDirectoryExists (CONST_STRPTR dir_s)
 {
+	ENTER ();
+
 	BOOL success_flag = FALSE;
 	struct ExamineData *dat_p = IDOS->ExamineObjectTags (EX_StringNameInput, dir_s, TAG_END);
 
@@ -53,6 +62,7 @@ BOOL EnsureDirectoryExists (CONST_STRPTR dir_s)
 				}
 		}
 
+	LEAVE ();
 	return success_flag;
 }
 
@@ -60,6 +70,8 @@ BOOL EnsureDirectoryExists (CONST_STRPTR dir_s)
 
 STRPTR MakeFilename (CONST_STRPTR first_s, CONST_STRPTR second_s)
 {
+	ENTER ();
+
 	const size_t l0 = strlen (first_s);
 	const size_t l = l0 + strlen (second_s) + 2;
 
@@ -76,6 +88,7 @@ STRPTR MakeFilename (CONST_STRPTR first_s, CONST_STRPTR second_s)
 				}
 		}
 
+	LEAVE ();
 	return result_s;
 }
 
@@ -83,6 +96,8 @@ STRPTR MakeFilename (CONST_STRPTR first_s, CONST_STRPTR second_s)
 
 STRPTR ConcatenateStrings (CONST_STRPTR first_s, CONST_STRPTR second_s)
 {
+	ENTER ();
+
 	const size_t l0 = strlen (first_s);
 	const size_t l1 = strlen (second_s);
 	STRPTR result_s = (STRPTR) IExec->AllocVecTags (l0 + l1 + 1, TAG_DONE);
@@ -93,12 +108,15 @@ STRPTR ConcatenateStrings (CONST_STRPTR first_s, CONST_STRPTR second_s)
 			strcpy (result_s + l0, second_s);
 		}
 
+	LEAVE ();
 	return result_s;
 }
 
 
 STRPTR GetSourceFilename (CONST CONST_STRPTR header_filename_s)
 {
+	ENTER ();
+
 	/* Get the .c filename */
 	STRPTR filename_s = strdup (IDOS->FilePart (header_filename_s));
 
@@ -114,28 +132,28 @@ STRPTR GetSourceFilename (CONST CONST_STRPTR header_filename_s)
 						{
 							*suffix_p = 'c';
 							* (++ suffix_p) = '\0';
-							
+
 							return filename_s;
 						}		/* if (*suffix_p != '\0') */
 					else
 						{
 							DB (KPRINTF ("%s %ld - dot followed by NULL in %s\n", __FILE__, __LINE__, filename_s));
 						}
-						
+
 				}		/* if (suffix_p) */
 			else
 				{
 					DB (KPRINTF ("%s %ld - Failed to get find dot in %s\n", __FILE__, __LINE__, filename_s));
-				}		
-				
+				}
+
 			free (filename_s);
 		}
 	else
 		{
 			DB (KPRINTF ("%s %ld - Failed to get copy header filename %s\n", __FILE__, __LINE__, header_filename_s));
 		}
-				
-		
+
+	LEAVE ();
 	return NULL;
 }
 
@@ -149,6 +167,8 @@ STRPTR GetSourceFilename (CONST CONST_STRPTR header_filename_s)
  */
 char *CopyToNewString (const char *start_p, const char *end_p, const BOOL trim_flag)
 {
+	ENTER ();
+
 	if (trim_flag)
 		{
 			BOOL loop_flag = TRUE;
@@ -207,12 +227,15 @@ char *CopyToNewString (const char *start_p, const char *end_p, const BOOL trim_f
 			DB (KPRINTF ("%s %ld - ERROR: \"%s\" is after \"%s\"\n", __FILE__, __LINE__, start_p ? start_p : "NULL", end_p ? end_p : "NULL"));
 		}
 
+	LEAVE ();
 	return NULL;
 }
 
 
 BOOL AddFullFilenameToList (struct List *filenames_p, CONST_STRPTR dir_s, CONST_STRPTR name_s)
 {
+	ENTER ();
+
 	BOOL success_flag = FALSE;
 	STRPTR full_path_s = NULL;
 	size_t l = 2;		/* terminating NULL and path separtor */
@@ -253,12 +276,15 @@ BOOL AddFullFilenameToList (struct List *filenames_p, CONST_STRPTR dir_s, CONST_
 		}
 
 
+	LEAVE ();
 	return success_flag;
 }
 
 
 int32 ScanDirectories (CONST_STRPTR dir_s, struct List *filenames_p, CONST_STRPTR filename_pattern_s, const BOOL recurse_flag)
 {
+	ENTER ();
+
 	int32 success = FALSE;
 	APTR context_p = IDOS->ObtainDirContextTags (EX_StringNameInput, dir_s,
 		EX_DataFields, (EXF_NAME | EXF_LINK | EXF_TYPE),
@@ -354,5 +380,7 @@ int32 ScanDirectories (CONST_STRPTR dir_s, struct List *filenames_p, CONST_STRPT
 		}
 
 	IDOS->ReleaseDirContext (context_p);          /* NULL safe */
+
+	LEAVE ();
 	return success;
 }

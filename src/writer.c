@@ -17,7 +17,7 @@
 #include <proto/dos.h>
 
 #include "writer.h"
-
+#include "debugging_utils.h"
 
 
 #ifdef _DEBUG
@@ -28,10 +28,13 @@
 
 BOOL WriteFunctionDefinitionsList (struct Writer *writer_p, struct List *function_defs_p, CONST_STRPTR library_s, const int32 version, const enum InterfaceFlag flag, BPTR out_p)
 {
+	ENTER ();
+
 	BOOL success_flag = writer_p -> wr_write_function_definitions_list_fn (writer_p, function_defs_p, library_s, version, flag, out_p);
 
 	IDOS->FFlush (out_p);
 
+	LEAVE ();
 	return success_flag;
 }
 
@@ -39,6 +42,9 @@ BOOL WriteFunctionDefinitionsList (struct Writer *writer_p, struct List *functio
 
 CONST_STRPTR GetWriterFileSuffix (struct Writer *writer_p)
 {
+	ENTER ();
+
+	LEAVE ();
 	return (writer_p -> wr_get_file_suffix_fn (writer_p));
 }
 

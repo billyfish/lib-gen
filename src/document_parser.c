@@ -19,6 +19,7 @@
 
 struct DocumentParser *AllocateDocumentParser (void)
 {
+	ENTER ();
 	ByteBuffer *buffer_p = AllocateByteBuffer (1024);
 
 	if (buffer_p)
@@ -46,29 +47,42 @@ struct DocumentParser *AllocateDocumentParser (void)
 			FreeByteBuffer (buffer_p);
 		}
 
+	LEAVE ();
 	return NULL;
 }
 
 
 void FreeDocumentParser (struct DocumentParser *parser_p)
 {
+	ENTER ();
+
 	IDOS->FreeDosObject (DOS_FREADLINEDATA, parser_p -> dp_line_p);
 	FreeByteBuffer (parser_p -> dp_buffer_p);
 	IExec->FreeVec (parser_p);
+
+	LEAVE ();
 }
 
 
 void SetDocumentToParse (struct DocumentParser *parser_p, BPTR handle_p)
 {
+	ENTER ();
+
 	parser_p -> dp_file_handle_p = handle_p;
 	parser_p -> dp_line_number = 0;
+
+	LEAVE ();
 }
 
 
 int32 ParseLine (struct DocumentParser *parser_p)
 {
+	ENTER ();
+
 	int32 count = IDOS->FReadLine (parser_p -> dp_file_handle_p, parser_p -> dp_line_p);
 	++ (parser_p -> dp_line_number);
+
+	LEAVE ();
 
 	return count;
 }
@@ -76,6 +90,8 @@ int32 ParseLine (struct DocumentParser *parser_p)
 
 int32 GetNextPrototype (struct DocumentParser *parser_p, STRPTR *prototype_ss)
 {
+	ENTER ();
+
 	int32 count = 0;
 	BOOL loop_flag = TRUE;
 
@@ -107,6 +123,7 @@ int32 GetNextPrototype (struct DocumentParser *parser_p, STRPTR *prototype_ss)
 
 	DB (KPRINTF ("%s %ld - GetNextPrototype: exited with %ld", __FILE__, __LINE__, count));
 
+	LEAVE ();
 
 	return count;
 }
@@ -114,6 +131,8 @@ int32 GetNextPrototype (struct DocumentParser *parser_p, STRPTR *prototype_ss)
 
 BOOL StripComments (struct DocumentParser *parser_p)
 {
+	ENTER ();
+
 	STRPTR data_start_p = parser_p -> dp_line_p -> frld_Line;
 	STRPTR cpp_comment_p = strstr (data_start_p, "//");
 	BOOL loop_flag = TRUE;
@@ -228,6 +247,7 @@ BOOL StripComments (struct DocumentParser *parser_p)
 	DebugPrintByteBuffer (parser_p -> dp_buffer_p);
 	#endif
 
+	LEAVE ();
 	return success_flag;
 }
 
@@ -235,6 +255,8 @@ BOOL StripComments (struct DocumentParser *parser_p)
 
 char *ParseDocument (struct DocumentParser *parser_p)
 {
+	ENTER ();
+
 	char *prototype_s = NULL;
 
 	if (StripComments (parser_p))
@@ -258,6 +280,8 @@ char *ParseDocument (struct DocumentParser *parser_p)
 					#endif
 				}
 		}
+
+	LEAVE ();
 
 	return prototype_s;
 }

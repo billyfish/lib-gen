@@ -80,6 +80,8 @@ enum Args
 
 int main (int argc, char *argv [])
 {
+	ENTER ();
+
 	int result = 0;
 
 	if (OpenLibs ())
@@ -226,6 +228,8 @@ int main (int argc, char *argv [])
 		}
 
 	DB (KPRINTF ("%s %ld - exiting\n", __FILE__, __LINE__));
+
+	LEAVE ();
 	return 0;
 }
 
@@ -233,6 +237,8 @@ int main (int argc, char *argv [])
 STRPTR CreateRegEx (CONST_STRPTR pattern_s, BOOL capture_flag)
 {
 	STRPTR reg_ex_s = NULL;
+
+	ENTER ();
 
 	if (pattern_s)
 		{
@@ -264,6 +270,7 @@ STRPTR CreateRegEx (CONST_STRPTR pattern_s, BOOL capture_flag)
 				}
 		}
 
+	LEAVE ();
 	return reg_ex_s;
 }
 
@@ -285,6 +292,9 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 	*/
 	struct List previous_fns_ordering_list;
 
+	ENTER ();
+
+
 	IExec->NewList (&function_defs);
 	IExec->NewList (&previous_fns_ordering_list);
 
@@ -294,6 +304,7 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 
 			if (!prototype_regexp_s)
 				{
+					LEAVE ();
 					return -1;
 				}
 		}
@@ -304,6 +315,7 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 
 			if (!filename_regexp_s)
 				{
+					LEAVE ();
 					return -1;
 				}
 		}
@@ -354,14 +366,9 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 													IDOS->Printf ("Failed to create makefile at %s", makefile_s);
 												}
 
-
-
-
 											/*
 												Write the makefile, vectors, init, autoinit_base, obtain and release files
 											*/
-
-
 
 										}
 									else
@@ -437,6 +444,7 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 	ClearFunctionDefinitionsList (&function_defs);
 	DB (KPRINTF ("%s %ld - post ClearFunctionDefinitionsList\n", __FILE__, __LINE__));
 
+	LEAVE ();
 	return res;
 }
 
@@ -444,6 +452,8 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 
 BOOL GetPreviousLibraryOrder (CONST_STRPTR filename_s, CONST_STRPTR struct_name_s, struct List *ordering_p, struct DocumentParser *parser_p)
 {
+	ENTER ();
+
 	BOOL success_flag = FALSE;
 	BPTR handle_p = IDOS->FOpen (filename_s, MODE_OLDFILE, 0);
 
@@ -499,6 +509,7 @@ BOOL GetPreviousLibraryOrder (CONST_STRPTR filename_s, CONST_STRPTR struct_name_
 
 	DB (KPRINTF ("%s %ld - GetMatchingPrototypes %ld\n", __FILE__, __LINE__, success_flag));
 
+	LEAVE ();
 	return success_flag;
 }
 
@@ -506,6 +517,8 @@ BOOL GetPreviousLibraryOrder (CONST_STRPTR filename_s, CONST_STRPTR struct_name_
 
 BOOL GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR filename_regexp_s, CONST CONST_STRPTR prototype_regexp_s, CONST BOOL recurse_flag, struct List *function_definitions_p)
 {
+	ENTER ();
+
 	BOOL success_flag = FALSE;
 	struct List *headers_p = GetHeaderFilesList (root_path_s, filename_regexp_s, recurse_flag);
 
@@ -549,6 +562,7 @@ BOOL GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR 
 			FreeList (headers_p);
 		}		/* if (headers_p) */
 
+	LEAVE ();
 	return success_flag;
 }
 
@@ -556,6 +570,8 @@ BOOL GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR 
 
 struct List *GetHeaderFilesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_regexp_s, const BOOL recurse_flag)
 {
+	ENTER ();
+
 	struct List *filenames_p = IExec->AllocSysObjectTags (ASOT_LIST, TAG_DONE);
 
 	if (filenames_p)
@@ -568,6 +584,7 @@ struct List *GetHeaderFilesList (CONST_STRPTR root_path_s, CONST_STRPTR filename
 
 		}		/* if (filenames_p) */
 
+	LEAVE ();
 	return filenames_p;
 }
 
@@ -577,6 +594,9 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, str
 {
 	BOOL success_flag = FALSE;
 	BPTR handle_p = ZERO;
+
+	ENTER ();
+
 
 	DB (KPRINTF ("%s %ld - GetMatchingPrototypes: About to open \"%s\"\n", __FILE__, __LINE__, filename_s));
 
@@ -720,6 +740,7 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, str
 
 	DB (KPRINTF ("%s %ld - GetMatchingPrototypes %ld\n", __FILE__, __LINE__, success_flag));
 
+	LEAVE ();
 	return success_flag;
 }
 
@@ -727,6 +748,8 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, str
 void ClearCapturedExpression (struct CapturedExpression *capture_p)
 {
 	struct CapturedExpression *next_p;
+
+	ENTER ();
 
 	while (capture_p)
 		{
@@ -737,12 +760,14 @@ void ClearCapturedExpression (struct CapturedExpression *capture_p)
 		}
 
 	memset (capture_p, 0, sizeof (struct CapturedExpression));
-}
 
+	LEAVE ();
+}
 
 
 BOOL ParseFile (CONST_STRPTR function_regexp_s, CONST_STRPTR filename_s, struct List *function_defs_p, struct DocumentParser *document_parser_p)
 {
+	ENTER ();
 	BOOL success_flag = GetMatchingPrototypes (filename_s, function_regexp_s, document_parser_p, function_defs_p);
 
 	if (success_flag)
@@ -759,14 +784,16 @@ BOOL ParseFile (CONST_STRPTR function_regexp_s, CONST_STRPTR filename_s, struct 
 
 	DB (KPRINTF ("%s %ld - ParseFile %ld\n", __FILE__, __LINE__, success_flag));
 
+	LEAVE ();
 	return success_flag;
 }
-
 
 
 STRPTR MakePrototypePattern (CONST_STRPTR pattern_s)
 {
 	STRPTR prototype_pattern_s = NULL;
+
+	ENTER ();
 
 	if (pattern_s)
 		{
@@ -792,12 +819,15 @@ STRPTR MakePrototypePattern (CONST_STRPTR pattern_s)
 				}
 		}
 
+	LEAVE ();
 	return prototype_pattern_s;
 }
 
 
 static BOOL OpenLibs (void)
 {
+	ENTER ();
+
 	if (OpenLib (&DOSBase, "dos.library", 52L, (struct Interface **) &IDOS, "main", 1))
 		{
 			if (OpenLib (&UtilityBase, "utility.library", 52L, (struct Interface **) &IUtility, "main", 1))
@@ -808,11 +838,17 @@ static BOOL OpenLibs (void)
 			CloseLib (DOSBase, (struct Interface *) IDOS);
 		}
 
+	LEAVE ();
 	return FALSE;
 }
 
+
 static void CloseLibs (void)
 {
+	ENTER ();
+
 	CloseLib (UtilityBase, (struct Interface *) IUtility);
 	CloseLib (DOSBase, (struct Interface *) IDOS);
+
+	LEAVE ();
 }

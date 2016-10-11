@@ -6,7 +6,7 @@
 **
 ** Project: LibraryGenerator
 **
-** File: 
+** File:
 **
 ** Date: 19-06-2013 16:07:32
 **
@@ -17,14 +17,18 @@
 #include <stdio.h>
 
 #include "library_utils.h"
+#include "debugging_utils.h"
 
 
 BOOL OpenLib (struct Library **library_pp, CONST_STRPTR lib_name_s, const uint32 lib_version, struct Interface **interface_pp, CONST_STRPTR interface_name_s, const uint32 interface_version)
 {
+	ENTER ();
+
 	if ((*library_pp = IExec->OpenLibrary (lib_name_s, lib_version)) != NULL)
 		{
 			if ((*interface_pp = IExec->GetInterface (*library_pp, interface_name_s, interface_version, NULL)) != NULL)
 				{
+					LEAVE ();
 					return TRUE;
 				}
 			else
@@ -38,12 +42,15 @@ BOOL OpenLib (struct Library **library_pp, CONST_STRPTR lib_name_s, const uint32
 			printf ("failed to open library \"%s\" version %lu\n", lib_name_s, lib_version);
 		}
 
+	LEAVE ();
 	return FALSE;
 }
 
 
 void CloseLib (struct Library *library_p, struct Interface *interface_p)
 {
+	ENTER ();
+
 	if (interface_p)
 		{
 			IExec->DropInterface (interface_p);
@@ -53,4 +60,6 @@ void CloseLib (struct Library *library_p, struct Interface *interface_p)
 		{
 			IExec->CloseLibrary (library_p);
 		}
+
+	LEAVE ();
 }

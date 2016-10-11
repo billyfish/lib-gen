@@ -65,11 +65,14 @@ void UnitTest (const char *prototype_s)
 		}
 
 	IDOS->Printf ("\n");
+
+	LEAVE ();
 }
 
 
 struct Parameter *GetNextParameter (const char **start_pp, BOOL function_flag)
 {
+
 	const char *start_p = *start_pp;
 	const char *data_p = start_p;
 	const char *end_p = NULL;
@@ -206,6 +209,7 @@ struct Parameter *GetNextParameter (const char **start_pp, BOOL function_flag)
 			#endif
 		}
 
+	LEAVE ();
 	return param_p;
 }
 
@@ -320,6 +324,7 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s, C
 		}		/* if (fd_p) */
 
 
+	LEAVE ();
 	return fd_p;
 }
 
@@ -341,6 +346,7 @@ uint32 GetFunctionDefinitionsListSize (struct List * const list_p)
 				}
 		}
 
+	LEAVE ();
 	return i;
 }
 
@@ -369,6 +375,7 @@ struct FunctionDefinition *AllocateFunctionDefinition (CONST CONST_STRPTR filena
 			IExec->FreeVec (fd_p);
 		}
 
+	LEAVE ();
 	return NULL;
 }
 
@@ -383,6 +390,8 @@ void FreeFunctionDefinition (struct FunctionDefinition *fd_p)
 	FreeParameterList (fd_p -> fd_args_p);
 
 	IExec->FreeVec (fd_p);
+
+	LEAVE ();
 }
 
 
@@ -390,6 +399,8 @@ void FreeFunctionDefinitionNode (struct FunctionDefinitionNode *node_p)
 {
 	FreeFunctionDefinition (node_p -> fdn_function_def_p);
 	IExec->FreeVec (node_p);
+
+	LEAVE ();
 }
 
 
@@ -405,14 +416,16 @@ BOOL AddParameterAtFront (struct FunctionDefinition *fd_p, struct Parameter *par
 			return TRUE;
 		}
 
-	return FALSE;
+	LEAVE ();
 
+	return FALSE;
 }
 
 
 BOOL AddParameterAtBack (struct FunctionDefinition *fd_p, struct Parameter *param_p)
 {
 	struct ParameterNode *node_p = AllocateParameterNode (param_p);
+	BOOL b = FALSE;
 
 	if (node_p)
 		{
@@ -423,15 +436,19 @@ BOOL AddParameterAtBack (struct FunctionDefinition *fd_p, struct Parameter *para
 					IDOS->FPrintf (IDOS->Output (), "Added %s - %s to %s\n", param_p -> pa_type_s, param_p -> pa_name_s, fd_p -> fd_definition_p -> pa_name_s);
 				}
 
-			return TRUE;
+			b = TRUE;
 		}
 
-	return FALSE;
+	LEAVE ();
+
+	return b;
 }
 
 
 BOOL PrintFunctionDefinition (BPTR out_p, const struct FunctionDefinition * const fn_p)
 {
+	ENTER ();
+
 	BOOL success_flag = FALSE;
 
 	if (IDOS->FPrintf (out_p, "FUNCTION:\n") >= 0)
@@ -445,6 +462,8 @@ BOOL PrintFunctionDefinition (BPTR out_p, const struct FunctionDefinition * cons
 				}
 		}
 
+	LEAVE ();
+
 	return success_flag;
 }
 
@@ -452,6 +471,9 @@ BOOL PrintFunctionDefinition (BPTR out_p, const struct FunctionDefinition * cons
 
 BOOL WriteFunctionDefinitionFunctionName (BPTR out_p, CONST CONST_STRPTR library_s, const struct FunctionDefinition * const fd_p)
 {
+	ENTER ();
+
+	LEAVE ();
 	return (IDOS->FPrintf (out_p, "%s%s", library_s, fd_p -> fd_definition_p -> pa_name_s) >= 0);
 }
 
@@ -459,7 +481,9 @@ BOOL WriteFunctionDefinitionFunctionName (BPTR out_p, CONST CONST_STRPTR library
 BOOL WriteLibraryFunctionDefinition (BPTR out_p, CONST CONST_STRPTR library_s, const struct FunctionDefinition * const fd_p)
 {
 	BOOL success_flag = FALSE;
-	
+
+	ENTER ();
+
 	if (IDOS->FPrintf (out_p, "%s ", fd_p -> fd_definition_p -> pa_type_s) >= 0)
 		{
 			if (WriteFunctionDefinitionFunctionName (out_p, library_s, fd_p))
@@ -489,11 +513,11 @@ BOOL WriteLibraryFunctionDefinition (BPTR out_p, CONST CONST_STRPTR library_s, c
 																		{
 																			curr_node_p = (struct ParameterNode *) IExec->GetSucc ((struct Node *) curr_node_p);
 																		}
-																		
+
 																}		/* if (success_flag) */
-																
+
 														}		/* while ((curr_node_p != final_node_p) && success_flag) */
-														
+
 												}		/* if (curr_node_p != final_node_p) */
 											else
 												{
@@ -507,7 +531,7 @@ BOOL WriteLibraryFunctionDefinition (BPTR out_p, CONST CONST_STRPTR library_s, c
 															success_flag = WriteParameterAsSource (out_p, final_node_p -> pn_param_p);
 														}
 												}		/* if (success_flag) */
-												
+
 										}		/* if (IDOS->FPrintf (out_p, "struct %s *Self", library_s) >= 0) */
 
 								}		/* if (curr_node_p) */
@@ -515,31 +539,33 @@ BOOL WriteLibraryFunctionDefinition (BPTR out_p, CONST CONST_STRPTR library_s, c
 								{
 									success_flag = TRUE;
 								}
-						
+
 						}		/* if (IDOS->FPrintf (out_p, " (") >= 0) */
 					else
 						{
-						
+
 						}
-				
+
 				}		/* if (WriteFunctionDefinitionFunctionName (out_p, library_s, fd_p)) */
 			else
 				{
-				
+
 				}
-				
+
 		}		/* if (IDOS->FPrintf (out_p, "%s ", fd_p -> fd_definition_p -> pa_type_s) >= 0) */
 	else
 		{
-		
+
 		}
-		
-	
+
+
 	if (success_flag)
 		{
 			success_flag = (IDOS->FPrintf (out_p, ")") >= 0);
 		}
-	
+
+	LEAVE ();
+
 	return success_flag;
 }
 
@@ -547,6 +573,8 @@ BOOL WriteLibraryFunctionDefinition (BPTR out_p, CONST CONST_STRPTR library_s, c
 BOOL WriteLibraryFunctionImplementation (BPTR out_p, const struct FunctionDefinition * const fd_p, CONST_STRPTR library_s)
 {
 	BOOL success_flag = FALSE;
+
+	ENTER ();
 
 	DB (KPRINTF ("%s %ld - WriteLibraryFunctionImplementation for  %s\n", __FILE__, __LINE__, fd_p -> fd_definition_p -> pa_name_s));
 
@@ -588,18 +616,22 @@ BOOL WriteLibraryFunctionImplementation (BPTR out_p, const struct FunctionDefini
 								}
 						}
 				}
-				
+
 		}
 
 	DB (KPRINTF ("%s %ld - WriteLibraryFunctionImplementation for %s = %ld\n", __FILE__, __LINE__, fd_p -> fd_definition_p -> pa_name_s, success_flag));
 
+	LEAVE ();
 	return success_flag;
 }
 
 
 BOOL AddFunctionDefinitionToList (struct FunctionDefinition *fd_p, struct List *functions_list_p)
 {
+	ENTER ();
+
 	BOOL success_flag = FALSE;
+
 
 	struct FunctionDefinitionNode *node_p = IExec->AllocSysObjectTags (ASOT_NODE,
 		ASONODE_Size, sizeof (struct FunctionDefinitionNode),
@@ -613,6 +645,8 @@ BOOL AddFunctionDefinitionToList (struct FunctionDefinition *fd_p, struct List *
 			success_flag = TRUE;
 		}
 
+	LEAVE ();
+
 	return success_flag;
 }
 
@@ -621,6 +655,8 @@ int CompareFunctionDefinitionNodes (const void *v0_p, const void *v1_p)
 {
 	struct FunctionDefinition *fd0_p = ((struct FunctionDefinitionNode *) v0_p) -> fdn_function_def_p;
 	struct FunctionDefinition *fd1_p = ((struct FunctionDefinitionNode *) v1_p) -> fdn_function_def_p;
+
+	ENTER ();
 
 	int res = strcmp (fd0_p -> fd_filename_s, fd1_p -> fd_filename_s);
 
@@ -636,6 +672,7 @@ int CompareFunctionDefinitionNodes (const void *v0_p, const void *v1_p)
 				}
 		}
 
+	LEAVE ();
 	return res;
 }
 
@@ -645,28 +682,34 @@ void ClearFunctionDefinitionsList (struct List *function_defs_p)
 	struct FunctionDefinitionNode *curr_node_p = (struct FunctionDefinitionNode *) IExec->GetHead (function_defs_p);
 	struct FunctionDefinitionNode *next_node_p = NULL;
 
+	ENTER ();
+
 	while (curr_node_p != NULL)
 		{
 			next_node_p = (struct FunctionDefinitionNode *) IExec->GetSucc (& (curr_node_p -> fdn_node));
 			FreeFunctionDefinitionNode (curr_node_p);
 			curr_node_p = next_node_p;
 		}
+
+	LEAVE ();
 }
 
 
 
 BOOL WriteSourceForAllFunctionDefinitions (struct List *fn_defs_p, CONST_STRPTR output_dir_s, CONST_STRPTR library_s)
 {
+	ENTER ();
+
 	BOOL success_flag = TRUE;
 	struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (fn_defs_p);
 	//BPTR makefile_p = GetMakefileHandle (library_s);
 	CONST_STRPTR current_filename_s = "";
 	BPTR output_f = ZERO;
-	
+
 	while (node_p && success_flag)
 		{
 			struct FunctionDefinition *fn_def_p = node_p -> fdn_function_def_p;
-			
+
 			/* are we changing the source file that we are writing to? */
 			if (strcmp (current_filename_s, fn_def_p -> fd_filename_s) != 0)
 				{
@@ -676,16 +719,16 @@ BOOL WriteSourceForAllFunctionDefinitions (struct List *fn_defs_p, CONST_STRPTR 
 								{
 									IDOS->Printf ("Error closing %s", current_filename_s);
 								}
-							
+
 							output_f = ZERO;
 						}
-					
+
 					success_flag = FALSE;
-						
+
 					output_f = GetSourceFileHandle (fn_def_p, output_dir_s);
-					
+
 					if (output_f)
-						{			
+						{
 							if (WriteIncludes (output_f, fn_def_p -> fd_filename_s))
 								{
 									success_flag = TRUE;
@@ -694,27 +737,27 @@ BOOL WriteSourceForAllFunctionDefinitions (struct List *fn_defs_p, CONST_STRPTR 
 								{
 									IDOS->Printf ("Error wrintg includes to  %s", fn_def_p -> fd_filename_s);
 								}
-								
+
 							current_filename_s = fn_def_p -> fd_filename_s;
 						}
 					else
 						{
 							IDOS->Printf ("Error opening %s", fn_def_p -> fd_filename_s);
 						}
-						
+
 				}		/* if (strcmp (current_filename_s, fn_def_p -> fd_filename_s) != 0) */
-					
+
 			if (success_flag)
 				{
 					success_flag  = WriteSourceForFunctionDefinition (fn_def_p, output_f, library_s);
-		
+
 					if (success_flag)
 						{
 							node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p);
 						}
 				}
 		}
-		
+
 	if (output_f)
 		{
 			if (IDOS->FClose (output_f) == 0)
@@ -722,7 +765,7 @@ BOOL WriteSourceForAllFunctionDefinitions (struct List *fn_defs_p, CONST_STRPTR 
 					IDOS->Printf ("Error closing %s", current_filename_s);
 				}
 		}
-	
+
 	/*
 	if (makefile_p)
 		{
@@ -737,36 +780,39 @@ BOOL WriteSourceForAllFunctionDefinitions (struct List *fn_defs_p, CONST_STRPTR 
 				}
 		}
 	*/
-	
+
+	LEAVE ();
 	return success_flag;
 }
 
 
 static BPTR GetSourceFileHandle (const struct FunctionDefinition *fn_def_p, CONST_STRPTR output_dir_s)
 {
+	ENTER ();
+
 	BPTR src_f = ZERO;
 
 	/* Get the .c filename */
 	STRPTR filename_s = GetSourceFilename (fn_def_p -> fd_filename_s);
-	
-	
+
+
 	if (filename_s)
 		{
 			STRPTR full_name_s = NULL;;
 
 			/* Make the full filename */
 			/* @TODO Make sure output dir already exists */
-			full_name_s = MakeFilename (output_dir_s, filename_s);	
-			
+			full_name_s = MakeFilename (output_dir_s, filename_s);
+
 			if (full_name_s)
 				{
 					src_f = IDOS->FOpen (full_name_s, MODE_NEWFILE, 0);
-					
+
 					if (!src_f)
 						{
 							DB (KPRINTF ("%s %ld - Failed to open %s\n", __FILE__, __LINE__, full_name_s));
 						}
-					
+
 					IExec->FreeVec (full_name_s);
 				}		/* if (full_name_s) */
 			else
@@ -780,8 +826,9 @@ static BPTR GetSourceFileHandle (const struct FunctionDefinition *fn_def_p, CONS
 		{
 			DB (KPRINTF ("%s %ld - Failed to get local filename from %s\n", __FILE__, __LINE__, fn_def_p -> fd_filename_s));
 		}
-		
-	return src_f;	
+
+	LEAVE ();
+	return src_f;
 }
 
 
@@ -789,6 +836,7 @@ BOOL WriteSourceForFunctionDefinition (const struct FunctionDefinition *fn_def_p
  {
 	BOOL success_flag = FALSE;
 
+	ENTER ();
 
 	if (WriteLibraryFunctionImplementation (output_f, fn_def_p, library_s))
 		{
@@ -806,18 +854,24 @@ BOOL WriteSourceForFunctionDefinition (const struct FunctionDefinition *fn_def_p
 		}
 
 
+	LEAVE ();
 	return success_flag;
 }
 
 
 BOOL WriteFunctionDefinitionDeclaration (const struct FunctionDefinition *fn_def_p, BPTR out_p)
 {
+	ENTER ();
+	LEAVE ();
 	return FALSE;
 }
 
 
 static BOOL WriteIncludes (BPTR out_p, CONST_STRPTR header_name_s)
 {
+	ENTER ();
+	LEAVE ();
+
 	return (IDOS->FPrintf (out_p, "#include \"%s\"\n\n", header_name_s) > 0);
 }
 

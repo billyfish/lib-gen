@@ -34,12 +34,17 @@ static BOOL WriteIDLFunctionDefinitionsList (BPTR out_p, struct List * const fun
 
 static CONST_STRPTR GetIDLWriterFileSuffix (struct Writer *writer_p)
 {
+	ENTER ();
+
+	LEAVE ();
+
 	return ".xml";
 }
 
 
 Writer *AllocateIDLWriter (void)
 {
+	ENTER ();
 	IDLWriter *idl_p = (IDLWriter *) IExec->AllocVecTags (sizeof (IDLWriter), TAG_DONE);
 
 	if (idl_p)
@@ -48,20 +53,24 @@ Writer *AllocateIDLWriter (void)
 			idl_p -> iw_base_writer.wr_get_file_suffix_fn = GetIDLWriterFileSuffix;
 		}
 
+	LEAVE ();
 	return ((Writer *) idl_p);
 }
 
 
 void FreeIDLWriter (Writer *writer_p)
 {
+	ENTER ();
 	IDLWriter *idl_p = (IDLWriter *) writer_p;
 
 	IExec->FreeVec (idl_p);
+	LEAVE ();
 }
 
 
 static BOOL WriteIDL (struct Writer *writer_p, struct List *function_definitions_p, CONST_STRPTR library_s, const int32 version, const enum InterfaceFlag flag, BPTR out_p)
 {
+	ENTER ();
 	BOOL success_flag = FALSE;
 
 	DB (KPRINTF ("%s %ld - Entering WriteIDL", __FILE__, __LINE__));
@@ -95,10 +104,11 @@ static BOOL WriteIDL (struct Writer *writer_p, struct List *function_definitions
 		{
 			DB (KPRINTF ("%s %ld - Failed to write idl header\n", __FILE__, __LINE__));
 		}
-		
-		
+
+
 	DB (KPRINTF ("%s %ld - Exiting  WriteIDL %ld", __FILE__, __LINE__, success_flag));
 
+	LEAVE ();
 	return success_flag;
 }
 
@@ -107,6 +117,7 @@ static BOOL WriteIDL (struct Writer *writer_p, struct List *function_definitions
 
 static BOOL WriteIDLHeader (BPTR out_p, CONST CONST_STRPTR library_s, const int32 version, const enum InterfaceFlag flag, struct List *function_definitions_p)
 {
+	ENTER ();
 	BOOL success_flag = FALSE;
 
 	if (IDOS->FPrintf (out_p, "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n") >= 0)
@@ -161,12 +172,14 @@ static BOOL WriteIDLHeader (BPTR out_p, CONST CONST_STRPTR library_s, const int3
 				}
 		}
 
+	LEAVE ();
 	return success_flag;
 }
 
 
 static BOOL WriteIDLFunctionDefinitionsList (BPTR out_p, struct List * const function_definitions_list_p)
 {
+	ENTER ();
 	BOOL success_flag = TRUE;
 	struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (function_definitions_list_p);
 
@@ -182,13 +195,14 @@ static BOOL WriteIDLFunctionDefinitionsList (BPTR out_p, struct List * const fun
 				}
 		}
 
-
+	LEAVE ();
 	return success_flag;
 }
 
 
 static BOOL WriteIDLFunctionDefinition (BPTR out_p, const struct FunctionDefinition * const fd_p)
 {
+	ENTER ();
 	BOOL success_flag = FALSE;
 
 	if (IDOS->FPrintf (out_p, "\n\t\t<!-- %s:%ld -->\n", fd_p -> fd_filename_s, fd_p -> fd_line_number) >= 0)
@@ -225,12 +239,15 @@ static BOOL WriteIDLFunctionDefinition (BPTR out_p, const struct FunctionDefinit
 		}		/* if (IDOS->FPrintf (out_p, "\n\t\t<!-- %s:%ld -->\n", fd_p -> fd_filename_s, fd_p -> fd_line_number) >= 0) */
 
 
+	LEAVE ();
 	return success_flag;
 }
 
 
 static BOOL WriteIDLParameter (BPTR out_p, const struct Parameter * const param_p)
 {
+	ENTER ();
+
 	BOOL success_flag = TRUE;
 
 	if (!IsVoidParameter (param_p))
@@ -238,6 +255,7 @@ static BOOL WriteIDLParameter (BPTR out_p, const struct Parameter * const param_
 			success_flag = (IDOS->FPrintf (out_p, "\t\t\t<arg name=\"%s\" type=\"%s\" />\n", param_p -> pa_name_s, param_p -> pa_type_s) >= 0);
 		}
 
+	LEAVE ();
 	return success_flag;
 }
 
@@ -245,6 +263,7 @@ static BOOL WriteIDLParameter (BPTR out_p, const struct Parameter * const param_
 static BOOL WriteIDLDefaultFunctions (BPTR out_p)
 {
 	BOOL success_flag = FALSE;
+	ENTER ();
 
 	if (IDOS->FPrintf (out_p, "\t\t<method name=\"Obtain\" result=\"uint32\"></method>\n") >= 0)
 		{
@@ -260,6 +279,7 @@ static BOOL WriteIDLDefaultFunctions (BPTR out_p)
 				}
 		}
 
+	LEAVE ();
 	return success_flag;
 }
 
@@ -267,6 +287,8 @@ static BOOL WriteIDLDefaultFunctions (BPTR out_p)
 
 static BOOL WriteIDLIncludes (BPTR out_p, struct List *function_definitions_list_p)
 {
+	ENTER ();
+
 	BOOL success_flag = TRUE;
 	struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (function_definitions_list_p);
 
@@ -282,7 +304,7 @@ static BOOL WriteIDLIncludes (BPTR out_p, struct List *function_definitions_list
 				}
 		}
 
-
+	LEAVE ();
 	return success_flag;
 }
 
@@ -291,5 +313,8 @@ static BOOL WriteIDLIncludes (BPTR out_p, struct List *function_definitions_list
 
 static BOOL WriteIDLFooter (BPTR out_p)
 {
+	ENTER ();
+
+	LEAVE ();
 	return (IDOS->FPrintf (out_p, "\t</interface>\n</library>\n") >= 0);
 }

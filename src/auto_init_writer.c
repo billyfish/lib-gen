@@ -3,6 +3,7 @@
 
 #include "auto_init_writer.h"
 #include "utils.h"
+#include "debugging_utils.h"
 
 
 #define AUTO_INIT_CODE(library_s,header_s) ( \
@@ -57,8 +58,11 @@
 
 BOOL WriteAutoInitSource (CONST CONST_STRPTR library_s, CONST CONST_STRPTR header_s)
 {
+	ENTER ();
+
 	BOOL success_flag = FALSE;
 	STRPTR file_s = ConcatenateStrings (header_s, "_auto_init.c");
+
 
 	if (file_s)
 		{
@@ -88,7 +92,8 @@ BOOL WriteAutoInitSource (CONST CONST_STRPTR library_s, CONST CONST_STRPTR heade
 			IDOS->Printf ("Failed to create vectors file name for \"%s\"\n", library_s);
 		}
 
+
+	LEAVE ();
+
 	return success_flag;
-
-
 }

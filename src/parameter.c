@@ -26,6 +26,9 @@ struct Parameter *ParseFunctionPointerParameter (const char *start_p, const char
 	struct Parameter *param_p = NULL;
 	const char *opening_bracket_p = strchr (start_p, '(');
 
+	ENTER ();
+
+
 	if (opening_bracket_p)
 		{
 			const char *name_start_p = opening_bracket_p + 1;
@@ -158,6 +161,7 @@ struct Parameter *ParseFunctionPointerParameter (const char *start_p, const char
 
 		}		/* if (opening_bracket_p) */
 
+	LEAVE ();
 	return param_p;
 }
 
@@ -174,6 +178,8 @@ struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 	uint8 array_count = 0;
 	uint8 loop_flag = TRUE;
 	BOOL matched_flag = FALSE;
+
+	ENTER ();
 
 	/*
 		Start from the end and work backwards
@@ -373,13 +379,16 @@ struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 				}
 		}
 
+	LEAVE ();
 	return param_p;
-
 }
 
 
 BOOL IsVoidParameter (const struct Parameter *param_p)
 {
+	ENTER ();
+
+	LEAVE ();
 	return ((strcmp (param_p -> pa_type_s, "void") == 0) && (param_p -> pa_type_s == NULL));
 }
 
@@ -388,6 +397,8 @@ void FreeParameterList (struct List *params_p)
 {
 	struct ParameterNode *curr_node_p = (struct ParameterNode *) IExec->GetHead (params_p);
 	struct ParameterNode *next_node_p = NULL;
+
+	ENTER ();
 
 	while (curr_node_p)
 		{
@@ -399,32 +410,42 @@ void FreeParameterList (struct List *params_p)
 		}
 
 	IExec->FreeSysObject (ASOT_LIST, params_p);
+	LEAVE ();
 }
 
 
 struct List *AllocateParameterList (void)
 {
+	ENTER ();
+
 	struct List *params_p = (struct List *) IExec->AllocSysObjectTags (ASOT_LIST,
 		ASOLIST_Type, PT_PARAMETER,
 		TAG_DONE);
 
+	LEAVE ();
 	return params_p;
 }
 
 
 void FreeParameterNode (struct ParameterNode *node_p)
 {
+	ENTER ();
+
 	if (node_p -> pn_param_p)
 		{
 			FreeParameter (node_p -> pn_param_p);
 		}
 
 	IExec->FreeSysObject (ASOT_NODE, node_p);
+
+	LEAVE ();
 }
 
 
 struct ParameterNode *AllocateParameterNode (struct Parameter *param_p)
 {
+	ENTER ();
+
 	struct ParameterNode *node_p = IExec->AllocSysObjectTags (ASOT_NODE,
 		ASONODE_Size, sizeof (struct ParameterNode),
 		TAG_DONE);
@@ -437,6 +458,7 @@ struct ParameterNode *AllocateParameterNode (struct Parameter *param_p)
 			return node_p;
 		}
 
+	LEAVE ();
 	return NULL;
 }
 
@@ -444,6 +466,8 @@ struct ParameterNode *AllocateParameterNode (struct Parameter *param_p)
 
 struct Parameter *AllocateParameter (char *type_s, char *name_s)
 {
+	ENTER ();
+
 	struct Parameter *param_p = (struct Parameter *) IExec->AllocVecTags (sizeof (struct Parameter), TAG_DONE);
 
 	if (param_p)
@@ -454,20 +478,25 @@ struct Parameter *AllocateParameter (char *type_s, char *name_s)
 			return param_p;
 		}
 
+	LEAVE ();
 	return NULL;
 }
 
 
 void FreeParameter (struct Parameter *param_p)
 {
+	ENTER ();
+
 	ClearParameter (param_p);
 	IExec->FreeVec (param_p);
+
+	LEAVE ();
 }
 
 
 void ClearParameter (struct Parameter *param_p)
 {
-	//DB (KPRINTF ("%s %ld - freeing \"%s\" \"%s\"\n", __FILE__, __LINE__, param_p -> pa_name_s, param_p -> pa_type_s));
+	ENTER ();
 
 	if (param_p -> pa_name_s)
 		{
@@ -479,25 +508,32 @@ void ClearParameter (struct Parameter *param_p)
 			IExec->FreeVec (param_p -> pa_type_s);
 		}
 
+	LEAVE ();
 }
 
 
 BOOL SetParameterName (struct Parameter *param_p, const char *start_p, const char *end_p)
 {
+	ENTER ();
+
+	LEAVE ();
 	return SetParameterValue (& (param_p -> pa_name_s), start_p, end_p);
 }
 
 
 BOOL SetParameterType (struct Parameter *param_p, const char *start_p, const char *end_p)
 {
+	ENTER ();
+
+	LEAVE ();
 	return SetParameterValue (& (param_p -> pa_type_s), start_p, end_p);
 }
 
 
-
-
 static BOOL SetParameterValue (char **param_value_ss, const char *start_p, const char *end_p)
 {
+	ENTER ();
+
 	BOOL success_flag = FALSE;
 	size_t l;
 	char *copy_s = NULL;
@@ -558,6 +594,7 @@ static BOOL SetParameterValue (char **param_value_ss, const char *start_p, const
 
 		}		/* f (start_p != end_p) */
 
+	LEAVE ();
 	return success_flag;
 }
 
@@ -565,6 +602,9 @@ static BOOL SetParameterValue (char **param_value_ss, const char *start_p, const
 BOOL WriteParameterAsSource (BPTR out_p, const struct Parameter * const param_p)
 {
 	BOOL success_flag = FALSE;
+
+	ENTER ();
+
 
 	if (IDOS->FPrintf (out_p, "%s", param_p -> pa_type_s) >= 0)
 		{
@@ -581,6 +621,7 @@ BOOL WriteParameterAsSource (BPTR out_p, const struct Parameter * const param_p)
 				}
 		}
 
+	LEAVE ();
 	return success_flag;
 }
 
@@ -588,6 +629,9 @@ BOOL WriteParameterAsSource (BPTR out_p, const struct Parameter * const param_p)
 BOOL PrintParameter (BPTR out_p, const struct Parameter * const param_p)
 {
 	BOOL success_flag = TRUE;
+
+	ENTER ();
+
 
 	if (param_p)
 		{
@@ -613,6 +657,7 @@ BOOL PrintParameter (BPTR out_p, const struct Parameter * const param_p)
 				}
 		}
 
+	LEAVE ();
 	return success_flag;
 }
 
@@ -621,6 +666,9 @@ BOOL PrintParameterList (BPTR out_p, struct List * const params_p)
 	struct ParameterNode *curr_node_p = (struct ParameterNode *) IExec->GetHead (params_p);
 	struct ParameterNode *next_node_p = NULL;
 	uint32 i = 0;
+
+	ENTER ();
+
 
 	while ((next_node_p = (struct ParameterNode *) IExec->GetSucc (& (curr_node_p -> pn_node))) != NULL)
 		{
@@ -638,6 +686,7 @@ BOOL PrintParameterList (BPTR out_p, struct List * const params_p)
 			curr_node_p = next_node_p;
 		}
 
+	LEAVE ();
 	return TRUE;
 }
 
