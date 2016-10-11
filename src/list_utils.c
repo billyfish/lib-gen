@@ -8,16 +8,21 @@
 void FreeList (struct List *list_p)
 {
 	ENTER ();
-	struct Node *node_p;
+	struct Node *node_p = IExec->GetHead (list_p);
+	struct Node *next_node_p = NULL;
 
-	for (node_p = IExec->GetHead (list_p); node_p != NULL; node_p = IExec->GetSucc (node_p))
+	while (node_p)
 		{
+			DB (KPRINTF ("%s %ld - About to free node name %s\n", __FILE__, __LINE__, i, (node_p -> ln_Name) ? (node_p -> ln_Name) : "<NULL>"));
+
 			if (node_p -> ln_Name)
 				{
 					//IExec->FreeVec (node_p -> ln_Name);
 				}
 
+			next_node_p = IExec->GetSucc (node_p);
 			IExec->FreeSysObject (ASOT_NODE, node_p);
+			node_p = next_node_p;
 		}
 
 	IExec->FreeSysObject (ASOT_LIST, (APTR) list_p);
