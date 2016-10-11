@@ -67,7 +67,7 @@ BOOL ExtendByteBuffer (ByteBuffer *buffer_p, size_t increment)
 
 BOOL ResizeByteBuffer (ByteBuffer *buffer_p, size_t new_size)
 {
-	ENTER ():
+	ENTER ();
 
 	BOOL success_flag = FALSE;
 	STRPTR new_data_p = (STRPTR) IExec->AllocVecTags (new_size, AVT_ClearWithValue, 0, TAG_DONE);

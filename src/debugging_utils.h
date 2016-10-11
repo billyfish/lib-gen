@@ -23,7 +23,7 @@
 #ifdef _DEBUG
 	#define DB(X)	(X)
 	#define ENTER() IExec->DebugPrintF("Entered %s in %s at line %d\n", __func__, __FILE__, __LINE__)
-	#define LEAVE() IExec->DenugPrintF("Leaving %s in %s at line %d\n", __func__, __FILE__, __LINE__)
+	#define LEAVE() IExec->DebugPrintF("Leaving %s in %s at line %d\n", __func__, __FILE__, __LINE__)
 #else
 	#define DB(X)
 #define ENTER()

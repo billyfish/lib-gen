@@ -23,7 +23,7 @@ BIN = libgen
 
 INCPATH = -I.
 
-CFLAGS = $(INCPATH) -Wall -Wextra -Wwrite-strings -Wpedantic -Wshadow -D_AMIGA_  -D_DEBUG -gstabs
+CFLAGS = $(INCPATH) -Wall -Wextra -Wwrite-strings  -Wshadow -D_AMIGA_  -D_DEBUG -gstabs
 
 LDFLAGS = 
 
@@ -62,7 +62,7 @@ $(BIN): $(OBJ) $(LIBS)
 # because we are hiding compiler commands from the output
 
 .c.o:
-	@echo "Compiling $<"
+	@echo "Compiling $< with $(CFLAGS)"
 	@$(CC) -c $< -o $*.o $(CFLAGS)
 
 auto_init_writer.o: src/auto_init_writer.c src/auto_init_writer.h src/utils.h

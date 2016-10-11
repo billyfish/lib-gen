@@ -195,7 +195,7 @@ struct Parameter *ParseParameter (const char *start_p, const char *end_p)
 			else if (c == ']')
 				{
 					/* find the opening array bracket */
-					BOOL matched_flag = FALSE;
+//					BOOL matched_flag = FALSE;
 
 					while (loop_flag && !matched_flag)
 						{

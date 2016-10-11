@@ -755,6 +755,10 @@ BOOL WriteSourceForAllFunctionDefinitions (struct List *fn_defs_p, CONST_STRPTR 
 						{
 							node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p);
 						}
+					else
+						{
+							IDOS->Printf ("Error writing source for %s", fn_def_p -> fd_filename_s);
+						}
 				}
 		}
 

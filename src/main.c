@@ -544,10 +544,10 @@ BOOL GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR 
 									IDOS->Printf ("Parsing \"%s\"\n", filename_s);
 
 									/* Get the list of matching prototypes in each file */
-									if (!ParseFile (prototype_regexp_s, filename_s, function_definitions_p, document_parser_p))
-										{
-											success_flag = FALSE;
-										}
+									//if (!ParseFile (prototype_regexp_s, filename_s, function_definitions_p, document_parser_p))
+									//	{
+									//		success_flag = FALSE;
+									//	}
 								}
 
 							FreeDocumentParser (document_parser_p);
