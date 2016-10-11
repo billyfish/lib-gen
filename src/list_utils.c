@@ -13,7 +13,7 @@ void FreeList (struct List *list_p)
 
 	while (node_p)
 		{
-			DB (KPRINTF ("%s %ld - About to free node name %s\n", __FILE__, __LINE__, i, (node_p -> ln_Name) ? (node_p -> ln_Name) : "<NULL>"));
+			DB (KPRINTF ("%s %ld - About to free node name %s\n", __FILE__, __LINE__, (node_p -> ln_Name) ? (node_p -> ln_Name) : "<NULL>"));
 
 			if (node_p -> ln_Name)
 				{
