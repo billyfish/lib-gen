@@ -23,7 +23,7 @@ BIN = libgen
 
 INCPATH = -I.
 
-CFLAGS = $(INCPATH) -Wall -Wextra -Wwrite-strings -D_AMIGA_  -D_DEBUG -gstabs
+CFLAGS = $(INCPATH) -Wall -Wextra -Wwrite-strings -Wpedantic -Wshadow -D_AMIGA_  -D_DEBUG -gstabs
 
 LDFLAGS = 
 

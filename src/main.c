@@ -203,10 +203,6 @@ int main (int argc, char *argv [])
 							result = Run (input_dir_s, filename_pattern_s, prototype_pattern_s, library_s, recurse_flag, version, flag, generate_code_flag);
 						}		/* if (input_dir_s && filename_pattern_s) */
 
-
-
-
-
 					if ((prototype_pattern_s != NULL) && (prototype_pattern_s != S_DEFAULT_PROTOTYPE_PATTERN_S))
 						{
 							DB (KPRINTF ("%s %ld - freeing prototype_pattern_s:= \"%s\"\n", __FILE__, __LINE__, prototype_pattern_s));
@@ -312,7 +308,6 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 				}
 		}
 
-
 	if (GeneratePrototypesList (root_path_s, filename_regexp_s, prototype_regexp_s, recurse_flag, &function_defs))
 		{
 			Writer *writer_p = AllocateIDLWriter ();
@@ -329,7 +324,6 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 						{
 							BPTR out_p = IDOS->FOpen (output_s, MODE_NEWFILE, 0);
 
-
 							if (out_p)
 								{
 									DB (KPRINTF ("%s %ld - opened output_s %s", __FILE__, __LINE__, output_s));
@@ -339,9 +333,9 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 									if (WriteFunctionDefinitionsList (writer_p, &function_defs, library_s, version, flag, out_p))
 										{
 											STRPTR makefile_s = ConcatenateStrings (library_s, ".makefile");
-											
+
 											IDOS->Printf ("Successfully wrote header definitions to %s\n", output_s);
-											
+
 											if (makefile_s)
 												{
 													if (WriteMakefile (makefile_s, library_s, &function_defs))
@@ -350,25 +344,25 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 														}
 													else
 														{
-															
+
 														}
-													
+
 													IExec->FreeVec (makefile_s);
 												}
 											else
 												{
 													IDOS->Printf ("Failed to create makefile at %s", makefile_s);
 												}
-											
-											
-											
-											
+
+
+
+
 											/*
 												Write the makefile, vectors, init, autoinit_base, obtain and release files
 											*/
-											
-											
-											
+
+
+
 										}
 									else
 										{
@@ -525,9 +519,9 @@ BOOL GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR 
 
 					if (document_parser_p)
 						{
-							success_flag = TRUE;
 							struct Node *node_p;
 
+							success_flag = TRUE;
 							IDOS->Printf ("Found %lu header files\n", num_header_files);
 
 							for (node_p = IExec->GetHead (headers_p); node_p != NULL; node_p = IExec->GetSucc (node_p))
@@ -543,7 +537,7 @@ BOOL GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR 
 										}
 								}
 
-							//FreeDocumentParser (document_parser_p);
+							FreeDocumentParser (document_parser_p);
 						}
 					else
 						{

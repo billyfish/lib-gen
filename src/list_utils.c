@@ -32,14 +32,7 @@ uint32 GetListSize (struct List * const list_p)
 		{
 			++ i;
 
-			if (node_p -> ln_Name)
-				{
-					DB (KPRINTF ("%s %ld - GetListSize i: %lu node name %s\n", __FILE__, __LINE__, i, node_p -> ln_Name));
-				}
-			else
-				{
-					DB (KPRINTF ("%s %ld - GetListSize i: %lu node name <NULL>\n", __FILE__, __LINE__, i));
-				}
+			DB (KPRINTF ("%s %ld - GetListSize i: %lu node name %s\n", __FILE__, __LINE__, i, (node_p -> ln_Name) ? (node_p -> ln_Name) : "<NULL>"));
 		}
 
 	return i;
