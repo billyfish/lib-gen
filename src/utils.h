@@ -12,6 +12,17 @@ enum Verbosity
 	VB_LOUD
 };
 
+#ifdef ALLOCATE_GLOBALS
+	#define PREFIX 
+	#define VAL(x)	= x
+#else
+	#define PREFIX extern
+	#define VAL(x)
+#endif
+
+
+PREFIX const char *SOURCE_DIR_SUFFIX_S VAL("_source"); 
+
 
 #ifdef __cplusplus
 extern "C" {

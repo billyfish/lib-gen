@@ -4,7 +4,7 @@
 #
 # Project: libgen
 #
-# Created on: 30-08-2016 17:23:16
+# Created on: 04-11-2016 18:24:42
 #
 #
 
@@ -23,7 +23,7 @@ BIN = libgen
 
 INCPATH = -I.
 
-CFLAGS = $(INCPATH) -Wall -Wextra -Wwrite-strings  -Wshadow -D_AMIGA_  -D_DEBUG -gstabs
+CFLAGS = $(INCPATH) -Wall -Wextra -Wwrite-strings -D_AMIGA_  -D_DEBUG -gstabs
 
 LDFLAGS = 
 
@@ -62,16 +62,16 @@ $(BIN): $(OBJ) $(LIBS)
 # because we are hiding compiler commands from the output
 
 .c.o:
-	@echo "Compiling $< with $(CFLAGS)"
+	@echo "Compiling $<"
 	@$(CC) -c $< -o $*.o $(CFLAGS)
 
-auto_init_writer.o: src/auto_init_writer.c src/auto_init_writer.h src/utils.h
+auto_init_writer.o: src/auto_init_writer.c src/auto_init_writer.h src/utils.h src/debugging_utils.h
 
 init_writer.o: src/init_writer.c
 
 inline_header_writer.o: src/inline_header_writer.c
 
-makefile_writer.o: src/makefile_writer.c src/makefile_writer.h src/function_definition.h src/parameter.h src/utils.h
+makefile_writer.o: src/makefile_writer.c src/makefile_writer.h src/function_definition.h src/parameter.h src/utils.h src/debugging_utils.h
 
 proto_header_writer.o: src/proto_header_writer.c
 
@@ -81,7 +81,7 @@ byte_buffer.o: src/byte_buffer.c src/byte_buffer.h src/utils.h src/debugging_uti
 
 document_parser.o: src/document_parser.c src/document_parser.h src/byte_buffer.h src/utils.h src/debugging_utils.h
 
-library_utils.o: src/library_utils.c src/library_utils.h
+library_utils.o: src/library_utils.c src/library_utils.h src/debugging_utils.h
 
 idl_writer.o: src/idl_writer.c src/idl_writer.h src/writer.h src/function_definition.h src/parameter.h src/debugging_utils.h
 
@@ -93,11 +93,11 @@ parameter.o: src/parameter.c src/debugging_utils.h src/parameter.h src/utils.h
 
 function_definition.o: src/function_definition.c src/function_definition.h src/parameter.h src/debugging_utils.h src/utils.h
 
-writer.o: src/writer.c src/writer.h src/function_definition.h src/parameter.h
+writer.o: src/writer.c src/writer.h src/function_definition.h src/parameter.h src/debugging_utils.h
 
-c_writer.o: src/c_writer.c src/c_writer.h src/writer.h src/function_definition.h
+c_writer.o: src/c_writer.c src/c_writer.h src/writer.h src/function_definition.h src/debugging_utils.h
 
-makefile_utils.o: src/makefile_utils.c src/makefile_utils.h src/function_definition.h src/parameter.h src/utils.h
+makefile_utils.o: src/makefile_utils.c src/makefile_utils.h src/function_definition.h src/parameter.h src/utils.h src/debugging_utils.h
 
 vectors.o: src/vectors.c src/function_definition.h src/parameter.h src/debugging_utils.h
 

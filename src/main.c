@@ -28,6 +28,8 @@
 #include <proto/exec.h>
 #include <proto/utility.h>
 
+#define ALLOCATE_GLOBALS (1)
+
 #include "utils.h"
 #include "function_definition.h"
 #include "document_parser.h"
@@ -412,7 +414,7 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 
 	if (gen_source_flag)
 		{
-			STRPTR output_dir_s = ConcatenateStrings (library_s, "_source");
+			STRPTR output_dir_s = ConcatenateStrings (library_s, SOURCE_DIR_SUFFIX_S);
 
 			if (output_dir_s)
 				{
@@ -544,10 +546,10 @@ BOOL GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR 
 									IDOS->Printf ("Parsing \"%s\"\n", filename_s);
 
 									/* Get the list of matching prototypes in each file */
-									//if (!ParseFile (prototype_regexp_s, filename_s, function_definitions_p, document_parser_p))
-									//	{
-									//		success_flag = FALSE;
-									//	}
+									if (!ParseFile (prototype_regexp_s, filename_s, function_definitions_p, document_parser_p))
+										{
+											success_flag = FALSE;
+										}
 								}
 
 							FreeDocumentParser (document_parser_p);
