@@ -48,6 +48,7 @@ BOOL EnsureDirectoryExists (CONST_STRPTR dir_s);
 
 STRPTR GetSourceFilename (CONST CONST_STRPTR header_filename_s);
 
+BOOL CopyFile (CONST CONST_STRPTR src_s, CONST CONST_STRPTR dest_s);
 
 #ifdef __cplusplus
 }

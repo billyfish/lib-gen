@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<CodeBench_Project name="libgen" path="DH6:Projects/libgen/libgen.cbp" created="1119285779" lastmodified="1225825115">
+<CodeBench_Project name="libgen" path="DH6:Projects/libgen/libgen.cbp" created="1119285779" lastmodified="1225843443">
 	<plugin name="PROGDIR:Plugins/AmigaOS4SDK.CCPlugin" flags="16"/>
 	<label identifier="////"/>
 	<target name="libgen" run="libgen"/>
@@ -16,43 +16,46 @@
 		<file name="src/byte_buffer.h" open="1" top="0" left="0" line="5" row="0"/>
 		<file name="src/library_utils.h" open="0"/>
 		<file name="src/list_utils.h" open="0"/>
-		<file name="src/utils.h" open="0"/>
-		<file name="src/debugging_utils.h" open="0"/>
+		<file name="src/utils.h" open="1" top="0" left="0" line="50" row="1"/>
+		<file name="src/debugging_utils.h" open="1" top="0" left="0" line="0" row="0"/>
 		<file name="src/parameter.h" open="0"/>
 		<file name="src/writer.h" open="0"/>
 		<file name="src/idl_writer.h" open="0"/>
-		<file name="src/function_definition.h" open="0"/>
+		<file name="src/function_definition.h" open="1" top="0" left="0" line="0" row="0"/>
 		<file name="src/c_writer.h" open="0"/>
 		<file name="src/makefile_utils.h" open="0"/>
 		<file name="src/document_parser.h" open="0"/>
 		<file name="src/auto_init_writer.h" open="0"/>
 		<file name="src/makefile_writer.h" open="0"/>
-		<file name="src/vectors.h" open="1" current="1" top="0" left="0" line="28" row="0"/>
+		<file name="src/vectors.h" open="1" top="0" left="0" line="24" row="46"/>
 	</headers>
 	<sources>
 		<file name="src/auto_init_writer.c" open="0"/>
-		<file name="src/init_writer.c" open="0"/>
+		<file name="src/init_writer.c" open="1" top="285" left="0" line="306" row="0"/>
 		<file name="src/inline_header_writer.c" open="0"/>
-		<file name="src/makefile_writer.c" open="1" top="0" left="0" line="0" row="0"/>
+		<file name="src/makefile_writer.c" open="1" top="74" left="0" line="85" row="0"/>
 		<file name="src/proto_header_writer.c" open="0"/>
 		<file name="src/list_utils.c" open="0"/>
 		<file name="src/byte_buffer.c" open="1" top="0" left="0" line="0" row="0"/>
 		<file name="src/document_parser.c" open="1" top="0" left="0" line="0" row="0"/>
 		<file name="src/library_utils.c" open="0"/>
 		<file name="src/idl_writer.c" open="1" top="0" left="0" line="21" row="0"/>
-		<file name="src/main.c" open="1" top="638" left="0" line="648" row="22"/>
-		<file name="src/utils.c" open="1" top="0" left="0" line="0" row="0"/>
+		<file name="src/main.c" open="1" top="393" left="0" line="430" row="22"/>
+		<file name="src/utils.c" open="1" current="1" top="354" left="0" line="391" row="13"/>
 		<file name="src/parameter.c" open="1" top="0" left="0" line="0" row="0"/>
-		<file name="src/function_definition.c" open="1" top="432" left="0" line="442" row="0"/>
+		<file name="src/function_definition.c" open="1" top="725" left="0" line="725" row="31"/>
 		<file name="src/writer.c" open="1" top="0" left="0" line="0" row="0"/>
 		<file name="src/c_writer.c" open="1" top="0" left="0" line="0" row="0"/>
 		<file name="src/makefile_utils.c" open="1" top="0" left="0" line="0" row="0"/>
-		<file name="src/vectors.c" open="1" top="5" left="0" line="34" row="0"/>
+		<file name="src/vectors.c" open="1" top="28" left="0" line="38" row="1"/>
 	</sources>
+	<others>
+		<file name="data/lib_manager.c.template" open="0"/>
+	</others>
 	<flags value="0x0000000002001005"/>
 	<buildscript name="Makefile" depth="3" open="0"/>
 	<projectnotes open="0"/>
 	<buildwindow open="1"/>
 	<logfile name="RAM Disk:Build.log"/>
-	<repository plugin="PROGDIR:plugins/svntool.syncplugin" lastcommit="1220525821" lastupdate="1225301742"/>
+	<repository plugin="PROGDIR:plugins/svntool.syncplugin" lastcommit="1225825248" lastupdate="1225301742"/>
 </CodeBench_Project>

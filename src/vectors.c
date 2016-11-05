@@ -36,7 +36,40 @@ static BOOL WriteVectors (BPTR vector_file_p, CONST CONST_STRPTR library_s, stru
 /******** END STATIC DECLARATIONS *******/
 
 
-BOOL WriteVectorsFile (BPTR vector_file_p, CONST CONST_STRPTR library_s, struct List *function_defs_p)
+BOOL WriteVectorsFile (CONST CONST_STRPTR source_directory_s, CONST CONST_STRPTR library_s, struct List *function_defs_p)
+{
+	BOOL success_flag = FALSE;
+	STRPTR vectors_header_s = NULL;
+	
+	ENTER ();
+	
+	vectors_header_s = MakeFilename (source_directory_s, "vectors.h");
+	
+	if (vectors_header_s)
+		{
+			BPTR vectors_f = IDOS->FOpen (vectors_header_s, MODE_NEWFILE, 0);
+			
+			if (vectors_f)
+				{
+					success_flag = WriteVectors (vectors_f, library_s, function_defs_p);
+				
+					if (IDOS->FClose (vectors_f) == 0)
+						{
+							
+						}
+						
+				}		/* if (vectors_f) */
+			
+			IExec->FreeVec (vectors_header_s);
+		}		/* if (vectors_header_s) */
+	
+	LEAVE ();
+	return success_flag;
+}
+
+
+
+BOOL WriteVectors (BPTR vector_file_p, CONST CONST_STRPTR library_s, struct List *function_defs_p)
 {
 	ENTER ();
 

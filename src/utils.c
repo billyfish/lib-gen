@@ -384,3 +384,67 @@ int32 ScanDirectories (CONST_STRPTR dir_s, struct List *filenames_p, CONST_STRPT
 	LEAVE ();
 	return success;
 }
+
+
+BOOL CopyFile (CONST CONST_STRPTR src_s, CONST CONST_STRPTR dest_s)
+{
+	BOOL success_flag = FALSE;
+	BPTR src_f;
+	
+	ENTER ();
+	
+	src_f = IDOS->FOpen (src_s, MODE_OLDFILE, 0);
+	
+	if (src_f)
+		{
+			BPTR dest_f = IDOS->FOpen (dest_s, MODE_NEWFILE, 0);
+
+			if (dest_f)
+				{
+					BOOL loop_flag = true;
+					const int32 buffer_size = 1024;
+					char buffer_p [buffer_size];
+					
+					success_flag = true;
+					
+					while (loop_flag && success_flag)
+						{
+							int32 res = IDOS->Read (src_f, buffer_p, buffer_size);
+							
+							if (res > 0)
+								{
+									IDOS->Write (dest_f, buffer_p, res);
+								}
+							else if (res == 0)
+								{
+									/* EOF */
+									loop_flag = FALSE;
+								}
+							else if (res == -1)
+								{
+									/* error */
+									success_flag = FALSE;
+								}
+													
+						}
+					
+					
+					if (success_flag)
+						{
+							int64 src_size = IDOS->GetFileSize (src_f);
+							int64 dest_size = IDOS->GetFileSize (dest_f);
+							
+						}
+			
+					IDOS->FClose (dest_f);
+				}	
+			
+			IDOS->FClose (src_f);
+		}
+	
+	LEAVE ();
+	
+	return success_flag;
+}
+
+

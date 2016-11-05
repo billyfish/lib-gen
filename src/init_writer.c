@@ -246,3 +246,176 @@
 "};\n"  \
 "\n"  \)
 
+
+
+static BOOL WriteLibInterfaceCode ()
+{
+	CONST CONST_STRPTR part0_s =
+		"struct Library\n" \
+		"{\n" \
+	  "\tstruct Library libNode;\n" \
+	  "\tBPTR segList;\n" \
+	  "/* If you need more data fields, add them here */\n" \
+		"};\n" \
+		"\n" \
+		"/*\n" \
+ 		"* The system (and compiler) rely on a symbol named _start which marks\n" \
+ 		"* the beginning of execution of an ELF file. To prevent others from \n" \
+ 		"* executing this library, and to keep the compiler/linker happy, we\n" \
+ 		"* define an empty _start symbol here.\n" \
+ 		"*\n" \
+ 		"* On the classic system (pre-AmigaOS 4.x) this was usually done by\n" \
+ 		"* moveq #0,d0\n" \
+ 		"* rts\n" \
+ 		"*\n" \
+ 		"*/\n" \
+		"int32 _start(void);\n" \
+		"\n" \
+		"int32 _start(void)\n" \
+		"{\n" \
+    "\t/* If you feel like it, open DOS and print something to the user */\n" \
+    "\treturn RETURN_FAIL;\n" \
+		"}\n\n\n" \
+		"/* Open the library */\n" \
+		"STATIC struct Library *libOpen(struct LibraryManagerInterface *Self, ULONG version)\n" \
+		"{\n" \
+    "\tstruct Library *libBase = (struct Library *)Self->Data.LibBase; \n" \
+		"\n" \
+    "\tif (version > VERSION)\n" \
+    "\t\t{\n" \
+    "\t\t\treturn NULL;\n" \
+    "\t}\n" \
+		"\t\n" \
+    "\t/* Add any specific open code here \n" \
+    "\t   Return 0 before incrementing OpenCnt to fail opening */\n" \
+		"\n" \
+    "\t/* Add up the open count */\n" \
+    "\tlibBase->libNode.lib_OpenCnt++;\n" \
+    "\treturn (struct Library *)libBase;\n" \
+		"}\n\n\n" \
+		"/* Close the library */\n" \
+		"STATIC APTR libClose(struct LibraryManagerInterface *Self)\n" \
+		"{\n" \
+		"struct Library *libBase = (struct Library *)Self->Data.LibBase;\n" \
+		"/* Make sure to undo what open did */\n" \
+		"\n" \
+    "/* Make the close count */\n" \
+    "((struct Library *)libBase)->lib_OpenCnt--;\n" \
+		"\n" \
+    "return 0;\n" \
+		"}\n\n" \
+
+
+/* Expunge the library */
+STATIC APTR libExpunge(struct LibraryManagerInterface *Self)
+{
+    /* If your library cannot be expunged, return 0 */
+    struct ExecIFace *IExec
+        = (struct ExecIFace *)(*(struct ExecBase **)4)->MainInterface;
+    APTR result = (APTR)0;
+    struct Library *libBase = (struct Library *)Self->Data.LibBase;
+    if (libBase->libNode.lib_OpenCnt == 0)
+    {
+	     result = (APTR)libBase->segList;
+        /* Undo what the init code did */
+
+        IExec->Remove((struct Node *)libBase);
+        IExec->DeleteLibrary((struct Library *)libBase);
+    }
+    else
+    {
+        result = (APTR)0;
+        libBase->libNode.lib_Flags |= LIBF_DELEXP;
+    }
+    return result;
+}
+
+/* The ROMTAG Init Function */
+STATIC struct Library *libInit(struct Library *LibraryBase, APTR seglist, struct Interface *exec)
+{
+    struct Library *libBase = (struct Library *)LibraryBase;
+    struct ExecIFace *IExec UNUSED = (struct ExecIFace *)exec;
+
+    libBase->libNode.lib_Node.ln_Type = NT_LIBRARY;
+    libBase->libNode.lib_Node.ln_Pri  = 0;
+    libBase->libNode.lib_Node.ln_Name = "";
+    libBase->libNode.lib_Flags        = LIBF_SUMUSED|LIBF_CHANGED;
+    libBase->libNode.lib_Version      = VERSION;
+    libBase->libNode.lib_Revision     = REVISION;
+    libBase->libNode.lib_IdString     = VSTRING;
+
+    libBase->segList = (BPTR)seglist;
+
+    /* Add additional init code here if you need it. For example, to open additional
+       Libraries:
+       libBase->UtilityBase = IExec->OpenLibrary("utility.library", 50L);
+       if (libBase->UtilityBase)
+       {
+           libBase->IUtility = (struct UtilityIFace *)IExec->GetInterface(ElfBase->UtilityBase, 
+              "main", 1, NULL);
+           if (!libBase->IUtility)
+               return NULL;
+       } else return NULL; */
+
+       return (struct Library *)libBase;
+}
+
+/* ------------------- Manager Interface ------------------------ */
+/* These are generic. Replace if you need more fancy stuff */
+STATIC uint32 _manager_Obtain(struct LibraryManagerInterface *Self)
+{
+	uint32 res;
+	__asm__ __volatile__(
+	"1:	lwarx	%0,0,%1\n"
+	"addic	%0,%0,1\n"
+	"stwcx.	%0,0,%1\n"
+	"bne-	1b"
+	: "=&r" (res)
+	: "r" (&Self->Data.RefCount)
+	: "cc", "memory");
+
+	return res;
+}
+
+STATIC uint32 _manager_Release(struct LibraryManagerInterface *Self)
+{
+	uint32 res;
+	__asm__ __volatile__(
+	"1:	lwarx	%0,0,%1\n"
+	"addic	%0,%0,-1\n"
+	"stwcx.	%0,0,%1\n"
+	"bne-	1b"
+	: "=&r" (res)
+	: "r" (&Self->Data.RefCount)
+	: "cc", "memory");
+
+	return res;
+}
+
+/* Manager interface vectors */
+STATIC CONST APTR lib_manager_vectors[] =
+{
+	_manager_Obtain,
+	_manager_Release,
+	NULL,
+	NULL,
+	libOpen,
+	libClose,
+	libExpunge,
+	NULL,
+	(APTR)-1
+};
+
+/* "__library" interface tag list */
+STATIC CONST struct TagItem lib_managerTags[] =
+{
+	{ MIT_Name,			(Tag)"__library"		},
+	{ MIT_VectorTable,	(Tag)lib_manager_vectors},
+	{ MIT_Version,		1						},
+	{ TAG_DONE,			0						}
+};
+
+	
+}
+
+

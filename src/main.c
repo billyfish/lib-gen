@@ -423,6 +423,18 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 							if (WriteSourceForAllFunctionDefinitions (&function_defs, output_dir_s, library_s))
 								{
 									IDOS->Printf ("Generating source succeeded");
+									
+									if (WriteVectorsFile (output_dir_s, library_s, &function_defs))
+										{
+											IDOS->Printf ("Generating vectors succeeded");
+											
+											
+										}
+									else
+										{
+											IDOS->Printf ("Generating vectors failed");
+										}
+									
 								}
 							else
 								{
