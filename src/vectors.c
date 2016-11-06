@@ -21,6 +21,7 @@
 
 #include "function_definition.h"
 #include "debugging_utils.h"
+#include "utils.h"
 
 
 /******* BEGIN STATIC DECLARTAIONS ******/
@@ -31,7 +32,11 @@ static BOOL WriteFunctionDeclaration (BPTR vector_file_p, CONST CONST_STRPTR lib
 
 static BOOL WriteLibraryIncludes (BPTR vector_file_p, struct List *function_defs_p);
 
+static BOOL WriteVectorsArray (BPTR vector_file_p, CONST CONST_STRPTR library_s, struct List *function_defs_p);
+
 static BOOL WriteVectors (BPTR vector_file_p, CONST CONST_STRPTR library_s, struct List *function_defs_p);
+
+static BOOL WriteFunctionNameIntoArray (BPTR vector_f, CONST CONST_STRPTR library_s, const struct FunctionDefinition *function_def_p);
 
 /******** END STATIC DECLARATIONS *******/
 
@@ -69,7 +74,7 @@ BOOL WriteVectorsFile (CONST CONST_STRPTR source_directory_s, CONST CONST_STRPTR
 
 
 
-BOOL WriteVectors (BPTR vector_file_p, CONST CONST_STRPTR library_s, struct List *function_defs_p)
+static BOOL WriteVectors (BPTR vector_file_p, CONST CONST_STRPTR library_s, struct List *function_defs_p)
 {
 	ENTER ();
 
@@ -85,7 +90,7 @@ BOOL WriteVectors (BPTR vector_file_p, CONST CONST_STRPTR library_s, struct List
 					if (WriteFunctionDeclarations (vector_file_p, library_s, function_defs_p))
 						{
 							/* Declare the library vectors */
-							if (WriteVectors (vector_file_p, library_s, function_defs_p))
+							if (WriteVectorsArray (vector_file_p, library_s, function_defs_p))
 								{
 									success_flag = TRUE;
 								}
@@ -144,7 +149,7 @@ static BOOL WriteFunctionDeclarations (BPTR vector_file_p, CONST CONST_STRPTR li
 		{
 			struct FunctionDefinition *fn_def_p = node_p -> fdn_function_def_p;
 
-			if (WriteFunctionDeclaration (vector_file_p, library_s,  fn_def_p))
+			if (WriteFunctionDeclaration (vector_file_p, library_s, fn_def_p))
 				{
 					node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p);
 				}
@@ -163,7 +168,7 @@ static BOOL WriteFunctionDeclaration (BPTR vector_file_p, CONST CONST_STRPTR lib
 {
 	ENTER ();
 
-	if (WriteLibraryFunctionDefinition (vector_file_p, library_s, function_def_p))
+	if (WriteInterfaceFunctionDefinition (vector_file_p, library_s, function_def_p))
 		{
 			if (IDOS->FPrintf (vector_file_p, ";\n") >= 0)
 				{
@@ -184,13 +189,13 @@ static BOOL WriteFunctionDeclaration (BPTR vector_file_p, CONST CONST_STRPTR lib
 }
 
 
-static BOOL WriteVectors (BPTR vector_file_p, CONST CONST_STRPTR library_s, struct List *function_defs_p)
+static BOOL WriteVectorsArray (BPTR vector_file_p, CONST CONST_STRPTR library_s, struct List *function_defs_p)
 {
 	ENTER ();
 
 	BOOL success_flag = TRUE;
 
-	if (IDOS->FPrintf (vector_file_p, "STATIC CONST APTR %s_vectors [] = {\n,%t%s_Obtain,\n,%t%s_Release,\n,\tNULL,\n\tNULL,\n", library_s, library_s, library_s) >= 0)
+	if (IDOS->FPrintf (vector_file_p, "STATIC CONST APTR %s_vectors [] = \n{\n\t%s_Obtain,\n\t%s_Release,\n\tNULL,\n\tNULL,\n", library_s, library_s, library_s) >= 0)
 		{
 			struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (function_defs_p);
 
@@ -198,7 +203,7 @@ static BOOL WriteVectors (BPTR vector_file_p, CONST CONST_STRPTR library_s, stru
 				{
 					struct FunctionDefinition *function_def_p = node_p -> fdn_function_def_p;
 
-					if (WriteFunctionDefinitionFunctionName (vector_file_p, library_s, function_def_p))
+					if (WriteFunctionNameIntoArray (vector_file_p, library_s, function_def_p))
 						{
 							node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p);
 						}
@@ -224,3 +229,40 @@ static BOOL WriteVectors (BPTR vector_file_p, CONST CONST_STRPTR library_s, stru
 	LEAVE ();
 	return success_flag;
 }
+
+
+static BOOL WriteFunctionNameIntoArray (BPTR vector_f, CONST CONST_STRPTR library_s, const struct FunctionDefinition *function_def_p)
+{
+	BOOL success_flag = FALSE;
+	
+	ENTER ();
+
+	if (IDOS->FPrintf (vector_f, "\t") >= 0)
+		{
+			if (WriteFunctionDefinitionFunctionName (vector_f, library_s, function_def_p))
+				{
+					if (IDOS->FPrintf (vector_f, ",\n") >= 0)
+						{
+							success_flag = TRUE;
+						}
+					else
+						{
+							DB (KPRINTF ("%s %ld - Failed to add newline after %s\n", __FILE__, __LINE__, function_def_p -> fd_definition_p -> pa_name_s ));
+						}
+				}
+			else
+				{
+					DB (KPRINTF ("%s %ld - Failed to write function name %s\n", __FILE__, __LINE__, function_def_p -> fd_definition_p -> pa_name_s ));
+				}
+		}
+	else
+		{
+			DB (KPRINTF ("%s %ld - Failed to add tab before %s\n", __FILE__, __LINE__, function_def_p -> fd_definition_p -> pa_name_s ));
+		}
+				
+	LEAVE ();
+	
+	return success_flag;
+}
+
+

@@ -38,6 +38,7 @@
 #include "library_utils.h"
 #include "list_utils.h"
 #include "makefile_writer.h"
+#include "vectors.h"
 
 
 static CONST CONST_STRPTR S_DEFAULT_FILENAME_PATTERN_S = "#?.h";
@@ -426,8 +427,30 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 									
 									if (WriteVectorsFile (output_dir_s, library_s, &function_defs))
 										{
+											STRPTR init_s = NULL;
+											
 											IDOS->Printf ("Generating vectors succeeded");
 											
+											init_s = MakeFilename (output_dir_s, "init.c");
+											
+											
+											if (init_s)
+												{
+													if (CopyFile ("data/lib_manager.c.template", init_s))
+														{
+															
+														}
+													else
+														{
+															IDOS->Printf ("Failed to generate init.c");
+														}
+													
+													IExec->FreeVec (init_s);	
+												}		/* if (init_s) */
+											else
+												{
+													IDOS->Printf ("Failed to get init.c full filename");
+												}
 											
 										}
 									else

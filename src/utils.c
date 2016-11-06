@@ -401,11 +401,11 @@ BOOL CopyFile (CONST CONST_STRPTR src_s, CONST CONST_STRPTR dest_s)
 
 			if (dest_f)
 				{
-					BOOL loop_flag = true;
+					BOOL loop_flag = TRUE;
 					const int32 buffer_size = 1024;
 					char buffer_p [buffer_size];
 					
-					success_flag = true;
+					success_flag = TRUE;
 					
 					while (loop_flag && success_flag)
 						{
@@ -433,6 +433,12 @@ BOOL CopyFile (CONST CONST_STRPTR src_s, CONST CONST_STRPTR dest_s)
 						{
 							int64 src_size = IDOS->GetFileSize (src_f);
 							int64 dest_size = IDOS->GetFileSize (dest_f);
+						
+							if (src_size != dest_size)
+								{
+									IDOS->Printf ("ScanDirectories: failed to copy %s to %s correctly, copied %ld instead of %ld\n", src_s, dest_s, dest_size, src_size);
+								}
+						
 							
 						}
 			

@@ -35,6 +35,7 @@ static BOOL WriteIncludes (BPTR out_p, CONST_STRPTR header_name_s);
 
 static BPTR GetSourceFileHandle (const struct FunctionDefinition *fn_def_p, CONST_STRPTR output_dir_s);
 
+static BOOL WriteLibraryFunctionDefinitionVariant (BPTR out_p, CONST CONST_STRPTR library_s, const struct FunctionDefinition * const fd_p, CONST CONST_STRPTR type_prefix_s, CONST CONST_STRPTR function_prefix_s,  CONST CONST_STRPTR self_type_s);
 
 
 void UnitTest (const char *prototype_s)
@@ -478,13 +479,58 @@ BOOL WriteFunctionDefinitionFunctionName (BPTR out_p, CONST CONST_STRPTR library
 }
 
 
+
 BOOL WriteLibraryFunctionDefinition (BPTR out_p, CONST CONST_STRPTR library_s, const struct FunctionDefinition * const fd_p)
+{
+	BOOL success_flag;
+	STRPTR self_type_s = NULL;
+	
+	ENTER ();
+	
+	self_type_s = ConcatenateStrings ("struct ", library_s);
+	
+	if (self_type_s)
+		{
+			success_flag = WriteLibraryFunctionDefinitionVariant (out_p, library_s, fd_p, NULL, NULL, self_type_s);
+			
+			IExec->FreeVec (self_type_s);
+		}
+	
+	LEAVE ();
+	
+	return success_flag;
+}
+
+
+BOOL WriteInterfaceFunctionDefinition (BPTR out_p, CONST CONST_STRPTR library_s, const struct FunctionDefinition * const fd_p)
+{
+	BOOL success_flag;
+	STRPTR self_type_s = NULL;
+	
+	ENTER ();
+	
+	self_type_s = ConcatenateStrings ("struct ", library_s);
+	
+	if (self_type_s)
+		{
+			success_flag = WriteLibraryFunctionDefinitionVariant (out_p, library_s, fd_p, "extern", "VARARGS68K", self_type_s);
+			
+			IExec->FreeVec (self_type_s);
+		}
+	
+	LEAVE ();
+	
+	return success_flag;
+}
+
+
+static BOOL WriteLibraryFunctionDefinitionVariant (BPTR out_p, CONST CONST_STRPTR library_s, const struct FunctionDefinition * const fd_p, CONST CONST_STRPTR type_prefix_s, CONST CONST_STRPTR function_prefix_s, CONST CONST_STRPTR self_type_s)
 {
 	BOOL success_flag = FALSE;
 
 	ENTER ();
 
-	if (IDOS->FPrintf (out_p, "%s ", fd_p -> fd_definition_p -> pa_type_s) >= 0)
+	if (IDOS->FPrintf (out_p, "%s %s %s ", type_prefix_s ? type_prefix_s : "", function_prefix_s ? function_prefix_s : "", fd_p -> fd_definition_p -> pa_type_s) >= 0)
 		{
 			if (WriteFunctionDefinitionFunctionName (out_p, library_s, fd_p))
 				{
@@ -495,7 +541,7 @@ BOOL WriteLibraryFunctionDefinition (BPTR out_p, CONST CONST_STRPTR library_s, c
 
 							if (curr_node_p)
 								{
-									if (IDOS->FPrintf (out_p, "struct %s *Self", library_s) >= 0)
+									if (IDOS->FPrintf (out_p, "%s *Self", self_type_s) >= 0)
 										{
 											if (curr_node_p != final_node_p)
 												{

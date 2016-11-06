@@ -105,6 +105,9 @@ BOOL WriteFunctionDefinitionFunctionName (BPTR out_p, CONST CONST_STRPTR library
 BOOL WriteLibraryFunctionDefinition (BPTR out_p, CONST CONST_STRPTR library_s, const struct FunctionDefinition * const fd_p);
 
 
+
+BOOL WriteInterfaceFunctionDefinition (BPTR out_p, CONST CONST_STRPTR library_s, const struct FunctionDefinition * const fd_p);
+
 #ifdef __cplusplus
 }
 #endif
