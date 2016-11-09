@@ -14,6 +14,7 @@
 
 */
 
+#include <ctype.h>
 #include <string.h>
 
 #include <proto/dos.h>
@@ -124,6 +125,7 @@ static BOOL WriteLibraryIncludes (BPTR vector_file_p, struct List *function_defs
 					else
 						{
 							DB (KPRINTF ("%s %ld - failed to write include filename for \"%s\"\n", __FILE__, __LINE__, fn_def_p -> fd_filename_s));
+							success_flag = FALSE;
 						}
 				}
 
@@ -133,6 +135,11 @@ static BOOL WriteLibraryIncludes (BPTR vector_file_p, struct List *function_defs
 				}
 		}
 
+	if (success_flag)
+		{
+			success_flag = (IDOS->FPrintf (vector_file_p, "\n") >= 0);
+		}
+
 	LEAVE ();
 	return success_flag;
 }
@@ -140,24 +147,44 @@ static BOOL WriteLibraryIncludes (BPTR vector_file_p, struct List *function_defs
 
 static BOOL WriteFunctionDeclarations (BPTR vector_file_p, CONST CONST_STRPTR library_s, struct List *function_defs_p)
 {
+	BOOL success_flag = TRUE;
+	struct FunctionDefinitionNode *node_p;
+	STRPTR interface_s;	
+	
 	ENTER ();
 
-	BOOL success_flag = TRUE;
-	struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (function_defs_p);
-
-	while (node_p && success_flag)
+	node_p = (struct FunctionDefinitionNode *) IExec->GetHead (function_defs_p);
+	interface_s = ConcatenateStrings (library_s, "IFace");
+	
+	if (interface_s)
 		{
-			struct FunctionDefinition *fn_def_p = node_p -> fdn_function_def_p;
-
-			if (WriteFunctionDeclaration (vector_file_p, library_s, fn_def_p))
+			/* Captialize the interface */
+			*interface_s = toupper (*interface_s);
+			
+			while (node_p && success_flag)
 				{
-					node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p);
-				}
-			else
-				{
-					success_flag = FALSE;
-				}
+					struct FunctionDefinition *fn_def_p = node_p -> fdn_function_def_p;
+		
+					if (WriteFunctionDeclaration (vector_file_p, interface_s, fn_def_p))
+						{
+							node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p);
+						}
+					else
+						{
+							success_flag = FALSE;
+						}
+				}			
+					
+			IExec->FreeVec (interface_s);
 		}
+
+
+	if (success_flag)
+		{
+			success_flag = (IDOS->FPrintf (vector_file_p, "\n") >= 0);
+		}
+
+
 
 	LEAVE ();
 	return success_flag;

@@ -34,6 +34,7 @@ static BOOL WritePreInterface (BPTR out_p);
 
 static BOOL WriteHeaderBottom (BPTR out_p, CONST CONST_STRPTR upper_case_library_s);
 
+static BOOL WriteInterface (BPTR out_p, struct List *function_defs_p, CONST CONST_STRPTR library_s);
 
 /*
  * API DEFINITIONS
@@ -74,27 +75,15 @@ BOOL WriteInterfaceHeader (struct List *function_defs_p, CONST CONST_STRPTR libr
 															
 															if (WritePreInterface (out_p))
 																{
-																	STRPTR interface_s = ConcatenateStrings (library_s, "IFace");
-	
-																	if (interface_s)
+																	if (WriteInterface (out_p, function_defs_p, library_s))
 																		{
-																			/* Captialize the interface */
-																			*interface_s = toupper (*interface_s);
-			
-																			/* Write out the interface structure */
-																			if (WriteAllInterfaceFunctionDefinitions (function_defs_p, out_p, interface_s))
-																				{
-																					
 																			
-																					if (WriteHeaderBottom (out_p, upper_case_library_s))
-																						{
-																							success_flag = TRUE;
-																						}
+																	
+																			if (WriteHeaderBottom (out_p, upper_case_library_s))
+																				{
+																					success_flag = TRUE;
 																				}
-																		
-																			IExec->FreeVec (interface_s);		
-																		}
-																					
+																		}					
 																}
 														}
 														
@@ -193,13 +182,22 @@ static BOOL WriteInterface (BPTR out_p, struct List *function_defs_p, CONST CONS
 			/* Captialize the interface */
 			*interface_s = toupper (*interface_s);
 			
-			if (IDOS->FPrintf (out_p, "struct %s\n{\n\tstruct InterfaceData Data;\n\n") >= 0)
+			if (IDOS->FPrintf (out_p, "struct %s\n{\n\tstruct InterfaceData Data;\n\n", interface_s) >= 0)
 				{
-					
-					if (IDOS->FPrintf (out_p, "};\n\n") >= 0)
+					if (IDOS->FPrintf (out_p, "\tuint32 APICALL (*Obtain) (struct %s *Self)\n"
+						"\tuint32 APICALL (*Release) (struct TestIFace *Self);\n"
+						"\tvoid APICALL (*Expunge) (struct TestIFace *Self);\n"
+						"\tstruct Interface * APICALL (*Clone) (struct TestIFace *Self);\n\n", 
+						interface_s, interface_s, interface_s, interface_s) >= 0)
 						{
-							success_flag = TRUE;
-						}	
+							if (WriteAllInterfaceFunctionDefinitions (function_defs_p, out_p, interface_s))
+								{
+									if (IDOS->FPrintf (out_p, "};\n\n") >= 0)
+										{
+											success_flag = TRUE;
+										}										
+								}							
+						}
 				}
 			
 			IExec->FreeVec (interface_s);	

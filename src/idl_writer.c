@@ -1,4 +1,5 @@
 #include <ctype.h>
+#include <string.h>
 
 #include <proto/exec.h>
 #include <proto/dos.h>
@@ -291,16 +292,25 @@ static BOOL WriteIDLIncludes (BPTR out_p, struct List *function_definitions_list
 
 	BOOL success_flag = TRUE;
 	struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (function_definitions_list_p);
-
+	CONST_STRPTR current_filename_s = "";
+	
 	while ((node_p != NULL) && success_flag)
 		{
-			if (IDOS->FPrintf (out_p, "\t<include>%s</include>\n", node_p -> fdn_function_def_p -> fd_filename_s) >= 0)
+			CONST_STRPTR next_filename_s = node_p -> fdn_function_def_p -> fd_filename_s;
+			
+			if (strcmp (current_filename_s, next_filename_s) != 0)
+				{
+					current_filename_s = next_filename_s;
+					
+					if (IDOS->FPrintf (out_p, "\t<include>%s</include>\n", current_filename_s) < 0)
+						{
+							success_flag = FALSE;
+						}
+				} 
+
+			if (success_flag)
 				{
 					node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p);
-				}
-			else
-				{
-					success_flag = FALSE;
 				}
 		}
 
