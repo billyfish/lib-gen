@@ -990,3 +990,52 @@ static BOOL WriteIncludes (BPTR out_p, CONST_STRPTR header_name_s)
 
 
 
+
+BOOL WriteFunctionDefinitionListIncludes (BPTR out_p, struct List *function_definitions_list_p, CONST CONST_STRPTR prefix_s, CONST CONST_STRPTR suffix_s)
+{
+	ENTER ();
+
+	BOOL success_flag = TRUE;
+	struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (function_definitions_list_p);
+	CONST_STRPTR current_filename_s = "";
+	
+	while ((node_p != NULL) && success_flag)
+		{
+			CONST_STRPTR next_filename_s = node_p -> fdn_function_def_p -> fd_filename_s;
+			
+			if (strcmp (current_filename_s, next_filename_s) != 0)
+				{
+					current_filename_s = next_filename_s;
+				
+					
+					if ((!prefix_s) || (IDOS->FPrintf (out_p, prefix_s) >= 0))
+						{
+							if (IDOS->FPrintf (out_p, "%s", current_filename_s) >= 0)
+								{
+									if (suffix_s && (IDOS->FPrintf (out_p, suffix_s) < 0))
+										{
+											success_flag = FALSE;
+										}
+								}
+							else
+								{
+									success_flag = FALSE;
+								}
+						}
+					else
+						{
+							success_flag = FALSE;
+						}
+				} 
+
+			if (success_flag)
+				{
+					node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p);
+				}
+		}
+
+	LEAVE ();
+	return success_flag;
+}
+
+

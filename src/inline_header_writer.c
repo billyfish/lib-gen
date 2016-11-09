@@ -9,9 +9,6 @@
 #include "utils.h"
 
 
-
-static BOOL WriteInlineIncludes (BPTR out_p, struct List *function_definitions_list_p);
-
 static BOOL WriteHeader (BPTR out_p, CONST CONST_STRPTR library_s);
 
 static BOOL WriteFooter (BPTR out_p, CONST CONST_STRPTR library_s);
@@ -45,7 +42,7 @@ BOOL WriteInlineHeader (struct List *function_definitions_list_p, CONST CONST_ST
 										{
 											if (WriteHeader (out_p, library_s))
 												{
-													if (WriteInlineIncludes (out_p, function_definitions_list_p))
+													if (WriteFunctionDefinitionListIncludes (out_p, function_definitions_list_p, "#include \"", "\""))
 														{
 															if (WriteFooter (out_p, library_s))
 																{
@@ -151,27 +148,4 @@ static BOOL WriteFooter (BPTR out_p, CONST CONST_STRPTR library_s)
 	return success_flag;
 }
 
-
-static BOOL WriteInlineIncludes (BPTR out_p, struct List *function_definitions_list_p)
-{
-	ENTER ();
-
-	BOOL success_flag = TRUE;
-	struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (function_definitions_list_p);
-
-	while ((node_p != NULL) && success_flag)
-		{
-			if (IDOS->FPrintf (out_p, "#include \"%s\"\n", node_p -> fdn_function_def_p -> fd_filename_s) >= 0)
-				{
-					node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p);
-				}
-			else
-				{
-					success_flag = FALSE;
-				}
-		}
-
-	LEAVE ();
-	return success_flag;
-}
 

@@ -153,7 +153,7 @@ static BOOL WriteIDLHeader (BPTR out_p, CONST CONST_STRPTR library_s, const int3
 																break;
 														}
 
-													if (WriteIDLIncludes (out_p, function_definitions_p))
+													if (WriteFunctionDefinitionListIncludes (out_p, function_definitions_p, "\t<include>", "</include>"))
 														{
 															if (IDOS->FPrintf (out_p, "\n\t<interface name=\"%s\" version=\"%lu.0\" flags=\"%s\" prefix=\"_%s_\" struct=\"", library_s, version, flags_s, library_s) >= 0)
 																{
@@ -283,42 +283,6 @@ static BOOL WriteIDLDefaultFunctions (BPTR out_p)
 	LEAVE ();
 	return success_flag;
 }
-
-
-
-static BOOL WriteIDLIncludes (BPTR out_p, struct List *function_definitions_list_p)
-{
-	ENTER ();
-
-	BOOL success_flag = TRUE;
-	struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (function_definitions_list_p);
-	CONST_STRPTR current_filename_s = "";
-	
-	while ((node_p != NULL) && success_flag)
-		{
-			CONST_STRPTR next_filename_s = node_p -> fdn_function_def_p -> fd_filename_s;
-			
-			if (strcmp (current_filename_s, next_filename_s) != 0)
-				{
-					current_filename_s = next_filename_s;
-					
-					if (IDOS->FPrintf (out_p, "\t<include>%s</include>\n", current_filename_s) < 0)
-						{
-							success_flag = FALSE;
-						}
-				} 
-
-			if (success_flag)
-				{
-					node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p);
-				}
-		}
-
-	LEAVE ();
-	return success_flag;
-}
-
-
 
 
 static BOOL WriteIDLFooter (BPTR out_p)

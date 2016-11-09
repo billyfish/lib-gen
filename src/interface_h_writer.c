@@ -72,18 +72,20 @@ BOOL WriteInterfaceHeader (struct List *function_defs_p, CONST CONST_STRPTR libr
 													if (WriteHeaderTop (out_p, upper_case_library_s))
 														{
 															/* Write library includes */
-															
-															if (WritePreInterface (out_p))
+															if (WriteFunctionDefinitionListIncludes (out_p, function_defs_p, "#include \"", "\""))
 																{
-																	if (WriteInterface (out_p, function_defs_p, library_s))
+																	if (WritePreInterface (out_p))
 																		{
-																			
-																	
-																			if (WriteHeaderBottom (out_p, upper_case_library_s))
+																			if (WriteInterface (out_p, function_defs_p, library_s))
 																				{
-																					success_flag = TRUE;
-																				}
-																		}					
+																					
+																			
+																					if (WriteHeaderBottom (out_p, upper_case_library_s))
+																						{
+																							success_flag = TRUE;
+																						}
+																				}					
+																		}
 																}
 														}
 														
@@ -216,7 +218,7 @@ static BOOL WritePreInterface (BPTR out_p)
 	
 	ENTER ();
 	
-	if (IDOS->FPrintf (out_p, "#ifdef __cplusplus\n"
+	if (IDOS->FPrintf (out_p, "\n\n#ifdef __cplusplus\n"
 		"#ifdef __USE_AMIGAOS_NAMESPACE__\n"
 		"namespace AmigaOS {\n"
 		"#endif\n"

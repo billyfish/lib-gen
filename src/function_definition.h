@@ -113,6 +113,10 @@ BOOL WriteInterfaceFunctionDefinition (BPTR out_p, CONST CONST_STRPTR library_s,
 
 BOOL WriteInterfaceHeaderDefinition (BPTR out_p, CONST CONST_STRPTR library_s, const struct FunctionDefinition * const fd_p);
 
+
+BOOL WriteFunctionDefinitionListIncludes (BPTR out_p, struct List *function_definitions_list_p, CONST CONST_STRPTR prefix_s, CONST CONST_STRPTR suffix_s);
+
+
 #ifdef __cplusplus
 }
 #endif
