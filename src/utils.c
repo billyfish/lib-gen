@@ -454,3 +454,98 @@ BOOL CopyFile (CONST CONST_STRPTR src_s, CONST CONST_STRPTR dest_s)
 }
 
 
+BOOL PrintUpperCase (BPTR out_p, CONST_STRPTR value_s)
+{
+	ENTER ();
+		
+	if (value_s)
+		{
+			while (*value_s != '\0')
+				{
+					char c = toupper (*value_s);
+					
+					DB (KPRINTF ("%s %ld - Converting from \"%s\" %d\n", __FILE__, __LINE__, value_s, (int) c));
+					
+					if (IDOS->FPrintf (out_p, "%lc", c) >= 0)
+						{
+							++ value_s;
+						}
+					else
+						{
+							return FALSE;
+						}
+				}
+			
+		}
+	
+	LEAVE ();
+	
+	return TRUE;
+}
+
+
+BOOL PrintCaptitalizedString (BPTR out_p, CONST_STRPTR value_s)
+{
+	BOOL success_flag = FALSE;
+	size_t l;
+	
+	ENTER ();
+
+	l = strlen (value_s);
+	
+	if (l > 0)
+		{
+			char c = toupper (*value_s);		
+			
+			if (l > 1)
+				{
+					success_flag = (IDOS->FPrintf (out_p, "%lc%s", c, value_s + 1) >= 0);	
+				}
+			else
+				{
+					success_flag = (IDOS->FPrintf (out_p, "%lc", c) >= 0);		
+				}	
+		}		
+	
+	LEAVE ();
+	
+	return success_flag;
+}
+
+
+
+STRPTR GetUpperCaseString (CONST_STRPTR src_s)
+{
+	STRPTR dest_s = NULL;
+	
+	ENTER ();
+	
+	if (src_s)
+		{
+			size_t l = strlen (src_s);	
+			
+			dest_s = (STRPTR) IExec->AllocVecTags (l + 1, TAG_END);
+			
+			if (dest_s)
+				{
+					STRPTR value_s = dest_s;
+					
+					while (*src_s != '\0')
+						{
+							*value_s = toupper (*src_s);
+							
+							++ src_s;
+							++ value_s;
+						}
+						
+					*value_s = '\0';
+				}
+		}
+	
+	
+	LEAVE ();
+	
+	return dest_s;
+}
+
+

@@ -50,6 +50,13 @@ STRPTR GetSourceFilename (CONST CONST_STRPTR header_filename_s);
 
 BOOL CopyFile (CONST CONST_STRPTR src_s, CONST CONST_STRPTR dest_s);
 
+BOOL PrintUpperCase (BPTR out_p, CONST_STRPTR value_s);
+
+BOOL PrintCaptitalizedString (BPTR out_p, CONST_STRPTR value_s);
+
+STRPTR GetUpperCaseString (CONST_STRPTR src_s);
+
+
 #ifdef __cplusplus
 }
 #endif

@@ -4,7 +4,7 @@
 #
 # Project: libgen
 #
-# Created on: 08-11-2016 23:56:22
+# Created on: 09-11-2016 10:27:54
 #
 #
 
@@ -73,7 +73,7 @@ inline_header_writer.o: src/inline_header_writer.c src/inline_header_writer.h sr
 
 makefile_writer.o: src/makefile_writer.c src/makefile_writer.h src/function_definition.h src/parameter.h src/utils.h src/debugging_utils.h
 
-proto_header_writer.o: src/proto_header_writer.c
+proto_header_writer.o: src/proto_header_writer.c src/proto_header_writer.h
 
 list_utils.o: src/list_utils.c src/list_utils.h src/debugging_utils.h
 

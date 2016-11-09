@@ -36,6 +36,7 @@
 #include "debugging_utils.h"
 #include "idl_writer.h"
 #include "inline_header_writer.h"
+#include "proto_header_writer.h"
 #include "library_utils.h"
 #include "list_utils.h"
 #include "makefile_writer.h"
@@ -430,33 +431,36 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 										{
 											if (WriteInlineHeader (&function_defs, library_s, output_dir_s))
 												{
-													STRPTR init_s = NULL;
-											
-													IDOS->Printf ("Generating vectors succeeded");
+													if (WriteProtoHeader (library_s, output_dir_s))
+														{						
+															STRPTR init_s = NULL;
 													
-													init_s = MakeFilename (output_dir_s, "init.c");
-													
-													
-													if (init_s)
-														{
-															if (CopyFile ("data/lib_manager.c.template", init_s))
+															IDOS->Printf ("Generating vectors succeeded");
+															
+															init_s = MakeFilename (output_dir_s, "init.c");
+															
+															
+															if (init_s)
 																{
+																	if (CopyFile ("data/lib_manager.c.template", init_s))
+																		{
+																			
+																		}
+																	else
+																		{
+																			IDOS->Printf ("Failed to generate init.c");
+																		}
 																	
-																}
+																	IExec->FreeVec (init_s);	
+																}		/* if (init_s) */
 															else
 																{
-																	IDOS->Printf ("Failed to generate init.c");
-																}
-															
-															IExec->FreeVec (init_s);	
-														}		/* if (init_s) */
-													else
-														{
-															IDOS->Printf ("Failed to get init.c full filename");
-														}		
-												}
-											
-	
+																	IDOS->Printf ("Failed to get init.c full filename");
+																}		
+																
+														}		/* if (WriteProtoHeader (library_s, output_dir_s)) */
+												
+												}		/* if (WriteInlineHeader (&function_defs, library_s, output_dir_s)) */
 											
 										}
 									else
