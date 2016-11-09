@@ -4,7 +4,7 @@
 #
 # Project: libgen
 #
-# Created on: 06-11-2016 11:15:39
+# Created on: 08-11-2016 23:56:22
 #
 #
 
@@ -69,7 +69,7 @@ auto_init_writer.o: src/auto_init_writer.c src/auto_init_writer.h src/utils.h sr
 
 init_writer.o: src/init_writer.c
 
-inline_header_writer.o: src/inline_header_writer.c
+inline_header_writer.o: src/inline_header_writer.c src/inline_header_writer.h src/debugging_utils.h src/function_definition.h src/parameter.h src/utils.h
 
 makefile_writer.o: src/makefile_writer.c src/makefile_writer.h src/function_definition.h src/parameter.h src/utils.h src/debugging_utils.h
 
@@ -85,7 +85,7 @@ library_utils.o: src/library_utils.c src/library_utils.h src/debugging_utils.h
 
 idl_writer.o: src/idl_writer.c src/idl_writer.h src/writer.h src/function_definition.h src/parameter.h src/debugging_utils.h
 
-main.o: src/main.c src/utils.h src/function_definition.h src/parameter.h src/document_parser.h src/byte_buffer.h src/debugging_utils.h src/idl_writer.h src/writer.h src/library_utils.h src/list_utils.h src/makefile_writer.h
+main.o: src/main.c src/utils.h src/function_definition.h src/parameter.h src/document_parser.h src/byte_buffer.h src/debugging_utils.h src/idl_writer.h src/writer.h src/inline_header_writer.h src/library_utils.h src/list_utils.h src/makefile_writer.h src/vectors.h
 
 utils.o: src/utils.c src/debugging_utils.h src/utils.h src/parameter.h src/function_definition.h
 
@@ -99,5 +99,5 @@ c_writer.o: src/c_writer.c src/c_writer.h src/writer.h src/function_definition.h
 
 makefile_utils.o: src/makefile_utils.c src/makefile_utils.h src/function_definition.h src/parameter.h src/utils.h src/debugging_utils.h
 
-vectors.o: src/vectors.c src/function_definition.h src/parameter.h src/debugging_utils.h
+vectors.o: src/vectors.c src/function_definition.h src/parameter.h src/debugging_utils.h src/utils.h
 
