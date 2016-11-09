@@ -549,3 +549,29 @@ STRPTR GetUpperCaseString (CONST_STRPTR src_s)
 }
 
 
+STRPTR GetCapitalizedString (CONST_STRPTR src_s)
+{
+	STRPTR dest_s = NULL;
+	
+	ENTER ();
+	
+	if (src_s)
+		{
+			size_t l = strlen (src_s);	
+			
+			dest_s = (STRPTR) IExec->AllocVecTags (l + 1, TAG_END);
+			
+			if (dest_s)
+				{
+					strcpy (dest_s, src_s); 
+					
+					*dest_s = toupper (*dest_s);
+					* (dest_s + l) = '\0';
+				}
+		}
+	
+	
+	LEAVE ();
+	
+	return dest_s;
+}

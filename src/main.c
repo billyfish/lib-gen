@@ -37,6 +37,7 @@
 #include "idl_writer.h"
 #include "inline_header_writer.h"
 #include "proto_header_writer.h"
+#include "interface_h_writer.h"
 #include "library_utils.h"
 #include "list_utils.h"
 #include "makefile_writer.h"
@@ -63,6 +64,9 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 STRPTR MakePrototypePattern (CONST_STRPTR pattern_s);
 
 struct List *GetHeaderFilesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_regexp_s, const BOOL recurse_flag);
+
+
+BOOL WriteHeaderFiles (struct List *function_defs_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR output_dir_s);
 
 
 enum Args
@@ -429,38 +433,34 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 									
 									if (WriteVectorsFile (output_dir_s, library_s, &function_defs))
 										{
-											if (WriteInlineHeader (&function_defs, library_s, output_dir_s))
-												{
-													if (WriteProtoHeader (library_s, output_dir_s))
-														{						
-															STRPTR init_s = NULL;
+											if (WriteHeaderFiles (&function_defs, library_s, output_dir_s))
+												{						
+													STRPTR init_s = NULL;
+											
+													IDOS->Printf ("Generating vectors succeeded");
 													
-															IDOS->Printf ("Generating vectors succeeded");
-															
-															init_s = MakeFilename (output_dir_s, "init.c");
-															
-															
-															if (init_s)
+													init_s = MakeFilename (output_dir_s, "init.c");
+													
+													
+													if (init_s)
+														{
+															if (CopyFile ("data/lib_manager.c.template", init_s))
 																{
-																	if (CopyFile ("data/lib_manager.c.template", init_s))
-																		{
-																			
-																		}
-																	else
-																		{
-																			IDOS->Printf ("Failed to generate init.c");
-																		}
 																	
-																	IExec->FreeVec (init_s);	
-																}		/* if (init_s) */
+																}
 															else
 																{
-																	IDOS->Printf ("Failed to get init.c full filename");
-																}		
-																
-														}		/* if (WriteProtoHeader (library_s, output_dir_s)) */
-												
-												}		/* if (WriteInlineHeader (&function_defs, library_s, output_dir_s)) */
+																	IDOS->Printf ("Failed to generate init.c");
+																}
+															
+															IExec->FreeVec (init_s);	
+														}		/* if (init_s) */
+													else
+														{
+															IDOS->Printf ("Failed to get init.c full filename");
+														}		
+														
+												}		/* if (WriteHeaderFiles (&function_defs, library_s, output_dir_s)) */
 											
 										}
 									else
@@ -495,6 +495,36 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 	return res;
 }
 
+
+
+BOOL WriteHeaderFiles (struct List *function_defs_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR output_dir_s)
+{
+	BOOL success_flag = FALSE;
+	STRPTR include_dir_s = NULL;
+		
+	ENTER ();
+	
+	include_dir_s = MakeFilename (output_dir_s, "include");
+	
+	if (include_dir_s)
+		{
+			if (WriteInlineHeader (function_defs_p, library_s, include_dir_s))
+				{
+					if (WriteProtoHeader (library_s, include_dir_s))
+						{
+							if (WriteInterfaceHeader (function_defs_p, library_s, include_dir_s))
+								{
+									success_flag = TRUE;
+								}
+						}
+				}
+				
+			IExec->FreeVec (include_dir_s);
+		}		
+		
+	LEAVE ();
+	return success_flag;
+}
 
 
 BOOL GetPreviousLibraryOrder (CONST_STRPTR filename_s, CONST_STRPTR struct_name_s, struct List *ordering_p, struct DocumentParser *parser_p)

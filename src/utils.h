@@ -56,6 +56,8 @@ BOOL PrintCaptitalizedString (BPTR out_p, CONST_STRPTR value_s);
 
 STRPTR GetUpperCaseString (CONST_STRPTR src_s);
 
+STRPTR GetCapitalizedString (CONST_STRPTR src_s);
+
 
 #ifdef __cplusplus
 }

@@ -35,7 +35,8 @@ static BOOL WriteIncludes (BPTR out_p, CONST_STRPTR header_name_s);
 
 static BPTR GetSourceFileHandle (const struct FunctionDefinition *fn_def_p, CONST_STRPTR output_dir_s);
 
-static BOOL WriteLibraryFunctionDefinitionVariant (BPTR out_p, CONST CONST_STRPTR library_s, const struct FunctionDefinition * const fd_p, CONST CONST_STRPTR type_prefix_s, CONST CONST_STRPTR function_prefix_s,  CONST CONST_STRPTR self_type_s);
+static BOOL WriteLibraryFunctionDefinitionVariant (BPTR out_p, CONST CONST_STRPTR library_s, const struct FunctionDefinition * const fd_p, CONST CONST_STRPTR type_prefix_s, CONST CONST_STRPTR function_prefix_s, CONST CONST_STRPTR function_suffix_s, CONST CONST_STRPTR self_type_s);
+
 
 
 void UnitTest (const char *prototype_s)
@@ -491,7 +492,7 @@ BOOL WriteLibraryFunctionDefinition (BPTR out_p, CONST CONST_STRPTR library_s, c
 	
 	if (self_type_s)
 		{
-			success_flag = WriteLibraryFunctionDefinitionVariant (out_p, library_s, fd_p, NULL, NULL, self_type_s);
+			success_flag = WriteLibraryFunctionDefinitionVariant (out_p, library_s, fd_p, NULL, NULL, NULL, self_type_s);
 			
 			IExec->FreeVec (self_type_s);
 		}
@@ -513,7 +514,7 @@ BOOL WriteInterfaceFunctionDefinition (BPTR out_p, CONST CONST_STRPTR library_s,
 	
 	if (self_type_s)
 		{
-			success_flag = WriteLibraryFunctionDefinitionVariant (out_p, library_s, fd_p, "extern", "VARARGS68K", self_type_s);
+			success_flag = WriteLibraryFunctionDefinitionVariant (out_p, library_s, fd_p, "extern", "VARARGS68K", NULL, self_type_s);
 			
 			IExec->FreeVec (self_type_s);
 		}
@@ -524,7 +525,30 @@ BOOL WriteInterfaceFunctionDefinition (BPTR out_p, CONST CONST_STRPTR library_s,
 }
 
 
-static BOOL WriteLibraryFunctionDefinitionVariant (BPTR out_p, CONST CONST_STRPTR library_s, const struct FunctionDefinition * const fd_p, CONST CONST_STRPTR type_prefix_s, CONST CONST_STRPTR function_prefix_s, CONST CONST_STRPTR self_type_s)
+BOOL WriteInterfaceHeaderDefinition (BPTR out_p, CONST CONST_STRPTR library_s, const struct FunctionDefinition * const fd_p)
+{
+	BOOL success_flag;
+	STRPTR self_type_s = NULL;
+	
+	ENTER ();
+	
+	self_type_s = ConcatenateStrings ("struct ", library_s);
+	
+	if (self_type_s)
+		{
+			success_flag = WriteLibraryFunctionDefinitionVariant (out_p, library_s, fd_p, NULL, "APICALL (*", ")", self_type_s);
+			
+			IExec->FreeVec (self_type_s);
+		}
+	
+	LEAVE ();
+	
+	return success_flag;
+}
+
+
+
+static BOOL WriteLibraryFunctionDefinitionVariant (BPTR out_p, CONST CONST_STRPTR library_s, const struct FunctionDefinition * const fd_p, CONST CONST_STRPTR type_prefix_s, CONST CONST_STRPTR function_prefix_s, CONST CONST_STRPTR function_suffix_s, CONST CONST_STRPTR self_type_s)
 {
 	BOOL success_flag = FALSE;
 
@@ -534,7 +558,7 @@ static BOOL WriteLibraryFunctionDefinitionVariant (BPTR out_p, CONST CONST_STRPT
 		{
 			if (WriteFunctionDefinitionFunctionName (out_p, library_s, fd_p))
 				{
-					if (IDOS->FPrintf (out_p, " (") >= 0)
+					if (IDOS->FPrintf (out_p, "%s (", function_suffix_s ? function_suffix_s : "") >= 0)
 						{
 							struct ParameterNode *curr_node_p = (struct ParameterNode *) IExec->GetHead (fd_p -> fd_args_p);
 							struct ParameterNode *final_node_p = (struct ParameterNode *) IExec->GetTail (fd_p -> fd_args_p);
@@ -831,6 +855,37 @@ BOOL WriteSourceForAllFunctionDefinitions (struct List *fn_defs_p, CONST_STRPTR 
 		}
 	*/
 
+	LEAVE ();
+	return success_flag;
+}
+
+
+
+BOOL WriteAllInterfaceFunctionDefinitions (struct List *fn_defs_p, BPTR out_p, CONST CONST_STRPTR interface_s)
+{
+	ENTER ();
+
+	BOOL success_flag = TRUE;
+	struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (fn_defs_p);
+
+	while (node_p && success_flag)
+		{
+			struct FunctionDefinition *fn_def_p = node_p -> fdn_function_def_p;
+			
+			success_flag  = WriteInterfaceHeaderDefinition (fn_def_p, out_p, interface_s);
+
+			if (success_flag)
+				{
+					node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p);
+				}
+			else
+				{
+					IDOS->Printf ("Error writing source for %s", fn_def_p -> fd_filename_s);
+				}
+			
+		}
+		
+		
 	LEAVE ();
 	return success_flag;
 }
