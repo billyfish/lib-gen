@@ -56,7 +56,8 @@ static BOOL WriteTop (BPTR out_p, CONST CONST_STRPTR library_s)
 		{
 			if (IDOS->FPrintf (out_p, 
 				"#include <proto/exec.h>\n\n"   
-				"#include \"%s_vectors.h\"\n\n"
+				"#include \"vectors.h\"\n\n"
+				"#include \"lib_init.h\"\n\n"
 				"/* Uncomment this line (and see below) if your library has a 68k jump table */\n"
 				"/* extern APTR VecTable68K []; */\n\n"
 				"STATIC CONST struct TagItem %sTags [] =\n"
@@ -65,7 +66,7 @@ static BOOL WriteTop (BPTR out_p, CONST CONST_STRPTR library_s)
 				"\t{ MIT_VectorTable,	(Tag) %s_vectors },\n"
 				"\t{ MIT_Version,	1	},\n"
 				"\t{ TAG_DONE, 0 }\n"
-				"};\n\n", library_s, library_s, library_s, library_s) >= 0)
+				"};\n\n", library_s, library_s, library_s) >= 0)
 				{
 					if (IDOS->FPrintf (out_p, 
 						"STATIC CONST CONST_APTR libInterfaces [] =\n"

@@ -80,20 +80,24 @@ static BOOL WriteVectors (BPTR vector_file_p, CONST CONST_STRPTR library_s, stru
 	BOOL success_flag = FALSE;
 
 	/* Add the system includes */
-	if (IDOS->FPrintf (vector_file_p, "#include <exec/exec.h>\n#include <exec/interfaces.h>\n#include <exec/types.h>\n\n") >= 0)
+	if (IDOS->FPrintf (vector_file_p, "#include <exec/exec.h>\n#include <exec/interfaces.h>\n#include <exec/types.h>\n") >= 0)
 		{
-			/* Add our library includes */
-			if (WriteFunctionDefinitionListIncludes (vector_file_p, function_defs_p, "#include \"", "\""))
+			if (IDOS->FPrintf (vector_file_p, "#include <proto/%s.h>\n", library_s) >= 0)
 				{
-					if (IDOS->FPrintf (vector_file_p, "\n\n") >= 0)
+			
+					/* Add our library includes */
+					if (WriteFunctionDefinitionListIncludes (vector_file_p, function_defs_p, "#include \"", "\""))
 						{
-							/* Declare our library functions */
-							if (WriteFunctionDeclarations (vector_file_p, library_s, function_defs_p))
+							if (IDOS->FPrintf (vector_file_p, "\n\n") >= 0)
 								{
-									/* Declare the library vectors */
-									if (WriteVectorsArray (vector_file_p, library_s, function_defs_p))
+									/* Declare our library functions */
+									if (WriteFunctionDeclarations (vector_file_p, library_s, function_defs_p))
 										{
-											success_flag = TRUE;
+											/* Declare the library vectors */
+											if (WriteVectorsArray (vector_file_p, library_s, function_defs_p))
+												{
+													success_flag = TRUE;
+												}
 										}
 								}
 						}

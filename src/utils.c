@@ -113,48 +113,55 @@ STRPTR ConcatenateStrings (CONST_STRPTR first_s, CONST_STRPTR second_s)
 }
 
 
-STRPTR GetSourceFilename (CONST CONST_STRPTR header_filename_s)
+STRPTR GetSourceFilename (CONST CONST_STRPTR prefix_s, CONST CONST_STRPTR header_filename_s)
 {
+	STRPTR result_s = NULL;
+	CONST_STRPTR filename_s;
+	
 	ENTER ();
-
+	
 	/* Get the .c filename */
-	STRPTR filename_s = strdup (IDOS->FilePart (header_filename_s));
+	filename_s = IDOS->FilePart (header_filename_s);
 
 	if (filename_s)
 		{
-			STRPTR suffix_p = strrchr (filename_s, '.');
-
-			if (suffix_p)
+			size_t prefix_length = strlen (prefix_s);
+			size_t filename_length = strlen (filename_s);
+			
+			result_s = (STRPTR) (IExec->AllocVecTags (prefix_length + filename_length + 2, TAG_END));
+			
+			if (result_s)
 				{
-					++ suffix_p;
-
-					if (*suffix_p != '\0')
+					STRPTR suffix_s = NULL;
+					
+					strncpy (result_s, prefix_s, prefix_length);
+					* (result_s + prefix_length) = '_';
+					strncpy (result_s + prefix_length + 1, filename_s, filename_length);	
+					* (result_s + prefix_length + filename_length + 1) = '\0';
+					
+					suffix_s = strrchr (result_s, '.');
+					
+					if (suffix_s)
 						{
-							*suffix_p = 'c';
-							* (++ suffix_p) = '\0';
-
-							return filename_s;
-						}		/* if (*suffix_p != '\0') */
-					else
-						{
-							DB (KPRINTF ("%s %ld - dot followed by NULL in %s\n", __FILE__, __LINE__, filename_s));
+							++ suffix_s;
+							
+							if (*suffix_s != '\0')
+								{
+									*suffix_s = 'c';
+									
+								}
 						}
-
-				}		/* if (suffix_p) */
-			else
-				{
-					DB (KPRINTF ("%s %ld - Failed to get find dot in %s\n", __FILE__, __LINE__, filename_s));
 				}
-
-			free (filename_s);
+			
+		
 		}
 	else
 		{
-			DB (KPRINTF ("%s %ld - Failed to get copy header filename %s\n", __FILE__, __LINE__, header_filename_s));
+			DB (KPRINTF ("%s %ld - Failed to get  header filename %s\n", __FILE__, __LINE__, header_filename_s));
 		}
 
 	LEAVE ();
-	return NULL;
+	return result_s;
 }
 
 

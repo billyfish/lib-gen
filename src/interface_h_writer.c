@@ -186,10 +186,10 @@ static BOOL WriteInterface (BPTR out_p, struct List *function_defs_p, CONST CONS
 			
 			if (IDOS->FPrintf (out_p, "struct %s\n{\n\tstruct InterfaceData Data;\n\n", interface_s) >= 0)
 				{
-					if (IDOS->FPrintf (out_p, "\tuint32 APICALL (*Obtain) (struct %s *Self)\n"
-						"\tuint32 APICALL (*Release) (struct TestIFace *Self);\n"
-						"\tvoid APICALL (*Expunge) (struct TestIFace *Self);\n"
-						"\tstruct Interface * APICALL (*Clone) (struct TestIFace *Self);\n\n", 
+					if (IDOS->FPrintf (out_p, "\tuint32 APICALL (*Obtain) (struct %s *Self);\n"
+						"\tuint32 APICALL (*Release) (struct %s *Self);\n"
+						"\tvoid APICALL (*Expunge) (struct %s *Self);\n"
+						"\tstruct Interface * APICALL (*Clone) (struct %s *Self);\n\n", 
 						interface_s, interface_s, interface_s, interface_s) >= 0)
 						{
 							if (WriteAllInterfaceFunctionDefinitions (function_defs_p, out_p, interface_s))

@@ -33,7 +33,8 @@
 
 static BOOL WriteIncludes (BPTR out_p, CONST_STRPTR header_name_s);
 
-static BPTR GetSourceFileHandle (const struct FunctionDefinition *fn_def_p, CONST_STRPTR output_dir_s);
+
+static BPTR GetSourceFileHandle (const struct FunctionDefinition *fn_def_p, CONST_STRPTR library_s, CONST_STRPTR output_dir_s);
 
 static BOOL WriteLibraryFunctionDefinitionVariant (BPTR out_p, CONST CONST_STRPTR library_s, const struct FunctionDefinition * const fd_p, CONST CONST_STRPTR type_prefix_s, CONST CONST_STRPTR type_suffix_s, CONST CONST_STRPTR function_prefix_s, CONST CONST_STRPTR function_suffix_s, CONST CONST_STRPTR self_type_s);
 
@@ -773,7 +774,7 @@ void ClearFunctionDefinitionsList (struct List *function_defs_p)
 
 
 
-BOOL WriteSourceForAllFunctionDefinitions (struct List *fn_defs_p, CONST_STRPTR output_dir_s, CONST_STRPTR library_s)
+BOOL WriteSourceForAllFunctionDefinitions (struct List *fn_defs_p, CONST_STRPTR output_dir_s, CONST_STRPTR library_s, CONST_STRPTR prefix_s)
 {
 	ENTER ();
 
@@ -802,7 +803,7 @@ BOOL WriteSourceForAllFunctionDefinitions (struct List *fn_defs_p, CONST_STRPTR 
 
 					success_flag = FALSE;
 
-					output_f = GetSourceFileHandle (fn_def_p, output_dir_s);
+					output_f = GetSourceFileHandle (fn_def_p, library_s, output_dir_s);
 
 					if (output_f)
 						{
@@ -898,18 +899,20 @@ BOOL WriteAllInterfaceFunctionDefinitions (struct List *fn_defs_p, BPTR out_p, C
 }
 
 
-static BPTR GetSourceFileHandle (const struct FunctionDefinition *fn_def_p, CONST_STRPTR output_dir_s)
+static BPTR GetSourceFileHandle (const struct FunctionDefinition *fn_def_p, CONST_STRPTR library_s, CONST_STRPTR output_dir_s)
 {
 	ENTER ();
 
 	BPTR src_f = ZERO;
 
 	/* Get the .c filename */
-	STRPTR filename_s = GetSourceFilename (fn_def_p -> fd_filename_s);
+	STRPTR filename_s = GetSourceFilename (library_s, fn_def_p -> fd_filename_s);
 
 
 	if (filename_s)
 		{
+			//STRPTR generated_filename_s = 
+			
 			STRPTR full_name_s = NULL;;
 
 			/* Make the full filename */
@@ -932,7 +935,7 @@ static BPTR GetSourceFileHandle (const struct FunctionDefinition *fn_def_p, CONS
 					DB (KPRINTF ("%s %ld - Failed to make filename from %s and %s\n", __FILE__, __LINE__, output_dir_s, filename_s));
 				}
 
-			free (filename_s);
+			IExec->FreeVec (filename_s);
 		}		/* if (filename_s) */
 	else
 		{
@@ -942,6 +945,22 @@ static BPTR GetSourceFileHandle (const struct FunctionDefinition *fn_def_p, CONS
 	LEAVE ();
 	return src_f;
 }
+
+
+static STRPTR GetGeneratedFilename (CONST_STRPTR library_s, CONST_STRPTR filename_s)
+{
+	STRPTR res_s = NULL;
+	size_t l;
+	ENTER ();
+	
+	
+	
+	
+	LEAVE ();
+	
+	return res_s;
+}
+
 
 
 BOOL WriteSourceForFunctionDefinition (const struct FunctionDefinition *fn_def_p, BPTR output_f, CONST_STRPTR library_s)

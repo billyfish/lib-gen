@@ -15,11 +15,11 @@
 
 
 
-static BOOL WriteIDL (struct Writer *writer_p, struct List *function_definitions_p, CONST_STRPTR library_s, const int32 version, const enum InterfaceFlag flag, BPTR out_p);
+static BOOL WriteIDL (struct Writer *writer_p, struct List *function_definitions_p, CONST_STRPTR library_s, CONST_STRPTR prefix_s, const int32 version, const enum InterfaceFlag flag, BPTR out_p);
 
 static CONST_STRPTR GetIDLWriterFileSuffix (struct Writer *writer_p);
 
-static BOOL WriteIDLHeader (BPTR out_p, CONST CONST_STRPTR library_s, const int32 version, const enum InterfaceFlag flag, struct List *function_definitions_list_p);
+static BOOL WriteIDLHeader (BPTR out_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR prefix_s, const int32 version, const enum InterfaceFlag flag, struct List *function_definitions_list_p);
 
 static BOOL WriteIDLFunctionDefinition (BPTR out_p, const struct FunctionDefinition * const fd_p);
 
@@ -69,14 +69,14 @@ void FreeIDLWriter (Writer *writer_p)
 }
 
 
-static BOOL WriteIDL (struct Writer *writer_p, struct List *function_definitions_p, CONST_STRPTR library_s, const int32 version, const enum InterfaceFlag flag, BPTR out_p)
+static BOOL WriteIDL (struct Writer *writer_p, struct List *function_definitions_p, CONST_STRPTR library_s, CONST_STRPTR prefix_s, const int32 version, const enum InterfaceFlag flag, BPTR out_p)
 {
 	ENTER ();
 	BOOL success_flag = FALSE;
 
 	DB (KPRINTF ("%s %ld - Entering WriteIDL", __FILE__, __LINE__));
 
-	if (WriteIDLHeader (out_p, library_s, version, flag, function_definitions_p))
+	if (WriteIDLHeader (out_p, library_s, prefix_s, version, flag, function_definitions_p))
 		{
 			if (WriteIDLDefaultFunctions (out_p))
 				{
@@ -116,7 +116,7 @@ static BOOL WriteIDL (struct Writer *writer_p, struct List *function_definitions
 
 
 
-static BOOL WriteIDLHeader (BPTR out_p, CONST CONST_STRPTR library_s, const int32 version, const enum InterfaceFlag flag, struct List *function_definitions_p)
+static BOOL WriteIDLHeader (BPTR out_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR prefix_s, const int32 version, const enum InterfaceFlag flag, struct List *function_definitions_p)
 {
 	ENTER ();
 	BOOL success_flag = FALSE;
@@ -155,7 +155,7 @@ static BOOL WriteIDLHeader (BPTR out_p, CONST CONST_STRPTR library_s, const int3
 
 													if (WriteFunctionDefinitionListIncludes (out_p, function_definitions_p, "\t<include>", "</include>"))
 														{
-															if (IDOS->FPrintf (out_p, "\n\t<interface name=\"%s\" version=\"%lu.0\" flags=\"%s\" prefix=\"_%s_\" struct=\"", library_s, version, flags_s, library_s) >= 0)
+															if (IDOS->FPrintf (out_p, "\n\t<interface name=\"%s\" version=\"%lu.0\" flags=\"%s\" prefix=\"%s\" struct=\"", library_s, version, flags_s, prefix_s) >= 0)
 																{
 																	if (IDOS->FPutC (out_p, c) == c)
 																		{

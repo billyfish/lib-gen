@@ -26,11 +26,11 @@
 
 
 
-BOOL WriteFunctionDefinitionsList (struct Writer *writer_p, struct List *function_defs_p, CONST_STRPTR library_s, const int32 version, const enum InterfaceFlag flag, BPTR out_p)
+BOOL WriteFunctionDefinitionsList (struct Writer *writer_p, struct List *function_defs_p, CONST_STRPTR library_s, CONST CONST_STRPTR prefix_s,  const int32 version, const enum InterfaceFlag flag, BPTR out_p)
 {
 	ENTER ();
 
-	BOOL success_flag = writer_p -> wr_write_function_definitions_list_fn (writer_p, function_defs_p, library_s, version, flag, out_p);
+	BOOL success_flag = writer_p -> wr_write_function_definitions_list_fn (writer_p, function_defs_p, library_s, prefix_s, version, flag, out_p);
 
 	IDOS->FFlush (out_p);
 

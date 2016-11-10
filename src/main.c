@@ -60,7 +60,7 @@ BOOL GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR 
 STRPTR CreateRegEx (CONST_STRPTR pattern_s, BOOL capture_flag);
 void ClearCapturedExpression (struct CapturedExpression *capture_p);
 
-int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag, const BOOL gen_source_flag);
+int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, CONST_STRPTR prefix_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag, const BOOL gen_source_flag);
 
 STRPTR MakePrototypePattern (CONST_STRPTR pattern_s);
 
@@ -68,6 +68,11 @@ struct List *GetHeaderFilesList (CONST_STRPTR root_path_s, CONST_STRPTR filename
 
 
 BOOL WriteHeaderFiles (struct List *function_defs_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR output_dir_s);
+
+
+
+static STRPTR GetPrefixString (CONST_STRPTR value_s);
+
 
 
 enum Args
@@ -98,6 +103,7 @@ int main (int argc, char *argv [])
 		{
 			CONST_STRPTR input_dir_s = NULL;
 			CONST_STRPTR library_s = NULL;
+			STRPTR prefix_s = NULL;
 			CONST_STRPTR filename_pattern_s = S_DEFAULT_FILENAME_PATTERN_S;
 			STRPTR prototype_pattern_s = S_DEFAULT_PROTOTYPE_PATTERN_S;
 			CONST_STRPTR format_s = "idl";
@@ -212,7 +218,13 @@ int main (int argc, char *argv [])
 
 					if (input_dir_s && filename_pattern_s && library_s && prototype_pattern_s)
 						{
-							result = Run (input_dir_s, filename_pattern_s, prototype_pattern_s, library_s, recurse_flag, version, flag, generate_code_flag);
+							prefix_s = GetPrefixString (library_s);
+							
+							if (prefix_s)
+								{
+									result = Run (input_dir_s, filename_pattern_s, prototype_pattern_s, library_s, prefix_s, recurse_flag, version, flag, generate_code_flag);
+								}
+								
 						}		/* if (input_dir_s && filename_pattern_s) */
 
 					if ((prototype_pattern_s != NULL) && (prototype_pattern_s != S_DEFAULT_PROTOTYPE_PATTERN_S))
@@ -241,6 +253,25 @@ int main (int argc, char *argv [])
 
 	LEAVE ();
 	return 0;
+}
+
+
+static STRPTR GetPrefixString (CONST_STRPTR value_s)
+{
+	size_t l = strlen (value_s);
+	
+	STRPTR prefix_s = (STRPTR) IExec->AllocVecTags (l + 3, TAG_END);
+	
+	
+	if (prefix_s)
+		{
+			*prefix_s = '_';
+			strncpy (prefix_s + 1, value_s, l);
+			* (prefix_s + l + 1) = '_';
+			* (prefix_s + l + 2) = '\0';  
+		}
+		
+	return prefix_s;
 }
 
 
@@ -285,7 +316,7 @@ STRPTR CreateRegEx (CONST_STRPTR pattern_s, BOOL capture_flag)
 }
 
 
-int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag, const BOOL gen_source_flag)
+int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, CONST_STRPTR prefix_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag, const BOOL gen_source_flag)
 {
 	int res = 0;
 	STRPTR prototype_regexp_s = NULL;
@@ -352,7 +383,7 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 
 									IDOS->Printf ("%lu headers\n", GetListSize (&function_defs));
 
-									if (WriteFunctionDefinitionsList (writer_p, &function_defs, library_s, version, flag, out_p))
+									if (WriteFunctionDefinitionsList (writer_p, &function_defs, library_s, prefix_s, version, flag, out_p))
 										{
 											STRPTR makefile_s = ConcatenateStrings (library_s, ".makefile");
 

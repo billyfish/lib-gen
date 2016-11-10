@@ -23,7 +23,7 @@
 #include <dos/dos.h>
 #include <stdarg.h>
 
-
+#define ALLOCATE_LIB_MANAGER_DATA (1)
 #include "lib_init.h"
 
 /* Version Tag */
@@ -186,7 +186,7 @@ STATIC uint32 _manager_Release (struct LibraryManagerInterface *Self)
 
 
 /* Manager interface vectors */
-STATIC CONST APTR lib_manager_vectors [] =
+CONST APTR lib_manager_vectors [] =
 {
 	_manager_Obtain,
 	_manager_Release,
@@ -201,7 +201,7 @@ STATIC CONST APTR lib_manager_vectors [] =
 
 
 /* "__library" interface tag list */
-STATIC CONST struct TagItem lib_managerTags [] =
+CONST struct TagItem lib_managerTags [] =
 {
 	{ MIT_Name, (Tag) "__library" },
 	{ MIT_VectorTable, (Tag) lib_manager_vectors},
