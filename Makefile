@@ -4,7 +4,7 @@
 #
 # Project: libgen
 #
-# Created on: 09-11-2016 23:27:21
+# Created on: 10-11-2016 13:49:35
 #
 #
 
@@ -67,7 +67,7 @@ $(BIN): $(OBJ) $(LIBS)
 
 auto_init_writer.o: src/auto_init_writer.c src/auto_init_writer.h src/utils.h src/debugging_utils.h
 
-init_writer.o: src/init_writer.c
+init_writer.o: src/init_writer.c src/debugging_utils.h src/utils.h
 
 inline_header_writer.o: src/inline_header_writer.c src/inline_header_writer.h src/debugging_utils.h src/function_definition.h src/parameter.h src/utils.h
 
