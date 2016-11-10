@@ -22,7 +22,7 @@
 #include <exec/lists.h>
 
 
-BOOL WriteVectorsFile (CONST CONST_STRPTR source_directory_s, CONST CONST_STRPTR library_s, struct List *function_defs_p);
+BOOL WriteVectorsFile (CONST CONST_STRPTR source_directory_s, CONST CONST_STRPTR library_s, CONST CONST_STRPTR prefix_s, struct List *function_defs_p);
 
 #endif
 

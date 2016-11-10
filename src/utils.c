@@ -113,7 +113,7 @@ STRPTR ConcatenateStrings (CONST_STRPTR first_s, CONST_STRPTR second_s)
 }
 
 
-STRPTR GetSourceFilename (CONST CONST_STRPTR prefix_s, CONST CONST_STRPTR header_filename_s)
+STRPTR GetSourceFilename (CONST CONST_STRPTR prefix_s, CONST CONST_STRPTR header_filename_s, char file_suffix)
 {
 	STRPTR result_s = NULL;
 	CONST_STRPTR filename_s;
@@ -147,7 +147,7 @@ STRPTR GetSourceFilename (CONST CONST_STRPTR prefix_s, CONST CONST_STRPTR header
 							
 							if (*suffix_s != '\0')
 								{
-									*suffix_s = 'c';
+									*suffix_s = file_suffix;
 									
 								}
 						}

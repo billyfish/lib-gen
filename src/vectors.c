@@ -27,20 +27,20 @@
 
 /******* BEGIN STATIC DECLARTAIONS ******/
 
-static BOOL WriteFunctionDeclarations (BPTR vector_file_p, CONST CONST_STRPTR library_s, struct List *function_defs_p);
+static BOOL WriteFunctionDeclarations (BPTR vector_file_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR prefix_s, struct List *function_defs_p);
 
-static BOOL WriteFunctionDeclaration (BPTR vector_file_p, CONST CONST_STRPTR library_s, const struct FunctionDefinition * const function_def_p);
+static BOOL WriteFunctionDeclaration (BPTR vector_file_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR prefix_s, const struct FunctionDefinition * const function_def_p);
 
-static BOOL WriteVectorsArray (BPTR vector_file_p, CONST CONST_STRPTR library_s, struct List *function_defs_p);
+static BOOL WriteVectorsArray (BPTR vector_file_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR prefix_s, struct List *function_defs_p);
 
-static BOOL WriteVectors (BPTR vector_file_p, CONST CONST_STRPTR library_s, struct List *function_defs_p);
+static BOOL WriteVectors (BPTR vector_file_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR prefix_s, struct List *function_defs_p);
 
-static BOOL WriteFunctionNameIntoArray (BPTR vector_f, CONST CONST_STRPTR library_s, const struct FunctionDefinition *function_def_p);
+static BOOL WriteFunctionNameIntoArray (BPTR vector_f, CONST CONST_STRPTR library_s, CONST CONST_STRPTR prefix_s, const struct FunctionDefinition *function_def_p);
 
 /******** END STATIC DECLARATIONS *******/
 
 
-BOOL WriteVectorsFile (CONST CONST_STRPTR source_directory_s, CONST CONST_STRPTR library_s, struct List *function_defs_p)
+BOOL WriteVectorsFile (CONST CONST_STRPTR source_directory_s, CONST CONST_STRPTR library_s, CONST CONST_STRPTR prefix_s, struct List *function_defs_p)
 {
 	BOOL success_flag = FALSE;
 	STRPTR vectors_header_s = NULL;
@@ -55,7 +55,7 @@ BOOL WriteVectorsFile (CONST CONST_STRPTR source_directory_s, CONST CONST_STRPTR
 			
 			if (vectors_f)
 				{
-					success_flag = WriteVectors (vectors_f, library_s, function_defs_p);
+					success_flag = WriteVectors (vectors_f, library_s, prefix_s, function_defs_p);
 				
 					if (IDOS->FClose (vectors_f) == 0)
 						{
@@ -73,7 +73,7 @@ BOOL WriteVectorsFile (CONST CONST_STRPTR source_directory_s, CONST CONST_STRPTR
 
 
 
-static BOOL WriteVectors (BPTR vector_file_p, CONST CONST_STRPTR library_s, struct List *function_defs_p)
+static BOOL WriteVectors (BPTR vector_file_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR prefix_s, struct List *function_defs_p)
 {
 	ENTER ();
 
@@ -91,10 +91,10 @@ static BOOL WriteVectors (BPTR vector_file_p, CONST CONST_STRPTR library_s, stru
 							if (IDOS->FPrintf (vector_file_p, "\n\n") >= 0)
 								{
 									/* Declare our library functions */
-									if (WriteFunctionDeclarations (vector_file_p, library_s, function_defs_p))
+									if (WriteFunctionDeclarations (vector_file_p, library_s, prefix_s, function_defs_p))
 										{
 											/* Declare the library vectors */
-											if (WriteVectorsArray (vector_file_p, library_s, function_defs_p))
+											if (WriteVectorsArray (vector_file_p, library_s, prefix_s, function_defs_p))
 												{
 													success_flag = TRUE;
 												}
@@ -109,7 +109,7 @@ static BOOL WriteVectors (BPTR vector_file_p, CONST CONST_STRPTR library_s, stru
 }
 
 
-static BOOL WriteFunctionDeclarations (BPTR vector_file_p, CONST CONST_STRPTR library_s, struct List *function_defs_p)
+static BOOL WriteFunctionDeclarations (BPTR vector_file_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR prefix_s, struct List *function_defs_p)
 {
 	BOOL success_flag = TRUE;
 	struct FunctionDefinitionNode *node_p;
@@ -129,7 +129,7 @@ static BOOL WriteFunctionDeclarations (BPTR vector_file_p, CONST CONST_STRPTR li
 				{
 					struct FunctionDefinition *fn_def_p = node_p -> fdn_function_def_p;
 		
-					if (WriteFunctionDeclaration (vector_file_p, interface_s, fn_def_p))
+					if (WriteFunctionDeclaration (vector_file_p, interface_s, prefix_s, fn_def_p))
 						{
 							node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p);
 						}
@@ -155,7 +155,7 @@ static BOOL WriteFunctionDeclarations (BPTR vector_file_p, CONST CONST_STRPTR li
 }
 
 
-static BOOL WriteFunctionDeclaration (BPTR vector_file_p, CONST CONST_STRPTR library_s, const struct FunctionDefinition * const function_def_p)
+static BOOL WriteFunctionDeclaration (BPTR vector_file_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR prefix_s, const struct FunctionDefinition * const function_def_p)
 {
 	ENTER ();
 
@@ -180,13 +180,13 @@ static BOOL WriteFunctionDeclaration (BPTR vector_file_p, CONST CONST_STRPTR lib
 }
 
 
-static BOOL WriteVectorsArray (BPTR vector_file_p, CONST CONST_STRPTR library_s, struct List *function_defs_p)
+static BOOL WriteVectorsArray (BPTR vector_file_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR prefix_s, struct List *function_defs_p)
 {
 	ENTER ();
 
 	BOOL success_flag = TRUE;
 
-	if (IDOS->FPrintf (vector_file_p, "STATIC CONST APTR %s_vectors [] = \n{\n\t%s_Obtain,\n\t%s_Release,\n\tNULL,\n\tNULL,\n", library_s, library_s, library_s) >= 0)
+	if (IDOS->FPrintf (vector_file_p, "STATIC CONST APTR %s_vectors [] = \n{\n\t%sObtain,\n\t%sRelease,\n\tNULL,\n\tNULL,\n", library_s, prefix_s, prefix_s) >= 0)
 		{
 			struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (function_defs_p);
 
@@ -194,7 +194,7 @@ static BOOL WriteVectorsArray (BPTR vector_file_p, CONST CONST_STRPTR library_s,
 				{
 					struct FunctionDefinition *function_def_p = node_p -> fdn_function_def_p;
 
-					if (WriteFunctionNameIntoArray (vector_file_p, library_s, function_def_p))
+					if (WriteFunctionNameIntoArray (vector_file_p, library_s, prefix_s, function_def_p))
 						{
 							node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p);
 						}
@@ -222,7 +222,7 @@ static BOOL WriteVectorsArray (BPTR vector_file_p, CONST CONST_STRPTR library_s,
 }
 
 
-static BOOL WriteFunctionNameIntoArray (BPTR vector_f, CONST CONST_STRPTR library_s, const struct FunctionDefinition *function_def_p)
+static BOOL WriteFunctionNameIntoArray (BPTR vector_f, CONST CONST_STRPTR library_s, CONST CONST_STRPTR prefix_s, const struct FunctionDefinition *function_def_p)
 {
 	BOOL success_flag = FALSE;
 	
@@ -230,7 +230,7 @@ static BOOL WriteFunctionNameIntoArray (BPTR vector_f, CONST CONST_STRPTR librar
 
 	if (IDOS->FPrintf (vector_f, "\t") >= 0)
 		{
-			if (WriteFunctionDefinitionFunctionName (vector_f, library_s, function_def_p))
+			if (WriteFunctionDefinitionFunctionName (vector_f, prefix_s, function_def_p))
 				{
 					if (IDOS->FPrintf (vector_f, ",\n") >= 0)
 						{

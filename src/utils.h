@@ -46,7 +46,7 @@ BPTR GetMakefileHandle (CONST_STRPTR library_s);
 
 BOOL EnsureDirectoryExists (CONST_STRPTR dir_s);
 
-STRPTR GetSourceFilename (CONST CONST_STRPTR library_s, CONST CONST_STRPTR header_filename_s);
+STRPTR GetSourceFilename (CONST CONST_STRPTR library_s, CONST CONST_STRPTR header_filename_s, char file_suffix);
 
 BOOL CopyFile (CONST CONST_STRPTR src_s, CONST CONST_STRPTR dest_s);
 

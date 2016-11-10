@@ -34,7 +34,7 @@
 static BOOL WriteIncludes (BPTR out_p, CONST_STRPTR header_name_s);
 
 
-static BPTR GetSourceFileHandle (const struct FunctionDefinition *fn_def_p, CONST_STRPTR library_s, CONST_STRPTR output_dir_s);
+static BPTR GetSourceFileHandle (const struct FunctionDefinition *fn_def_p, CONST_STRPTR library_s, CONST_STRPTR output_dir_s, char file_suffix);
 
 static BOOL WriteLibraryFunctionDefinitionVariant (BPTR out_p, CONST CONST_STRPTR library_s, const struct FunctionDefinition * const fd_p, CONST CONST_STRPTR type_prefix_s, CONST CONST_STRPTR type_suffix_s, CONST CONST_STRPTR function_prefix_s, CONST CONST_STRPTR function_suffix_s, CONST CONST_STRPTR self_type_s);
 
@@ -482,7 +482,7 @@ BOOL WriteFunctionDefinitionFunctionName (BPTR out_p, CONST CONST_STRPTR library
 
 
 
-BOOL WriteLibraryFunctionDefinition (BPTR out_p, CONST CONST_STRPTR library_s, const struct FunctionDefinition * const fd_p)
+BOOL WriteLibraryFunctionDefinition (BPTR out_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR function_prefix_s, const struct FunctionDefinition * const fd_p)
 {
 	BOOL success_flag;
 	STRPTR self_type_s = NULL;
@@ -493,7 +493,7 @@ BOOL WriteLibraryFunctionDefinition (BPTR out_p, CONST CONST_STRPTR library_s, c
 	
 	if (self_type_s)
 		{
-			success_flag = WriteLibraryFunctionDefinitionVariant (out_p, library_s, fd_p, NULL, NULL, NULL, NULL, self_type_s);
+			success_flag = WriteLibraryFunctionDefinitionVariant (out_p, library_s, fd_p, NULL, NULL, function_prefix_s, NULL, self_type_s);
 			
 			IExec->FreeVec (self_type_s);
 		}
@@ -562,9 +562,9 @@ static BOOL WriteLibraryFunctionDefinitionVariant (BPTR out_p, CONST CONST_STRPT
 
 	ENTER ();
 
-	if (IDOS->FPrintf (out_p, "%s %s %s %s", type_prefix_s ? type_prefix_s : "", fd_p -> fd_definition_p -> pa_type_s, type_suffix_s ? type_suffix_s : "", function_prefix_s ? function_prefix_s : "") >= 0)
+	if (IDOS->FPrintf (out_p, "%s %s %s", type_prefix_s ? type_prefix_s : "", fd_p -> fd_definition_p -> pa_type_s, type_suffix_s ? type_suffix_s : "") >= 0)
 		{
-			if (WriteFunctionDefinitionFunctionName (out_p, library_s, fd_p))
+			if (WriteFunctionDefinitionFunctionName (out_p, function_prefix_s, fd_p))
 				{
 					if (IDOS->FPrintf (out_p, " %s (", function_suffix_s ? function_suffix_s : "") >= 0)
 						{
@@ -648,7 +648,7 @@ static BOOL WriteLibraryFunctionDefinitionVariant (BPTR out_p, CONST CONST_STRPT
 }
 
 
-BOOL WriteLibraryFunctionImplementation (BPTR out_p, const struct FunctionDefinition * const fd_p, CONST_STRPTR library_s)
+BOOL WriteLibraryFunctionImplementation (BPTR out_p, const struct FunctionDefinition * const fd_p, CONST_STRPTR library_s, CONST_STRPTR prefix_s)
 {
 	BOOL success_flag = FALSE;
 
@@ -656,7 +656,7 @@ BOOL WriteLibraryFunctionImplementation (BPTR out_p, const struct FunctionDefini
 
 	DB (KPRINTF ("%s %ld - WriteLibraryFunctionImplementation for  %s\n", __FILE__, __LINE__, fd_p -> fd_definition_p -> pa_name_s));
 
-	if (WriteLibraryFunctionDefinition (out_p, library_s, fd_p))
+	if (WriteLibraryFunctionDefinition (out_p, library_s, prefix_s, fd_p))
 		{
 			success_flag = (IDOS->FPrintf (out_p, "\n{\n\t") >= 0);
 
@@ -803,7 +803,7 @@ BOOL WriteSourceForAllFunctionDefinitions (struct List *fn_defs_p, CONST_STRPTR 
 
 					success_flag = FALSE;
 
-					output_f = GetSourceFileHandle (fn_def_p, library_s, output_dir_s);
+					output_f = GetSourceFileHandle (fn_def_p, library_s, output_dir_s, 'c');
 
 					if (output_f)
 						{
@@ -827,7 +827,7 @@ BOOL WriteSourceForAllFunctionDefinitions (struct List *fn_defs_p, CONST_STRPTR 
 
 			if (success_flag)
 				{
-					success_flag  = WriteSourceForFunctionDefinition (fn_def_p, output_f, library_s);
+					success_flag  = WriteSourceForFunctionDefinition (fn_def_p, output_f, library_s, prefix_s);
 
 					if (success_flag)
 						{
@@ -848,20 +848,84 @@ BOOL WriteSourceForAllFunctionDefinitions (struct List *fn_defs_p, CONST_STRPTR 
 				}
 		}
 
-	/*
-	if (makefile_p)
-		{
-			if (!WriteMakefileFooter (makefile_p))
-				{
-					IDOS->Printf ("Failed to write footer block to makefile\n");
-				}
+	LEAVE ();
+	return success_flag;
+}
 
-			if (!CloseMakefile (makefile_p))
+
+BOOL WriteSourceForAllFunctionDeclarations (struct List *fn_defs_p, CONST_STRPTR output_dir_s, CONST_STRPTR library_s, CONST_STRPTR prefix_s)
+{
+	ENTER ();
+
+	BOOL success_flag = TRUE;
+	struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (fn_defs_p);
+	//BPTR makefile_p = GetMakefileHandle (library_s);
+	CONST_STRPTR current_filename_s = "";
+	BPTR output_f = ZERO;
+
+	while (node_p && success_flag)
+		{
+			struct FunctionDefinition *fn_def_p = node_p -> fdn_function_def_p;
+
+			/* are we changing the source file that we are writing to? */
+			if (strcmp (current_filename_s, fn_def_p -> fd_filename_s) != 0)
 				{
-					IDOS->Printf ("Failed to close makefile\n");
+					if (output_f)
+						{
+							if (IDOS->FClose (output_f) == 0)
+								{
+									IDOS->Printf ("Error closing %s", current_filename_s);
+								}
+
+							output_f = ZERO;
+						}
+
+					success_flag = FALSE;
+
+					output_f = GetSourceFileHandle (fn_def_p, library_s, output_dir_s, 'h');
+
+					if (output_f)
+						{
+							if (WriteIncludes (output_f, fn_def_p -> fd_filename_s))
+								{
+									success_flag = TRUE;
+								}
+							else
+								{
+									IDOS->Printf ("Error writing includes to  %s", fn_def_p -> fd_filename_s);
+								}
+
+							current_filename_s = fn_def_p -> fd_filename_s;
+						}
+					else
+						{
+							IDOS->Printf ("Error opening %s", fn_def_p -> fd_filename_s);
+						}
+
+				}		/* if (strcmp (current_filename_s, fn_def_p -> fd_filename_s) != 0) */
+
+			if (success_flag)
+				{
+					success_flag  = WriteSourceForFunctionDeclaration (fn_def_p, output_f, library_s, prefix_s);
+
+					if (success_flag)
+						{
+							node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p);
+						}
+					else
+						{
+							IDOS->Printf ("Error writing source for %s", fn_def_p -> fd_filename_s);
+						}
 				}
 		}
-	*/
+
+	if (output_f)
+		{
+			if (IDOS->FClose (output_f) == 0)
+				{
+					IDOS->Printf ("Error closing %s", current_filename_s);
+				}
+		}
 
 	LEAVE ();
 	return success_flag;
@@ -899,20 +963,18 @@ BOOL WriteAllInterfaceFunctionDefinitions (struct List *fn_defs_p, BPTR out_p, C
 }
 
 
-static BPTR GetSourceFileHandle (const struct FunctionDefinition *fn_def_p, CONST_STRPTR library_s, CONST_STRPTR output_dir_s)
+static BPTR GetSourceFileHandle (const struct FunctionDefinition *fn_def_p, CONST_STRPTR library_s, CONST_STRPTR output_dir_s, char file_suffix)
 {
 	ENTER ();
 
 	BPTR src_f = ZERO;
 
 	/* Get the .c filename */
-	STRPTR filename_s = GetSourceFilename (library_s, fn_def_p -> fd_filename_s);
+	STRPTR filename_s = GetSourceFilename (library_s, fn_def_p -> fd_filename_s, file_suffix);
 
 
 	if (filename_s)
 		{
-			//STRPTR generated_filename_s = 
-			
 			STRPTR full_name_s = NULL;;
 
 			/* Make the full filename */
@@ -947,36 +1009,14 @@ static BPTR GetSourceFileHandle (const struct FunctionDefinition *fn_def_p, CONS
 }
 
 
-static STRPTR GetGeneratedFilename (CONST_STRPTR library_s, CONST_STRPTR filename_s)
-{
-	STRPTR res_s = NULL;
-	size_t l;
-	ENTER ();
-	
-	
-	
-	
-	LEAVE ();
-	
-	return res_s;
-}
-
-
-
-BOOL WriteSourceForFunctionDefinition (const struct FunctionDefinition *fn_def_p, BPTR output_f, CONST_STRPTR library_s)
+BOOL WriteSourceForFunctionDefinition (const struct FunctionDefinition *fn_def_p, BPTR output_f, CONST_STRPTR library_s, CONST_STRPTR prefix_s)
  {
 	BOOL success_flag = FALSE;
 
 	ENTER ();
 
-	if (WriteLibraryFunctionImplementation (output_f, fn_def_p, library_s))
+	if (WriteLibraryFunctionImplementation (output_f, fn_def_p, library_s, prefix_s))
 		{
-			/*
-			if (!AddFileToMakefileSources (makefile_p, full_name_s))
-				{
-					IDOS->Printf ("Failed to add %s to list of sources in makefile\n", full_name_s);
-				}
-			*/
 			success_flag = TRUE;
 		}
 	else
@@ -990,12 +1030,30 @@ BOOL WriteSourceForFunctionDefinition (const struct FunctionDefinition *fn_def_p
 }
 
 
-BOOL WriteFunctionDefinitionDeclaration (const struct FunctionDefinition *fn_def_p, BPTR out_p)
-{
+BOOL WriteSourceForFunctionDeclaration (const struct FunctionDefinition *fn_def_p, BPTR output_f, CONST_STRPTR library_s, CONST_STRPTR prefix_s)
+ {
+	BOOL success_flag = FALSE;
+
 	ENTER ();
+
+
+	if (WriteLibraryFunctionDefinition (output_f, library_s, prefix_s, fn_def_p))
+		{
+			if (IDOS->FPrintf (output_f, ";\n") >= 0)
+				{
+					success_flag = TRUE;
+				}
+		}
+	else
+		{
+			DB (KPRINTF ("%s %ld - Failed to write implementation to %s\n", __FILE__, __LINE__, fn_def_p -> fd_filename_s));
+		}
+
+
 	LEAVE ();
-	return FALSE;
+	return success_flag;
 }
+
 
 
 static BOOL WriteIncludes (BPTR out_p, CONST_STRPTR header_name_s)

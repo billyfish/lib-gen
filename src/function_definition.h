@@ -81,16 +81,18 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s, C
 BOOL PrintFunctionDefinition (BPTR out_p, const struct FunctionDefinition * const fn_p);
 
 
-BOOL WriteLibraryFunctionImplementation (BPTR out_p, const struct FunctionDefinition * const fd_p, CONST_STRPTR interface_struct_s);
+BOOL WriteLibraryFunctionImplementation (BPTR out_p, const struct FunctionDefinition * const fd_p, CONST_STRPTR interface_struct_s, CONST_STRPTR prefix_s);
 
 
 BOOL WriteSourceForAllFunctionDefinitions (struct List *fn_defs_p, CONST_STRPTR output_dir_s, CONST_STRPTR library_s, CONST_STRPTR prefix_s);
 
 
-BOOL WriteSourceForFunctionDefinition (const struct FunctionDefinition *fn_def_p, BPTR output_f, CONST_STRPTR library_s);
+BOOL WriteSourceForFunctionDefinition (const struct FunctionDefinition *fn_def_p, BPTR output_f, CONST_STRPTR library_s, CONST_STRPTR prefix_s);
 
 
-BOOL WriteFunctionDefinitionDeclaration (const struct FunctionDefinition *fn_def_p, BPTR out_p);
+BOOL WriteSourceForAllFunctionDeclarations (struct List *fn_defs_p, CONST_STRPTR output_dir_s, CONST_STRPTR library_s, CONST_STRPTR prefix_s);
+
+BOOL WriteSourceForFunctionDeclaration (const struct FunctionDefinition *fn_def_p, BPTR output_f, CONST_STRPTR library_s, CONST_STRPTR prefix_s);
 
 
 const char *FindParameterEnd (const char *start_p, BOOL function_flag);
@@ -102,7 +104,7 @@ int CompareFunctionDefinitionNodes (const void *v0_p, const void *v1_p);
 BOOL WriteFunctionDefinitionFunctionName (BPTR out_p, CONST CONST_STRPTR library_s, const struct FunctionDefinition * const fd_p);
 
 
-BOOL WriteLibraryFunctionDefinition (BPTR out_p, CONST CONST_STRPTR library_s, const struct FunctionDefinition * const fd_p);
+BOOL WriteLibraryFunctionDefinition (BPTR out_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR function_prefix_s, const struct FunctionDefinition * const fd_p);
 
 
 BOOL WriteAllInterfaceFunctionDefinitions (struct List *fn_defs_p, BPTR out_p, CONST CONST_STRPTR interface_s);

@@ -63,8 +63,8 @@ static BOOL WriteTop (BPTR out_p, CONST CONST_STRPTR library_s)
 				"STATIC CONST struct TagItem %sTags [] =\n"
 				"{\n"
 				"\t{ MIT_Name, (Tag) \"%s\" },\n"
-				"\t{ MIT_VectorTable,	(Tag) %s_vectors },\n"
-				"\t{ MIT_Version,	1	},\n"
+				"\t{ MIT_VectorTable, (Tag) %s_vectors },\n"
+				"\t{ MIT_Version,	1 },\n"
 				"\t{ TAG_DONE, 0 }\n"
 				"};\n\n", library_s, library_s, library_s) >= 0)
 				{
@@ -79,9 +79,9 @@ static BOOL WriteTop (BPTR out_p, CONST CONST_STRPTR library_s)
 							if (IDOS->FPrintf (out_p,
 								"STATIC CONST struct TagItem libCreateTags [] =\n"
 								"{\n"
-								"\t{ CLT_DataSize,		sizeof (struct Library)	},\n"
-								"\t{ CLT_InitFunc,		(Tag) libInit },\n"
-								"\t{ CLT_Interfaces,	(Tag) libInterfaces },\n\n"
+								"\t{ CLT_DataSize, sizeof (struct Library)	},\n"
+								"\t{ CLT_InitFunc, (Tag) libInit },\n"
+								"\t{ CLT_Interfaces, (Tag) libInterfaces },\n\n"
 								"\t/* Uncomment the following line if you have a 68k jump table */\n"
 								"\t/* { CLT_Vector68K, (Tag) VecTable68K }, */\n\n"
 								"\t{TAG_DONE, 0 }\n"

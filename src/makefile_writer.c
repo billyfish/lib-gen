@@ -186,7 +186,7 @@ BOOL WriteMakefileSources (BPTR makefile_p, CONST CONST_STRPTR library_s, CONST 
 
 			if (strcmp (current_source_filename_s, function_source_filename_s) != 0)
 				{
-					STRPTR c_filename_s = GetSourceFilename (library_s, function_source_filename_s);
+					STRPTR c_filename_s = GetSourceFilename (library_s, function_source_filename_s, 'c');
 
 					if (c_filename_s)
 						{

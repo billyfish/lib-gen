@@ -459,53 +459,60 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 				{
 					if (EnsureDirectoryExists (output_dir_s))
 						{
-							if (WriteSourceForAllFunctionDefinitions (&function_defs, output_dir_s, library_s))
+							if (WriteSourceForAllFunctionDefinitions (&function_defs, output_dir_s, library_s, prefix_s))
 								{
 									IDOS->Printf ("Generating source succeeded");
 						
-								
-									if (WriteInitFile (library_s, output_dir_s))
+									if (WriteSourceForAllFunctionDeclarations (&function_defs, output_dir_s, library_s, prefix_s))
 										{
-											if (WriteVectorsFile (output_dir_s, library_s, &function_defs))
+											IDOS->Printf ("Generating headers succeeded");
+								
+											if (WriteInitFile (library_s, output_dir_s))
 												{
-													if (WriteHeaderFiles (&function_defs, library_s, output_dir_s))
-														{						
-															STRPTR init_s = NULL;
-													
-															IDOS->Printf ("Generating vectors succeeded");
+													if (WriteVectorsFile (output_dir_s, library_s, prefix_s, &function_defs))
+														{
+															if (WriteHeaderFiles (&function_defs, library_s, output_dir_s))
+																{						
+																	STRPTR init_s = NULL;
 															
-															init_s = MakeFilename (output_dir_s, "lib_init.c");
-															
-															
-															if (init_s)
-																{
-																	if (CopyFile ("data/lib_manager.c.template", init_s))
+																	IDOS->Printf ("Generating vectors succeeded");
+																	
+																	init_s = MakeFilename (output_dir_s, "lib_init.c");
+																	
+																	
+																	if (init_s)
 																		{
+																			if (CopyFile ("data/lib_manager.c.template", init_s))
+																				{
+																					
+																				}
+																			else
+																				{
+																					IDOS->Printf ("Failed to generate init.c");
+																				}
 																			
-																		}
+																			IExec->FreeVec (init_s);	
+																		}		/* if (init_s) */
 																	else
 																		{
-																			IDOS->Printf ("Failed to generate init.c");
-																		}
-																	
-																	IExec->FreeVec (init_s);	
-																}		/* if (init_s) */
-															else
-																{
-																	IDOS->Printf ("Failed to get init.c full filename");
-																}		
-																
-														}		/* if (WriteHeaderFiles (&function_defs, library_s, output_dir_s)) */
-													
-												}
-											else
-												{
-													IDOS->Printf ("Generating vectors failed");
-												}
-																						
-										}		/* if (WriteInitFile (library_s, output_dir_s)) */
+																			IDOS->Printf ("Failed to get init.c full filename");
+																		}		
+																		
+																}		/* if (WriteHeaderFiles (&function_defs, library_s, output_dir_s)) */
+															
+														}
+													else
+														{
+															IDOS->Printf ("Generating vectors failed");
+														}
+																								
+												}		/* if (WriteInitFile (library_s, output_dir_s)) */
 									
-
+										}
+									else
+										{
+											IDOS->Printf ("Generating headers failed");	
+										}
 								}
 							else
 								{
