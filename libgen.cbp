@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<CodeBench_Project name="libgen" path="DH6:Projects/libgen/libgen.cbp" created="1119285779" lastmodified="1226360622">
+<CodeBench_Project name="libgen" path="DH6:Projects/libgen/libgen.cbp" created="1119285779" lastmodified="1227802971">
 	<plugin name="PROGDIR:Plugins/AmigaOS4SDK.CCPlugin" flags="16"/>
 	<label identifier="////"/>
 	<target name="libgen" run="libgen"/>
@@ -16,51 +16,51 @@
 		<file name="src/byte_buffer.h" open="0"/>
 		<file name="src/library_utils.h" open="0"/>
 		<file name="src/list_utils.h" open="0"/>
-		<file name="src/utils.h" open="1" top="3" left="0" line="56" row="20"/>
+		<file name="src/utils.h" open="0"/>
 		<file name="src/debugging_utils.h" open="0"/>
 		<file name="src/parameter.h" open="0"/>
 		<file name="src/writer.h" open="0"/>
-		<file name="src/idl_writer.h" open="1" top="0" left="0" line="0" row="0"/>
-		<file name="src/function_definition.h" open="1" top="0" left="0" line="0" row="0"/>
+		<file name="src/idl_writer.h" open="0"/>
+		<file name="src/function_definition.h" open="0"/>
 		<file name="src/c_writer.h" open="0"/>
 		<file name="src/makefile_utils.h" open="0"/>
 		<file name="src/document_parser.h" open="0"/>
 		<file name="src/auto_init_writer.h" open="0"/>
 		<file name="src/makefile_writer.h" open="0"/>
-		<file name="src/vectors.h" open="1" top="0" left="0" line="24" row="46"/>
-		<file name="src/inline_header_writer.h" open="1" top="0" left="0" line="16" row="0"/>
-		<file name="src/proto_header_writer.h" open="1" top="0" left="0" line="24" row="0"/>
+		<file name="src/vectors.h" open="0"/>
+		<file name="src/inline_header_writer.h" open="0"/>
+		<file name="src/proto_header_writer.h" open="0"/>
 		<file name="src/interface_h_writer.h" open="0"/>
 		<file name="src/init_writer.h" open="0"/>
 	</headers>
 	<sources>
 		<file name="src/auto_init_writer.c" open="0"/>
-		<file name="src/init_writer.c" open="1" current="1" top="1" left="0" line="9" row="64"/>
+		<file name="src/init_writer.c" open="0"/>
 		<file name="src/inline_header_writer.c" open="1" top="35" left="0" line="82" row="2"/>
-		<file name="src/makefile_writer.c" open="1" top="74" left="0" line="85" row="0"/>
-		<file name="src/proto_header_writer.c" open="1" top="5" left="0" line="13" row="0"/>
+		<file name="src/makefile_writer.c" open="1" top="164" left="0" line="169" row="22"/>
+		<file name="src/proto_header_writer.c" open="0"/>
 		<file name="src/list_utils.c" open="0"/>
 		<file name="src/byte_buffer.c" open="0"/>
-		<file name="src/document_parser.c" open="1" top="0" left="0" line="0" row="0"/>
+		<file name="src/document_parser.c" open="0"/>
 		<file name="src/library_utils.c" open="0"/>
 		<file name="src/idl_writer.c" open="1" top="257" left="0" line="287" row="0"/>
-		<file name="src/main.c" open="1" top="0" left="0" line="17" row="19"/>
+		<file name="src/main.c" open="1" top="450" left="0" line="465" row="52"/>
 		<file name="src/utils.c" open="1" top="489" left="0" line="515" row="0"/>
 		<file name="src/parameter.c" open="0"/>
-		<file name="src/function_definition.c" open="0"/>
+		<file name="src/function_definition.c" open="1" top="956" left="0" line="986" row="0"/>
 		<file name="src/writer.c" open="1" top="0" left="0" line="0" row="0"/>
 		<file name="src/c_writer.c" open="1" top="0" left="0" line="0" row="0"/>
 		<file name="src/makefile_utils.c" open="0"/>
-		<file name="src/vectors.c" open="0"/>
+		<file name="src/vectors.c" open="1" current="1" top="78" left="0" line="88" row="45"/>
 		<file name="src/interface_h_writer.c" open="0"/>
 	</sources>
 	<others>
 		<file name="data/lib_manager.c.template" open="0"/>
 	</others>
-	<flags value="0x0000000002001005"/>
+	<flags value="0x0000000002001001"/>
 	<buildscript name="Makefile" depth="3" open="0"/>
 	<projectnotes open="0"/>
 	<buildwindow open="1"/>
 	<logfile name="RAM Disk:Build.log"/>
-	<repository plugin="PROGDIR:plugins/svntool.syncplugin" lastcommit="1226336937" lastupdate="1225301742"/>
+	<repository plugin="PROGDIR:plugins/svntool.syncplugin" lastcommit="1226361399" lastupdate="1225301742"/>
 </CodeBench_Project>

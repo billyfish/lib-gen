@@ -20,9 +20,9 @@
 #include <exec/types.h>
 
 
-BOOL WriteMakefileHeader (BPTR makefile_p, CONST_STRPTR library_s);
+BOOL WriteMakefileHeader (BPTR makefile_p, CONST_STRPTR library_s, CONST_STRPTR src_dir_s);
 
-BOOL WriteMakefileFooter (BPTR makefile_p);
+BOOL WriteMakefileFooter (BPTR makefile_p, CONST_STRPTR library_s, CONST_STRPTR src_dir_s);
 
 BOOL AddFileToMakefileSources (BPTR makefile_p, CONST_STRPTR filename_s);
 

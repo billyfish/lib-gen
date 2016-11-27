@@ -9,14 +9,11 @@
 #include "utils.h"
 #include "debugging_utils.h"
 
-
-BOOL WriteMakefileHeader (BPTR makefile_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR dir_s);
-
-
-BOOL WriteMakefileFooter (BPTR makefile_p, CONST CONST_STRPTR library_s);
+#include "makefile_utils.h"
 
 
-BOOL WriteMakefileSources (BPTR makefile_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR dir_s, struct List * const src_files_p);
+
+STATIC BOOL WriteMakefileSources (BPTR makefile_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR dir_s, struct List * const src_files_p);
 
 
 BOOL WriteMakefile (CONST CONST_STRPTR  makefile_s, CONST CONST_STRPTR library_s, struct List * const function_defs_p)
@@ -35,7 +32,7 @@ BOOL WriteMakefile (CONST CONST_STRPTR  makefile_s, CONST CONST_STRPTR library_s
 						{
 							if (WriteMakefileSources (makefile_p, library_s, src_dir_s, function_defs_p))
 								{
-									if (WriteMakefileFooter (makefile_p, library_s))
+									if (WriteMakefileFooter (makefile_p, library_s, src_dir_s))
 										{
 											success_flag = TRUE;
 										}
@@ -107,7 +104,7 @@ BOOL WriteMakefileHeader (BPTR makefile_p, CONST CONST_STRPTR library_s, CONST C
 		
 	CONST CONST_STRPTR part1_s = "OPTIMIZE = -O3\n" \
 		"DEBUG    = # -gstabs -DDEBUG\n" \
-		"CFLAGS   = -Wall $(OPTIMIZE) $(DEBUG) -I$(DIR_SRC)/include -I$(DIR_INPUT_SRC)\n" \
+		"CFLAGS   = -Wall $(OPTIMIZE) $(DEBUG) -I$(DIR_SRC)/include -I$(DIR_SRC)\n" \
 		"\n" \
 		"# Flags passed to gcc during linking\n" \
 		"LINK = \n" \
@@ -125,7 +122,7 @@ BOOL WriteMakefileHeader (BPTR makefile_p, CONST CONST_STRPTR library_s, CONST C
 		"VERSION = 53\n" \
 		"\n";
 
-	if (IDOS->FPrintf (makefile_p, "# Makefile for project %s\n%sDIR_SRC = %s\nDIR_INPUT_SRC = %s\n%s%s%s", library_s, part0_s, dir_s, input_dir_s, part1_s, library_s, part2_s) >= 0)
+	if (IDOS->FPrintf (makefile_p, "# Makefile for project %s\n%sDIR_SRC = %s\n%s%s%s", library_s, part0_s, dir_s, part1_s, library_s, part2_s) >= 0)
 		{
 			success_flag = TRUE;
 		}
@@ -135,7 +132,7 @@ BOOL WriteMakefileHeader (BPTR makefile_p, CONST CONST_STRPTR library_s, CONST C
 }
 
 
-BOOL WriteMakefileFooter (BPTR makefile_p, CONST CONST_STRPTR library_s)
+BOOL WriteMakefileFooter (BPTR makefile_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR dir_s)
 {
 	ENTER ();
 	BOOL success_flag = FALSE;
@@ -158,8 +155,7 @@ BOOL WriteMakefileFooter (BPTR makefile_p, CONST CONST_STRPTR library_s)
 		"\n" \
 		".PHONY: revision\n" \
 		"revision:\n" \
-		"	bumprev $(VERSION) $(TARGET)\n" \
-		"\n";
+		"\tbumprev $(VERSION) $(DIR_SRC)/$(TARGET)\n";		
 
 	if (IDOS->FPrintf (makefile_p, "%s%s%s", part0_s, library_s, part1_s) >= 0)
 		{
