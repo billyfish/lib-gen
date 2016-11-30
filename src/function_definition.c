@@ -368,7 +368,7 @@ struct FunctionDefinition *AllocateFunctionDefinition (CONST CONST_STRPTR filena
 				{
 					fd_p -> fd_definition_p = NULL;
 					fd_p -> fd_args_p = params_p;
-					fd_p -> fd_filename_s = filename_s;
+					fd_p -> fd_header_filename_s = filename_s;
 					fd_p -> fd_line_number = line_number;
 
 
@@ -736,7 +736,7 @@ int CompareFunctionDefinitionNodes (const void *v0_p, const void *v1_p)
 
 	ENTER ();
 
-	int res = strcmp (fd0_p -> fd_filename_s, fd1_p -> fd_filename_s);
+	int res = strcmp (fd0_p -> fd_header_filename_s, fd1_p -> fd_header_filename_s);
 
 	if (res == 0)
 		{
@@ -789,7 +789,7 @@ BOOL WriteSourceForAllFunctionDefinitions (struct List *fn_defs_p, CONST_STRPTR 
 			struct FunctionDefinition *fn_def_p = node_p -> fdn_function_def_p;
 
 			/* are we changing the source file that we are writing to? */
-			if (strcmp (current_filename_s, fn_def_p -> fd_filename_s) != 0)
+			if (strcmp (current_filename_s, fn_def_p -> fd_header_filename_s) != 0)
 				{
 					if (output_f)
 						{
@@ -807,20 +807,20 @@ BOOL WriteSourceForAllFunctionDefinitions (struct List *fn_defs_p, CONST_STRPTR 
 
 					if (output_f)
 						{
-							if (WriteIncludes (output_f, fn_def_p -> fd_filename_s))
+							if (WriteIncludes (output_f, fn_def_p -> fd_header_filename_s))
 								{
 									success_flag = TRUE;
 								}
 							else
 								{
-									IDOS->Printf ("Error wrintg includes to  %s", fn_def_p -> fd_filename_s);
+									IDOS->Printf ("Error wrintg includes to  %s", fn_def_p -> fd_header_filename_s);
 								}
 
-							current_filename_s = fn_def_p -> fd_filename_s;
+							current_filename_s = fn_def_p -> fd_header_filename_s;
 						}
 					else
 						{
-							IDOS->Printf ("Error opening %s", fn_def_p -> fd_filename_s);
+							IDOS->Printf ("Error opening %s", fn_def_p -> fd_header_filename_s);
 						}
 
 				}		/* if (strcmp (current_filename_s, fn_def_p -> fd_filename_s) != 0) */
@@ -835,7 +835,7 @@ BOOL WriteSourceForAllFunctionDefinitions (struct List *fn_defs_p, CONST_STRPTR 
 						}
 					else
 						{
-							IDOS->Printf ("Error writing source for %s", fn_def_p -> fd_filename_s);
+							IDOS->Printf ("Error writing source for %s", fn_def_p -> fd_header_filename_s);
 						}
 				}
 		}
@@ -868,7 +868,7 @@ BOOL WriteSourceForAllFunctionDeclarations (struct List *fn_defs_p, CONST_STRPTR
 			struct FunctionDefinition *fn_def_p = node_p -> fdn_function_def_p;
 
 			/* are we changing the source file that we are writing to? */
-			if (strcmp (current_filename_s, fn_def_p -> fd_filename_s) != 0)
+			if (strcmp (current_filename_s, fn_def_p -> fd_header_filename_s) != 0)
 				{
 					if (output_f)
 						{
@@ -886,20 +886,20 @@ BOOL WriteSourceForAllFunctionDeclarations (struct List *fn_defs_p, CONST_STRPTR
 
 					if (output_f)
 						{
-							if (WriteIncludes (output_f, fn_def_p -> fd_filename_s))
+							if (WriteIncludes (output_f, fn_def_p -> fd_header_filename_s))
 								{
 									success_flag = TRUE;
 								}
 							else
 								{
-									IDOS->Printf ("Error writing includes to  %s", fn_def_p -> fd_filename_s);
+									IDOS->Printf ("Error writing includes to  %s", fn_def_p -> fd_header_filename_s);
 								}
 
-							current_filename_s = fn_def_p -> fd_filename_s;
+							current_filename_s = fn_def_p -> fd_header_filename_s;
 						}
 					else
 						{
-							IDOS->Printf ("Error opening %s", fn_def_p -> fd_filename_s);
+							IDOS->Printf ("Error opening %s", fn_def_p -> fd_header_filename_s);
 						}
 
 				}		/* if (strcmp (current_filename_s, fn_def_p -> fd_filename_s) != 0) */
@@ -914,7 +914,7 @@ BOOL WriteSourceForAllFunctionDeclarations (struct List *fn_defs_p, CONST_STRPTR
 						}
 					else
 						{
-							IDOS->Printf ("Error writing source for %s", fn_def_p -> fd_filename_s);
+							IDOS->Printf ("Error writing source for %s", fn_def_p -> fd_header_filename_s);
 						}
 				}
 		}
@@ -952,7 +952,7 @@ BOOL WriteAllInterfaceFunctionDefinitions (struct List *fn_defs_p, BPTR out_p, C
 				}
 			else
 				{
-					IDOS->Printf ("Error writing source for %s", fn_def_p -> fd_filename_s);
+					IDOS->Printf ("Error writing source for %s", fn_def_p -> fd_header_filename_s);
 				}
 			
 		}
@@ -970,7 +970,7 @@ static BPTR GetSourceFileHandle (const struct FunctionDefinition *fn_def_p, CONS
 	BPTR src_f = ZERO;
 
 	/* Get the .c filename */
-	STRPTR filename_s = GetSourceFilename (library_s, fn_def_p -> fd_filename_s, file_suffix);
+	STRPTR filename_s = GetSourceFilename (library_s, fn_def_p -> fd_header_filename_s, file_suffix);
 
 
 	if (filename_s)
@@ -1001,7 +1001,7 @@ static BPTR GetSourceFileHandle (const struct FunctionDefinition *fn_def_p, CONS
 		}		/* if (filename_s) */
 	else
 		{
-			DB (KPRINTF ("%s %ld - Failed to get local filename from %s\n", __FILE__, __LINE__, fn_def_p -> fd_filename_s));
+			DB (KPRINTF ("%s %ld - Failed to get local filename from %s\n", __FILE__, __LINE__, fn_def_p -> fd_header_filename_s));
 		}
 
 	LEAVE ();
@@ -1021,7 +1021,7 @@ BOOL WriteSourceForFunctionDefinition (const struct FunctionDefinition *fn_def_p
 		}
 	else
 		{
-			DB (KPRINTF ("%s %ld - Failed to write implementation to %s\n", __FILE__, __LINE__, fn_def_p -> fd_filename_s));
+			DB (KPRINTF ("%s %ld - Failed to write implementation to %s\n", __FILE__, __LINE__, fn_def_p -> fd_header_filename_s));
 		}
 
 
@@ -1046,7 +1046,7 @@ BOOL WriteSourceForFunctionDeclaration (const struct FunctionDefinition *fn_def_
 		}
 	else
 		{
-			DB (KPRINTF ("%s %ld - Failed to write implementation to %s\n", __FILE__, __LINE__, fn_def_p -> fd_filename_s));
+			DB (KPRINTF ("%s %ld - Failed to write implementation to %s\n", __FILE__, __LINE__, fn_def_p -> fd_header_filename_s));
 		}
 
 
@@ -1078,7 +1078,7 @@ BOOL WriteFunctionDefinitionListIncludes (BPTR out_p, struct List *function_defi
 	
 	while ((node_p != NULL) && success_flag)
 		{
-			CONST_STRPTR next_filename_s = node_p -> fdn_function_def_p -> fd_filename_s;
+			CONST_STRPTR next_filename_s = node_p -> fdn_function_def_p -> fd_header_filename_s;
 			
 			if (strcmp (current_filename_s, next_filename_s) != 0)
 				{

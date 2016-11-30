@@ -178,7 +178,7 @@ BOOL WriteMakefileSources (BPTR makefile_p, CONST CONST_STRPTR library_s, CONST 
 
 	while (node_p && success_flag)
 		{
-			CONST_STRPTR function_source_filename_s = node_p -> fdn_function_def_p -> fd_filename_s;
+			CONST_STRPTR function_source_filename_s = node_p -> fdn_function_def_p -> fd_header_filename_s;
 
 			if (strcmp (current_source_filename_s, function_source_filename_s) != 0)
 				{

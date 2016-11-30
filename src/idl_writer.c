@@ -206,7 +206,7 @@ static BOOL WriteIDLFunctionDefinition (BPTR out_p, const struct FunctionDefinit
 	ENTER ();
 	BOOL success_flag = FALSE;
 
-	if (IDOS->FPrintf (out_p, "\n\t\t<!-- %s:%ld -->\n", fd_p -> fd_filename_s, fd_p -> fd_line_number) >= 0)
+	if (IDOS->FPrintf (out_p, "\n\t\t<!-- %s:%ld -->\n", fd_p -> fd_header_filename_s, fd_p -> fd_line_number) >= 0)
 		{
 			if (IDOS->FPrintf (out_p, "\t\t<method name=\"%s\" result=\"%s\">\n", fd_p -> fd_definition_p -> pa_name_s, fd_p -> fd_definition_p -> pa_type_s) >= 0)
 				{
