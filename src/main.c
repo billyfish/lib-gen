@@ -461,11 +461,11 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 						{
 							if (WriteSourceForAllFunctionDefinitions (&function_defs, output_dir_s, library_s, prefix_s))
 								{
-									IDOS->Printf ("Generating source succeeded");
+									IDOS->Printf ("Generating source succeeded\n");
 						
 									if (WriteSourceForAllFunctionDeclarations (&function_defs, output_dir_s, library_s, prefix_s))
 										{
-											IDOS->Printf ("Generating headers succeeded");
+											IDOS->Printf ("Generating headers succeeded\n");
 								
 											if (WriteInitFile (library_s, output_dir_s))
 												{
@@ -475,7 +475,7 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 																{						
 																	STRPTR init_s = NULL;
 															
-																	IDOS->Printf ("Generating vectors succeeded");
+																	IDOS->Printf ("Generating vectors succeeded\n");
 																	
 																	init_s = MakeFilename (output_dir_s, "lib_init.c");
 																	
@@ -503,7 +503,7 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 														}
 													else
 														{
-															IDOS->Printf ("Generating vectors failed");
+															IDOS->Printf ("Generating vectors failed\n");
 														}
 																								
 												}		/* if (WriteInitFile (library_s, output_dir_s)) */
@@ -511,12 +511,12 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 										}
 									else
 										{
-											IDOS->Printf ("Generating headers failed");	
+											IDOS->Printf ("Generating headers failed\n");	
 										}
 								}
 							else
 								{
-									IDOS->Printf ("Generating source failed");
+									IDOS->Printf ("Generating source failed\n");
 								}
 						}
 					else

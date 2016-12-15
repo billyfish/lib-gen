@@ -1,0 +1,12 @@
+TODO:
+
+FIX vectors.h to include proto files for library definitions rather than use the extern declarations
+FIX library declarations so that first parameter is of type "struct TIFace *" rather than "struct t*"
+FIX interface declaration header so that api calls are to _t_<function> rather than <function> in struct TIFace.
+FIX add include guards to generated declaration header files.
+FIX Obtain and Release functions in init.c have "struct tIFace *" rather than "struct TIFace *" as their first parameter type.
+FIX Obtain and Release functions need to be "_t_Obtain" rather than "t_Obtain". Add initial underscore.
+FIX Obtain and Release function declarations need to be in a header fiel so that vectors.h can see them.
+FIX Create lib_init.h
+ 
+
