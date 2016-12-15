@@ -88,7 +88,7 @@ BOOL CloseMakefile (BPTR makefile_p)
 }
 
 
-BPTR GetMakefileHandle (CONST_STRPTR library_s)
+BPTR GetMakefileHandle (CONST_STRPTR library_s, CONST_STRPTR dir_s)
 {
 	ENTER ();
 	BPTR makefile_p = ZERO;
@@ -100,7 +100,7 @@ BPTR GetMakefileHandle (CONST_STRPTR library_s)
 
 			if (makefile_p)
 				{
-					if (!WriteMakefileHeader (makefile_p, library_s))
+					if (!WriteMakefileHeader (makefile_p, library_s, dir_s))
 						{
 							IDOS->Printf ("Failed to write header block to makefile \"%s\"\n", makefile_s);
 						}

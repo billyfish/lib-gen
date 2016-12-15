@@ -520,6 +520,25 @@ BOOL PrintCaptitalizedString (BPTR out_p, CONST_STRPTR value_s)
 }
 
 
+STRPTR GetInterfaceName (CONST CONST_STRPTR library_s)
+{
+	STRPTR interface_s = NULL;
+	
+	ENTER ();
+	
+	interface_s = ConcatenateStrings (library_s, "IFace");
+	
+	if (interface_s)
+		{
+			/* Captialize the interface */
+			*interface_s = toupper (*interface_s);	
+		}
+
+	LEAVE ();
+	return interface_s;
+}
+
+
 
 STRPTR GetUpperCaseString (CONST_STRPTR src_s)
 {

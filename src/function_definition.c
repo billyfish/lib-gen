@@ -31,7 +31,7 @@
 #endif
 
 
-static BOOL WriteIncludes (BPTR out_p, CONST_STRPTR header_name_s);
+static BOOL WriteIncludes (BPTR out_p, CONST_STRPTR header_name_s,  CONST_STRPTR lib_name_s);
 
 
 static BPTR GetSourceFileHandle (const struct FunctionDefinition *fn_def_p, CONST_STRPTR library_s, CONST_STRPTR output_dir_s, char file_suffix);
@@ -482,7 +482,7 @@ BOOL WriteFunctionDefinitionFunctionName (BPTR out_p, CONST CONST_STRPTR library
 
 
 
-BOOL WriteLibraryFunctionDefinition (BPTR out_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR function_prefix_s, const struct FunctionDefinition * const fd_p)
+ BOOL WriteLibraryFunctionDefinition (BPTR out_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR function_prefix_s, const struct FunctionDefinition * const fd_p)
 {
 	BOOL success_flag;
 	STRPTR self_type_s = NULL;
@@ -504,22 +504,37 @@ BOOL WriteLibraryFunctionDefinition (BPTR out_p, CONST CONST_STRPTR library_s, C
 }
 
 
-BOOL WriteInterfaceFunctionDefinition (BPTR out_p, CONST CONST_STRPTR library_s, const struct FunctionDefinition * const fd_p)
+BOOL WriteInterfaceFunctionDefinition (BPTR out_p, CONST CONST_STRPTR library_s,  CONST CONST_STRPTR interface_s, CONST CONST_STRPTR prefix_s, const struct FunctionDefinition * const fd_p)
 {
-	BOOL success_flag;
-	STRPTR self_type_s = NULL;
+	BOOL success_flag = FALSE;
+
+	STRPTR include_filename_s = NULL;
 	
 	ENTER ();
 	
-	self_type_s = ConcatenateStrings ("struct ", library_s);
-	
-	if (self_type_s)
+	include_filename_s = GetSourceFilename (library_s, fd_p -> fd_header_filename_s, 'h');
+
+	if (include_filename_s)
 		{
-			success_flag = WriteLibraryFunctionDefinitionVariant (out_p, library_s, fd_p, "extern", NULL, "VARARGS68K ", NULL, self_type_s);
+			STRPTR self_type_s = ConcatenateStrings ("struct ", interface_s);
 			
-			IExec->FreeVec (self_type_s);
+			if (self_type_s)
+				{
+					STRPTR function_prefix_s = ConcatenateStrings ("VARARGS68K ", prefix_s);
+					
+					if (function_prefix_s)
+						{
+							success_flag = WriteLibraryFunctionDefinitionVariant (out_p, interface_s, fd_p, NULL /*"extern"*/, NULL, function_prefix_s, NULL, self_type_s);
+						
+							IExec->FreeVec (function_prefix_s);
+						}
+						
+					IExec->FreeVec (self_type_s);
+				}
+				
+			IExec->FreeVec (include_filename_s);
 		}
-	
+			
 	LEAVE ();
 	
 	return success_flag;
@@ -807,7 +822,7 @@ BOOL WriteSourceForAllFunctionDefinitions (struct List *fn_defs_p, CONST_STRPTR 
 
 					if (output_f)
 						{
-							if (WriteIncludes (output_f, fn_def_p -> fd_header_filename_s))
+							if (WriteIncludes (output_f, fn_def_p -> fd_header_filename_s, library_s))
 								{
 									success_flag = TRUE;
 								}
@@ -886,7 +901,7 @@ BOOL WriteSourceForAllFunctionDeclarations (struct List *fn_defs_p, CONST_STRPTR
 
 					if (output_f)
 						{
-							if (WriteIncludes (output_f, fn_def_p -> fd_header_filename_s))
+							if (WriteIncludes (output_f, fn_def_p -> fd_header_filename_s, library_s))
 								{
 									success_flag = TRUE;
 								}
@@ -906,16 +921,33 @@ BOOL WriteSourceForAllFunctionDeclarations (struct List *fn_defs_p, CONST_STRPTR
 
 			if (success_flag)
 				{
-					success_flag  = WriteSourceForFunctionDeclaration (fn_def_p, output_f, library_s, prefix_s);
+					STRPTR interface_s = GetInterfaceName (library_s);
+					
+					if (interface_s)
+						{
+							//success_flag  = WriteSourceForFunctionDeclaration (fn_def_p, output_f, library_s, prefix_s);
+							success_flag = WriteInterfaceFunctionDefinition (output_f, library_s, interface_s, prefix_s, fn_def_p);
+							
+							if (success_flag)
+								{
+									if (IDOS->FPrintf (output_f, ";\n\n") >= 0)
+										{
+											node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p);
+										}
+									else
+										{
+											
+										}	
+								}
+							else
+								{
+									IDOS->Printf ("Error writing source for %s", fn_def_p -> fd_header_filename_s);
+								}	
+								
+							IExec->FreeVec (interface_s);
+						}
+					
 
-					if (success_flag)
-						{
-							node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p);
-						}
-					else
-						{
-							IDOS->Printf ("Error writing source for %s", fn_def_p -> fd_header_filename_s);
-						}
 				}
 		}
 
@@ -1012,18 +1044,29 @@ static BPTR GetSourceFileHandle (const struct FunctionDefinition *fn_def_p, CONS
 BOOL WriteSourceForFunctionDefinition (const struct FunctionDefinition *fn_def_p, BPTR output_f, CONST_STRPTR library_s, CONST_STRPTR prefix_s)
  {
 	BOOL success_flag = FALSE;
-
+	STRPTR interface_s = NULL;
+	
 	ENTER ();
 
-	if (WriteLibraryFunctionImplementation (output_f, fn_def_p, library_s, prefix_s))
+	interface_s = GetInterfaceName (library_s);
+	
+	if (interface_s)
 		{
-			success_flag = TRUE;
+			if (WriteLibraryFunctionImplementation (output_f, fn_def_p, interface_s, prefix_s))
+				{
+					success_flag = TRUE;
+				}
+			else
+				{
+					DB (KPRINTF ("%s %ld - Failed to write implementation to %s\n", __FILE__, __LINE__, fn_def_p -> fd_header_filename_s));
+				}
+				
+			IExec->FreeVec (interface_s);
 		}
 	else
 		{
-			DB (KPRINTF ("%s %ld - Failed to write implementation to %s\n", __FILE__, __LINE__, fn_def_p -> fd_header_filename_s));
+			DB (KPRINTF ("%s %ld - GetInterfaceName failed for library \"%s\" in  %s\n", __FILE__, __LINE__, library_s, fn_def_p -> fd_header_filename_s));
 		}
-
 
 	LEAVE ();
 	return success_flag;
@@ -1033,22 +1076,29 @@ BOOL WriteSourceForFunctionDefinition (const struct FunctionDefinition *fn_def_p
 BOOL WriteSourceForFunctionDeclaration (const struct FunctionDefinition *fn_def_p, BPTR output_f, CONST_STRPTR library_s, CONST_STRPTR prefix_s)
  {
 	BOOL success_flag = FALSE;
-
+	STRPTR interface_s = NULL;
+	
 	ENTER ();
 
-
-	if (WriteLibraryFunctionDefinition (output_f, library_s, prefix_s, fn_def_p))
+	interface_s = GetInterfaceName (library_s);
+	
+	if (interface_s)
 		{
-			if (IDOS->FPrintf (output_f, ";\n") >= 0)
+			if (WriteLibraryFunctionDefinition (output_f, interface_s, prefix_s, fn_def_p))
 				{
 					success_flag = TRUE;
 				}
+			else
+				{
+					DB (KPRINTF ("%s %ld - Failed to write declaration to %s\n", __FILE__, __LINE__, fn_def_p -> fd_header_filename_s));
+				}
+				
+			IExec->FreeVec (interface_s);
 		}
 	else
 		{
-			DB (KPRINTF ("%s %ld - Failed to write implementation to %s\n", __FILE__, __LINE__, fn_def_p -> fd_header_filename_s));
+			DB (KPRINTF ("%s %ld - GetInterfaceName failed for library \"%s\" in  %s\n", __FILE__, __LINE__, library_s, fn_def_p -> fd_header_filename_s));
 		}
-
 
 	LEAVE ();
 	return success_flag;
@@ -1056,12 +1106,23 @@ BOOL WriteSourceForFunctionDeclaration (const struct FunctionDefinition *fn_def_
 
 
 
-static BOOL WriteIncludes (BPTR out_p, CONST_STRPTR header_name_s)
+static BOOL WriteIncludes (BPTR out_p, CONST_STRPTR header_name_s, CONST_STRPTR lib_name_s)
 {
+	BOOL success_flag = FALSE;
 	ENTER ();
+	
+	if (IDOS->FPrintf (out_p, "#include \"%s\"\n\n", header_name_s) > 0)
+		{
+			if (IDOS->FPrintf (out_p, "#include \"proto/%s.h\"\n\n", lib_name_s) > 0)
+				{
+					success_flag = TRUE;
+				}
+		}
+	
+	
 	LEAVE ();
-
-	return (IDOS->FPrintf (out_p, "#include \"%s\"\n\n", header_name_s) > 0);
+	
+	return success_flag;
 }
 
 

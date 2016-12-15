@@ -21,7 +21,7 @@
 #include <exec/types.h>
 
 
-BOOL WriteInitFile (CONST_STRPTR library_s, CONST_STRPTR out_dir_s);
+BOOL WriteInitFiles (CONST_STRPTR library_s, CONST_STRPTR out_dir_s);
 
 #endif /* INLINE_HEADER_WRITER_H */
 

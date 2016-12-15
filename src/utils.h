@@ -42,7 +42,7 @@ void SetVerbosity (enum Verbosity v);
 
 enum Verbosity GetVerbosity (void);
 
-BPTR GetMakefileHandle (CONST_STRPTR library_s);
+STRPTR GetInterfaceName (CONST CONST_STRPTR library_s);
 
 BOOL EnsureDirectoryExists (CONST_STRPTR dir_s);
 

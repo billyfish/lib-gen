@@ -177,7 +177,7 @@ static BOOL WriteInterface (BPTR out_p, struct List *function_defs_p, CONST CONS
 	
 	ENTER ();
 	
-	interface_s = ConcatenateStrings (library_s, "IFace");
+	interface_s = GetInterfaceName (library_s);
 	
 	if (interface_s)
 		{

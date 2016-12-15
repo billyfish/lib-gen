@@ -467,7 +467,7 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 										{
 											IDOS->Printf ("Generating headers succeeded\n");
 								
-											if (WriteInitFile (library_s, output_dir_s))
+											if (WriteInitFiles (library_s, output_dir_s))
 												{
 													if (WriteVectorsFile (output_dir_s, library_s, prefix_s, &function_defs))
 														{

@@ -118,17 +118,24 @@ static BOOL WriteFunctionDeclarations (BPTR vector_file_p, CONST CONST_STRPTR li
 	ENTER ();
 
 	node_p = (struct FunctionDefinitionNode *) IExec->GetHead (function_defs_p);
-	interface_s = ConcatenateStrings (library_s, "IFace");
+	interface_s = GetInterfaceName (library_s);
 	
 	if (interface_s)
 		{
-			/* Captialize the interface */
-			*interface_s = toupper (*interface_s);
-			
+		
 			while (node_p && success_flag)
 				{
 					struct FunctionDefinition *fn_def_p = node_p -> fdn_function_def_p;
 		
+					if (IDOS->FPrintf (vector_file_p, "#include \"%s_%s\"", library_s, fn_def_p -> fd_header_filename_s) >= 0)
+						{
+							node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p);
+						}
+					else
+						{
+							success_flag = FALSE;
+						}
+					/*
 					if (WriteFunctionDeclaration (vector_file_p, interface_s, prefix_s, fn_def_p))
 						{
 							node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p);
@@ -137,6 +144,7 @@ static BOOL WriteFunctionDeclarations (BPTR vector_file_p, CONST CONST_STRPTR li
 						{
 							success_flag = FALSE;
 						}
+					*/
 				}			
 					
 			IExec->FreeVec (interface_s);

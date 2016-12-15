@@ -27,17 +27,7 @@
 #include "lib_init.h"
 
 /* Version Tag */
-#include "test.library_rev.h"
 STATIC CONST UBYTE USED verstag [] = VERSTAG;
-
-/* The Library that we are generating */
-struct GeneratedLibrary
-{
-    struct Library libNode;
-    BPTR segList;
-    /* If you need more data fields, add them here */
-};
-
 
 /*
  * STATIC PROTOTYPES 
@@ -47,108 +37,33 @@ STATIC uint32 _manager_Obtain (struct LibraryManagerInterface *Self);
 
 STATIC uint32 _manager_Release (struct LibraryManagerInterface *Self);
 
-STATIC struct Library *libOpen (struct LibraryManagerInterface *Self, ULONG version);
 
-STATIC APTR libClose (struct LibraryManagerInterface *Self);
 
-STATIC APTR libExpunge (struct LibraryManagerInterface *Self);
+/*
+ * The system (and compiler) rely on a symbol named _start which marks
+ * the beginning of execution of an ELF file. To prevent others from 
+ * executing this library, and to keep the compiler/linker happy, we
+ * define an empty _start symbol here.
+ *
+ * On the classic system (pre-AmigaOS 4.x) this was usually done by
+ * moveq #0,d0
+ * rts
+ *
+ */
+int32 _start(void);
 
-STATIC struct Library *libInit (struct Library *LibraryBase, APTR seglist, struct Interface *exec);
+int32 _start(void)
+{
+    /* If you feel like it, open DOS and print something to the user */
+    return RETURN_FAIL;
+}
+
+
 
 
 /*
  * DEFINITIONS 
  */
-
-/* Open the library */
-STATIC struct Library *libOpen (struct LibraryManagerInterface *Self, ULONG version)
-{
-    struct GeneratedLibrary *libBase = (struct GeneratedLibrary *)Self->Data.LibBase;
-
-    if (version > VERSION)
-    {
-        return NULL;
-    }
-
-    /* Add any specific open code here
-       Return 0 before incrementing OpenCnt to fail opening */
-
-
-    /* Add up the open count */
-    libBase->libNode.lib_OpenCnt++;
-    return (struct Library *)libBase;
-
-}
-
-
-/* Close the library */
-STATIC APTR libClose (struct LibraryManagerInterface *Self)
-{
-    struct GeneratedLibrary *libBase = (struct GeneratedLibrary *) Self->Data.LibBase;
-    /* Make sure to undo what open did */
-
-
-    /* Make the close count */
-    ((struct Library *)libBase)->lib_OpenCnt--;
-
-    return 0;
-}
-
-
-/* Expunge the library */
-STATIC APTR libExpunge (struct LibraryManagerInterface *Self)
-{
-    /* If your library cannot be expunged, return 0 */
-    struct ExecIFace *IExec
-        = (struct ExecIFace *)(*(struct ExecBase **)4)->MainInterface;
-    APTR result = (APTR)0;
-    struct Library *libBase = (struct Library *)Self->Data.LibBase;
-    if (libBase->libNode.lib_OpenCnt == 0)
-    {
-	     result = (APTR)libBase->segList;
-        /* Undo what the init code did */
-
-        IExec->Remove((struct Node *)libBase);
-        IExec->DeleteLibrary((struct Library *)libBase);
-    }
-    else
-    {
-        result = (APTR)0;
-        libBase->libNode.lib_Flags |= LIBF_DELEXP;
-    }
-    return result;
-}
-
-
-/* The ROMTAG Init Function */
-STATIC struct Library *libInit(struct Library *LibraryBase, APTR seglist, struct Interface *exec)
-{
-    struct GeneratedLibrary *libBase = (struct GeneratedLibrary *) LibraryBase;
-    struct ExecIFace *IExec UNUSED = (struct ExecIFace *) exec;
-
-    libBase->libNode.lib_Node.ln_Type = NT_LIBRARY;
-    libBase->libNode.lib_Node.ln_Pri  = 0;
-    libBase->libNode.lib_Node.ln_Name = "";
-    libBase->libNode.lib_Flags        = LIBF_SUMUSED|LIBF_CHANGED;
-    libBase->libNode.lib_Version      = VERSION;
-    libBase->libNode.lib_Revision     = REVISION;
-    libBase->libNode.lib_IdString     = VSTRING;
-
-    libBase->segList = (BPTR)seglist;
-
-    /* Add additional init code here if you need it. For example, to open additional
-       Libraries:
-       libBase->UtilityBase = IExec->OpenLibrary("utility.library", 50L);
-       if (libBase->UtilityBase)
-       {
-           libBase->IUtility = (struct UtilityIFace *) IExec->GetInterface(ElfBase->UtilityBase,
-              "main", 1, NULL);
-           if (!libBase->IUtility)
-               return NULL;
-       } else return NULL; */
-
-       return (struct Library *) libBase;
-}
 
 
 /* ------------------- Manager Interface ------------------------ */
@@ -192,9 +107,9 @@ CONST APTR lib_manager_vectors [] =
 	_manager_Release,
 	NULL,
 	NULL,
-	libOpen,
-	libClose,
-	libExpunge,
+	LibOpen,
+	LibClose,
+	LibExpunge,
 	NULL,
 	(APTR) -1
 };
