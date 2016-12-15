@@ -100,19 +100,21 @@ static BOOL WriteProtoTop (BPTR out_p, CONST CONST_STRPTR library_s)
 												" #ifndef __USE_BASETYPE__\n" 
 												"  extern struct Library *") >= 0)
 												{
-													if (PrintCaptitalizedString (out_p, library_s))
+													STRPTR capitalized_library_s = GetCapitalizedString (library_s);
+													
+													if (capitalized_library_s)
 														{
-															if (IDOS->FPrintf (out_p, "Base;\n #else\n  extern struct Library *") >= 0)
+															if (IDOS->FPrintf (out_p, "%sBase;\n #else\n  extern struct Library *%s", capitalized_library_s, capitalized_library_s) >= 0)
 																{
-																	if (PrintCaptitalizedString (out_p, library_s))
-																		{																			
-																			if (IDOS->FPrintf (out_p, "Base;\n #endif /* __USE_BASETYPE__ */\n#endif /* __NOLIBBASE__ */\n\n"
-																				"/****************************************************************************/\n\n") >= 0)
-																				{
-																					success_flag = TRUE;
-																				}
+						
+																	if (IDOS->FPrintf (out_p, "Base;\n #endif /* __USE_BASETYPE__ */\n#endif /* __NOLIBBASE__ */\n\n"
+																		"/****************************************************************************/\n\n") >= 0)
+																		{
+																			success_flag = TRUE;
 																		}
 																}
+																
+															IExec->FreeVec (capitalized_library_s);	
 														}
 												}
 										}		
@@ -139,43 +141,52 @@ static BOOL WriteProtoBottom (BPTR out_p, CONST CONST_STRPTR library_s)
 	
 	if (upper_case_library_s)
 		{
-			if (IDOS->FPrintf (out_p, "#ifdef __amigaos4__\n" \
-				" #include <interfaces/%s.h>\n" \
-				" #ifdef __USE_INLINE__\n" \
-				"  #include <inline4/%s.h>\n" \
-				" #endif /* __USE_INLINE__ */\n" \
-				" #ifndef CLIB_%s_PROTOS_H\n" \
-				"  #define CLIB_%s_PROTOS_H 1\n" \
-				" #endif /* CLIB_%s_PROTOS_H */\n" \
-				" #ifndef __NOGLOBALIFACE__\n" \
-				" #endif /* __NOGLOBALIFACE__ */\n" \
-				"#else /* __amigaos4__ */\n" \
-				" #ifndef CLIB_%s_PROTOS_H\n" \
-				"  #include <clib/%s_protos.h>\n" \
-				" #endif /* CLIB_%s_PROTOS_H */\n" \
-				" #if defined(__GNUC__)\n" \
-				"  #ifndef __PPC__\n" \
-				"   #include <inline/%s.h>\n" \
-				"  #else\n" \
-				"   #include <ppcinline/%s.h>\n" \
-				"  #endif /* __PPC__ */\n" \
-				" #elif defined(__VBCC__)\n" \
-				"  #ifndef __PPC__\n" \
-				"   #include <inline/%s_protos.h>\n" \
-				"  #endif /* __PPC__ */\n" \
-				" #else\n" \
-				"  #include <pragmas/%s_pragmas.h>\n" \
-				" #endif /* __GNUC__ */\n" \
-				"#endif /* __amigaos4__ */\n" \
-				"\n" \
-				"/****************************************************************************/\n" \
-				"\n" \
-				"#endif /* PROTO_%s_H */\n", library_s, library_s, upper_case_library_s, upper_case_library_s, upper_case_library_s,
-				upper_case_library_s, library_s, upper_case_library_s, library_s, library_s, library_s, library_s, upper_case_library_s) >= 0)
+			STRPTR capitalized_library_s = GetCapitalizedString (library_s);
+			
+			if (capitalized_library_s)
 				{
-					success_flag = TRUE;
+					if (IDOS->FPrintf (out_p, "#ifdef __amigaos4__\n" \
+						" #include <interfaces/%s.h>\n" \
+						" #ifdef __USE_INLINE__\n" \
+						"  #include <inline4/%s.h>\n" \
+						" #endif /* __USE_INLINE__ */\n" \
+						" #ifndef CLIB_%s_PROTOS_H\n" \
+						"  #define CLIB_%s_PROTOS_H 1\n" \
+						" #endif /* CLIB_%s_PROTOS_H */\n" \
+						" #ifndef __NOGLOBALIFACE__\n" \
+						"  extern struct %sIFace I%s;\n" \
+						" #endif /* __NOGLOBALIFACE__ */\n" \
+						"#else /* __amigaos4__ */\n" \
+						" #ifndef CLIB_%s_PROTOS_H\n" \
+						"  #include <clib/%s_protos.h>\n" \
+						" #endif /* CLIB_%s_PROTOS_H */\n" \
+						" #if defined(__GNUC__)\n" \
+						"  #ifndef __PPC__\n" \
+						"   #include <inline/%s.h>\n" \
+						"  #else\n" \
+						"   #include <ppcinline/%s.h>\n" \
+						"  #endif /* __PPC__ */\n" \
+						" #elif defined(__VBCC__)\n" \
+						"  #ifndef __PPC__\n" \
+						"   #include <inline/%s_protos.h>\n" \
+						"  #endif /* __PPC__ */\n" \
+						" #else\n" \
+						"  #include <pragmas/%s_pragmas.h>\n" \
+						" #endif /* __GNUC__ */\n" \
+						"#endif /* __amigaos4__ */\n" \
+						"\n" \
+						"/****************************************************************************/\n" \
+						"\n" \
+						"#endif /* PROTO_%s_H */\n", library_s, library_s, upper_case_library_s, upper_case_library_s, upper_case_library_s,
+						capitalized_library_s, capitalized_library_s, upper_case_library_s, library_s, upper_case_library_s, library_s, library_s, library_s, library_s, upper_case_library_s) >= 0)
+						{
+							success_flag = TRUE;
+						}
+				
+					IExec->FreeVec (capitalized_library_s);	
 				}
 			
+
 			IExec->FreeVec (upper_case_library_s);	
 		}
 		

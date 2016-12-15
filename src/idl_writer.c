@@ -12,7 +12,7 @@
 #include "parameter.h"
 #include "function_definition.h"
 #include "debugging_utils.h"
-
+#include "utils.h"
 
 
 static BOOL WriteIDL (struct Writer *writer_p, struct List *function_definitions_p, CONST_STRPTR library_s, CONST_STRPTR prefix_s, const int32 version, const enum InterfaceFlag flag, BPTR out_p);
@@ -127,49 +127,46 @@ static BOOL WriteIDLHeader (BPTR out_p, CONST CONST_STRPTR library_s, CONST CONS
 				{
 					if (library_s)
 						{
-							if (IDOS->FPrintf (out_p, "<library name=\"%s\" basename=\"", library_s) >= 0)
+							STRPTR capitalized_library_s = GetCapitalizedString (library_s);
+							
+							if (capitalized_library_s)
 								{
-									int32 c = IUtility->ToUpper (*library_s);
-
-									if (IDOS->FPutC (out_p, c) == c)
+									if (IDOS->FPrintf (out_p, "<library name=\"%s\" basename=\"%sBase\" openname=\"%s.library\">\n", library_s, capitalized_library_s, library_s) >= 0)
 										{
-											if (IDOS->FPrintf (out_p, "%sBase\">\n", library_s + 1) >= 0)
+											CONST_STRPTR flags_s = NULL;
+
+											switch (flag)
 												{
-													CONST_STRPTR flags_s = NULL;
+													case IF_PRIVATE:
+														flags_s = "private";
+														break;
 
-													switch (flag)
+													case IF_PROTECTED:
+														flags_s = "protected";
+														break;
+
+													case IF_PUBLIC:
+													default:
+														flags_s = "none";
+														break;
+												}
+
+											if (WriteFunctionDefinitionListIncludes (out_p, function_definitions_p, "\t<include>", "</include>"))
+												{
+													if (IDOS->FPrintf (out_p, "\n\t<interface name=\"main\" version=\"%lu.0\" flags=\"%s\" prefix=\"%s\" struct=\"%sIFace\" asmprefix=\"I%s\" global=\"I%s\">\n", 
+														version, flags_s, prefix_s, capitalized_library_s, capitalized_library_s, capitalized_library_s) >= 0)
 														{
-															case IF_PRIVATE:
-																flags_s = "private";
-																break;
-
-															case IF_PROTECTED:
-																flags_s = "protected";
-																break;
-
-															case IF_PUBLIC:
-															default:
-																flags_s = "none";
-																break;
-														}
-
-													if (WriteFunctionDefinitionListIncludes (out_p, function_definitions_p, "\t<include>", "</include>"))
-														{
-															if (IDOS->FPrintf (out_p, "\n\t<interface name=\"%s\" version=\"%lu.0\" flags=\"%s\" prefix=\"%s\" struct=\"", library_s, version, flags_s, prefix_s) >= 0)
-																{
-																	if (IDOS->FPutC (out_p, c) == c)
-																		{
-																			if (IDOS->FPrintf (out_p, "%sIFace\">\n", library_s + 1) >= 0)
-																				{
-																					success_flag = TRUE;
-																				}
-																		}
-																}
+															success_flag = TRUE;
 														}
 												}
 										}
-								}
-						}
+	
+																	
+									
+								}		/* if (capitalized_library_s) */
+							
+
+						}	/* if (library_s) */
 				}
 		}
 

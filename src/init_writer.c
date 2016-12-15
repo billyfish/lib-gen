@@ -151,10 +151,10 @@ static BOOL WriteDefintionsTop (BPTR out_p, CONST CONST_STRPTR library_s)
 										"\tVERSION,\n"
 										"\tNT_LIBRARY, /* Make this NT_DEVICE if needed */\n"
 										"\t0, /* PRI, usually not needed unless you're resident */\n"
-										"\t\"\",\n"
+										"\t\"%s.library\",\n"
 										"\tVSTRING,\n"
 										"\t(APTR) libCreateTags\n"
-										"};\n\n") >= 0)
+										"};\n\n", library_s) >= 0)
 										{
 											STRPTR interface_s = GetInterfaceName (library_s);
 											
@@ -207,31 +207,38 @@ static BOOL WriteDeclarationsTop (BPTR out_p, CONST CONST_STRPTR library_s)
 			
 			if (interface_s)
 				{
+					STRPTR capitalized_library_s = GetCapitalizedString (library_s);
 					
-					if (IDOS->FPrintf (out_p,
-						"#ifndef INIT_H\n"
-						"#define INIT_H\n\n"
-						"#include <dos/dos.h>\n\n"
-						"#include \"proto/%s.h\"\n\n"
-						"/* The Library that we are generating */\n"
-						"struct %sBase\n"
-						"{\n"
-    				"\tstruct Library libNode;\n"
-    				"\tBPTR segList;\n\n"
-    				"\t/* If you need more data fields, add them here */\n"
-						"};\n\n"
-						"struct Library *LibOpen (struct LibraryManagerInterface *Self, ULONG version);\n\n"
-						"struct Library *LibClose (struct LibraryManagerInterface *Self);\n\n"
-						"struct Library *LibInit (struct Library *LibraryBase, APTR seglist, struct Interface *exec);\n\n"
-						"struct Library *LibExpunge (struct LibraryManagerInterface *Self);\n\n"
-						"uint32 _%s_Obtain (struct %s *Self);\n\n"
-						"uint32 _%s_Release (struct %s *Self);\n\n"
-						"#endif\n",
-						library_s, library_s, library_s, interface_s, library_s, interface_s) >= 0)            
-						{	
-							success_flag = TRUE;
+					if (capitalized_library_s)
+						{
+											
+							if (IDOS->FPrintf (out_p,
+								"#ifndef INIT_H\n"
+								"#define INIT_H\n\n"
+								"#include <dos/dos.h>\n\n"
+								"#include \"proto/%s.h\"\n\n"
+								"/* The Library that we are generating */\n"
+								"struct %sBase\n"
+								"{\n"
+		    				"\tstruct Library libNode;\n"
+		    				"\tBPTR segList;\n\n"
+		    				"\t/* If you need more data fields, add them here */\n"
+								"};\n\n"
+								"struct Library *LibOpen (struct LibraryManagerInterface *Self, ULONG version);\n\n"
+								"struct Library *LibClose (struct LibraryManagerInterface *Self);\n\n"
+								"struct Library *LibInit (struct Library *LibraryBase, APTR seglist, struct Interface *exec);\n\n"
+								"struct Library *LibExpunge (struct LibraryManagerInterface *Self);\n\n"
+								"uint32 _%s_Obtain (struct %s *Self);\n\n"
+								"uint32 _%s_Release (struct %s *Self);\n\n"
+								"#endif\n",
+								library_s, capitalized_library_s, library_s, interface_s, library_s, interface_s) >= 0)            
+								{	
+									success_flag = TRUE;
+								}
+						
+							IExec->FreeVec (capitalized_library_s);	
 						}
-					
+
 					IExec->FreeVec (interface_s);		
 				}
 		}

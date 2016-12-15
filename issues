@@ -10,6 +10,38 @@ FIX Move static functions from libinit.c to available declarations for init.c to
 FIX add '#include "proto/t.h"' to library definitions so that they can see "struct TIFace *"  
 FIX add path to original library sources in makefile.
 
+FIX Parser only finds definitions after the first semi-colon in the file E.g.
+
+~~~~~~~~~~~~~~~
+#ifndef ADD_IMPL
+#define ADD_IMPL
+
+LIB_API int Addition (int value1, int value2);
+
+LIB_API int Subtract (int value1, int value2);
+
+#endif
+~~~~~~~~~~~~~~~
+
+would only see Subtract
+
+wheraes 
+
+~~~~~~~~~~~~~~~
+#ifndef ADD_IMPL
+#define ADD_IMPL
+
+;
+
+LIB_API int Addition (int value1, int value2);
+
+LIB_API int Subtract (int value1, int value2);
+
+#endif
+~~~~~~~~~~~~~~~
+
+would get Addition as well due to the semi-colon above it
+
 DONE:
 
 FIX library declarations so that first parameter is of type "struct TIFace *" rather than "struct t*"
