@@ -795,7 +795,6 @@ BOOL WriteSourceForAllFunctionDefinitions (struct List *fn_defs_p, CONST_STRPTR 
 
 	BOOL success_flag = TRUE;
 	struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (fn_defs_p);
-	//BPTR makefile_p = GetMakefileHandle (library_s);
 	CONST_STRPTR current_filename_s = "";
 	BPTR output_f = ZERO;
 
@@ -822,15 +821,26 @@ BOOL WriteSourceForAllFunctionDefinitions (struct List *fn_defs_p, CONST_STRPTR 
 
 					if (output_f)
 						{
-							if (WriteIncludes (output_f, fn_def_p -> fd_header_filename_s, library_s))
+							STRPTR filename_s = GetSourceFilename (library_s, fn_def_p -> fd_header_filename_s, 'h');
+							
+							if (filename_s)
 								{
-									success_flag = TRUE;
+									if (IDOS->FPrintf (output_f, "#include \"%s\"\n\n", filename_s) >= 0)
+										{
+											success_flag = TRUE;
+										}
+									else
+										{
+											IDOS->Printf ("Error writing includes to %s", fn_def_p -> fd_header_filename_s);
+										}
+										
+									IExec->FreeVec (filename_s);
 								}
 							else
 								{
-									IDOS->Printf ("Error wrintg includes to  %s", fn_def_p -> fd_header_filename_s);
+									IDOS->Printf ("Failed to get header filename from \"%s\" for source includes", fn_def_p -> fd_header_filename_s);
 								}
-
+					
 							current_filename_s = fn_def_p -> fd_header_filename_s;
 						}
 					else
@@ -874,7 +884,6 @@ BOOL WriteSourceForAllFunctionDeclarations (struct List *fn_defs_p, CONST_STRPTR
 
 	BOOL success_flag = TRUE;
 	struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (fn_defs_p);
-	//BPTR makefile_p = GetMakefileHandle (library_s);
 	CONST_STRPTR current_filename_s = "";
 	STRPTR current_include_guard_s = NULL;
 	BPTR output_f = ZERO;
@@ -888,12 +897,18 @@ BOOL WriteSourceForAllFunctionDeclarations (struct List *fn_defs_p, CONST_STRPTR
 				{
 					if (output_f)
 						{
+							if (IDOS->FPrintf (output_f, "\n\n#endif\t/* #ifndef %s */\n\n", current_include_guard_s) < 0)
+								{
+									IDOS->Printf ("error writing closing include guard \"%s\" to %s", current_include_guard_s, current_filename_s);
+								}
+								
 							if (IDOS->FClose (output_f) == 0)
 								{
 									IDOS->Printf ("Error closing %s", current_filename_s);
 								}
 
 							output_f = ZERO;
+							IExec->FreeVec (current_include_guard_s);
 						}
 
 					success_flag = FALSE;
@@ -902,16 +917,34 @@ BOOL WriteSourceForAllFunctionDeclarations (struct List *fn_defs_p, CONST_STRPTR
 
 					if (output_f)
 						{
-							if (WriteIncludes (output_f, fn_def_p -> fd_header_filename_s, library_s))
+							current_include_guard_s = GetUpperCaseString (fn_def_p -> fd_header_filename_s);
+							
+							if (current_include_guard_s)
 								{
-									success_flag = TRUE;
+									ReplaceChars (current_include_guard_s, ".:/ ", '_');									
+									
+									if (IDOS->FPrintf (output_f, "#ifndef %s\n#define %s\n\n\n", current_include_guard_s, current_include_guard_s)>= 0)
+										{
+											if (WriteIncludes (output_f, fn_def_p -> fd_header_filename_s, library_s))
+												{
+													success_flag = TRUE;
+												}
+											else
+												{
+													IDOS->Printf ("Error writing includes to  %s", fn_def_p -> fd_header_filename_s);
+												}											
+										}
+									else
+										{
+											IDOS->Printf ("error writing closing include guard \"%s\" to %s", current_include_guard_s, current_filename_s);
+										}
+										
+									current_filename_s = fn_def_p -> fd_header_filename_s;
 								}
 							else
 								{
-									IDOS->Printf ("Error writing includes to  %s", fn_def_p -> fd_header_filename_s);
+									IDOS->Printf ("Failed to get include guard for %s", fn_def_p -> fd_header_filename_s);
 								}
-
-							current_filename_s = fn_def_p -> fd_header_filename_s;
 						}
 					else
 						{
@@ -952,6 +985,20 @@ BOOL WriteSourceForAllFunctionDeclarations (struct List *fn_defs_p, CONST_STRPTR
 				}
 		}
 
+
+	if (current_include_guard_s)
+		{
+			if (output_f)
+				{
+					if (IDOS->FPrintf (output_f, "\n\n#endif\t/* #ifndef %s */\n\n", current_include_guard_s) < 0)
+						{
+							IDOS->Printf ("error writing closing include guard \"%s\" to %s", current_include_guard_s, current_filename_s);
+						}
+				}
+			
+			IExec->FreeVec (current_include_guard_s);	
+		}
+
 	if (output_f)
 		{
 			if (IDOS->FClose (output_f) == 0)
@@ -959,6 +1006,8 @@ BOOL WriteSourceForAllFunctionDeclarations (struct List *fn_defs_p, CONST_STRPTR
 					IDOS->Printf ("Error closing %s", current_filename_s);
 				}
 		}
+		
+
 
 	LEAVE ();
 	return success_flag;

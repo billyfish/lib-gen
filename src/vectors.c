@@ -29,7 +29,7 @@
 
 static BOOL WriteFunctionDeclarations (BPTR vector_file_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR prefix_s, struct List *function_defs_p);
 
-static BOOL WriteFunctionDeclaration (BPTR vector_file_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR prefix_s, const struct FunctionDefinition * const function_def_p);
+static BOOL WriteFunctionDeclaration (BPTR vector_file_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR interface_s, CONST CONST_STRPTR prefix_s, const struct FunctionDefinition * const function_def_p);
 
 static BOOL WriteVectorsArray (BPTR vector_file_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR prefix_s, struct List *function_defs_p);
 
@@ -88,7 +88,7 @@ static BOOL WriteVectors (BPTR vector_file_p, CONST CONST_STRPTR library_s, CONS
 					/* Add our library includes */
 					if (WriteFunctionDefinitionListIncludes (vector_file_p, function_defs_p, "#include \"", "\""))
 						{
-							if (IDOS->FPrintf (vector_file_p, "\n\n") >= 0)
+							if (IDOS->FPrintf (vector_file_p, "\n/*----*/\n") >= 0)
 								{
 									/* Declare our library functions */
 									if (WriteFunctionDeclarations (vector_file_p, library_s, prefix_s, function_defs_p))
@@ -166,11 +166,11 @@ static BOOL WriteFunctionDeclarations (BPTR vector_file_p, CONST CONST_STRPTR li
 }
 
 
-static BOOL WriteFunctionDeclaration (BPTR vector_file_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR prefix_s, const struct FunctionDefinition * const function_def_p)
+static BOOL WriteFunctionDeclaration (BPTR vector_file_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR interface_s, CONST CONST_STRPTR prefix_s, const struct FunctionDefinition * const function_def_p)
 {
 	ENTER ();
 
-	if (WriteInterfaceFunctionDefinition (vector_file_p, library_s, function_def_p))
+	if (WriteInterfaceFunctionDefinition (vector_file_p, library_s, interface_s, prefix_s, function_def_p))
 		{
 			if (IDOS->FPrintf (vector_file_p, ";\n") >= 0)
 				{

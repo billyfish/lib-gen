@@ -20,15 +20,11 @@
 #include <exec/types.h>
 
 
-BOOL WriteMakefileHeader (BPTR makefile_p, CONST_STRPTR library_s, CONST_STRPTR src_dir_s);
-
-BOOL WriteMakefileFooter (BPTR makefile_p, CONST_STRPTR library_s, CONST_STRPTR src_dir_s);
 
 BOOL AddFileToMakefileSources (BPTR makefile_p, CONST_STRPTR filename_s);
 
 BOOL CloseMakefile (BPTR makefile_p);
 
-BPTR GetMakefileHandle (CONST_STRPTR library_s, CONST_STRPTR src_dir_s);
 
 
 #endif		/* #ifndef MAKEFILE_UTILS_H */

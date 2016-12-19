@@ -601,3 +601,20 @@ STRPTR GetCapitalizedString (CONST_STRPTR src_s)
 	
 	return dest_s;
 }
+
+
+void ReplaceChars (STRPTR value_s, CONST CONST_STRPTR old_values_s, const char new_value)
+{
+	while (*value_s != '\0')
+		{
+			if (strchr (old_values_s, *value_s))
+				{
+					*value_s = new_value;	
+				}
+		
+			++ value_s;	
+		}
+
+}
+	
+

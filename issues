@@ -1,12 +1,7 @@
 TODO:
 
-FIX vectors.h to include proto files for library definitions rather than use the extern declarations
-FIX library definitions should include the generated header file rather than the input source one. 
-     E.g "t_bitstring.c" should include "t_bitstring.h" rather than "test/bitstring.h".
-FIX interface declaration header so that api calls are to _t_<function> rather than <function> in struct TIFace.
-FIX add include guards to generated declaration header files -> code to fix is  WriteSouceForAllFunctionDecalarations in function_definition.c
 FIX add path to original library sources in makefile.
-FIX add path to original library includes in makefile.
+FIX write generated header file names to vectors.h 
 FIX Parser only finds definitions after the first semi-colon in the file E.g.
 
 ~~~~~~~~~~~~~~~
@@ -51,4 +46,9 @@ FIX Create lib_init.h
 FIX Move static functions from libinit.c to available declarations for init.c to see.
 FIX add '#include "proto/t.h"' to library definitions so that they can see "struct TIFace *"  
 FIX add include guards to vectors.h
+FIX add include guards to generated declaration header files -> code to fix is  WriteSouceForAllFunctionDecalarations in function_definition.c
+FIX library definitions should include the generated header file rather than the input source one. 
+     E.g "t_bitstring.c" should include "t_bitstring.h" rather than "test/bitstring.h".
+FIX vectors.h to include proto files for library definitions rather than use the extern declarations
+FIX add path to original library includes in makefile.
 

@@ -391,7 +391,7 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 
 											if (makefile_s)
 												{
-													if (WriteMakefile (makefile_s, library_s, &function_defs))
+													if (WriteMakefile (makefile_s, root_path_s, library_s, &function_defs))
 														{
 															DB (KPRINTF ("%s %ld - wrote makefile to %s", __FILE__, __LINE__, makefile_s));
 														}

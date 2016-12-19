@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-BOOL WriteMakefile (CONST CONST_STRPTR  makefile_s, CONST CONST_STRPTR library_s, struct List * const fn_defs_p);
+BOOL WriteMakefile (CONST CONST_STRPTR  makefile_s, CONST CONST_STRPTR input_dir_s, CONST CONST_STRPTR library_s, struct List * const fn_defs_p);
 
 #ifdef __cplusplus
 }

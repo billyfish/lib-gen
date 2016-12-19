@@ -59,6 +59,8 @@ STRPTR GetUpperCaseString (CONST_STRPTR src_s);
 STRPTR GetCapitalizedString (CONST_STRPTR src_s);
 
 
+void ReplaceChars (STRPTR value_s, CONST CONST_STRPTR old_values_s, const char new_value);
+
 #ifdef __cplusplus
 }
 #endif

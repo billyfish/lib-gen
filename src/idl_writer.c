@@ -26,7 +26,6 @@ static BOOL WriteIDLFunctionDefinition (BPTR out_p, const struct FunctionDefinit
 static BOOL WriteIDLParameter (BPTR out_p, const struct Parameter * const param_p);
 
 static BOOL WriteIDLDefaultFunctions (BPTR out_p);
-static BOOL WriteIDLIncludes (BPTR out_p, struct List *includes_p);
 static BOOL WriteIDLFooter (BPTR out_p);
 
 
