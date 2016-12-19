@@ -117,7 +117,7 @@ static BOOL WriteFunctionDeclarations (BPTR vector_file_p, CONST CONST_STRPTR li
 	while (node_p && success_flag)
 		{
 			struct FunctionDefinition *fn_def_p = node_p -> fdn_function_def_p;
-			STRPTR filename_s = GetSourceFilename (library_s, fn_def_p -> fd_header_filename_s, 'c');
+			STRPTR filename_s = GetSourceFilename (library_s, fn_def_p -> fd_header_filename_s, 'h');
 
 			if (filename_s)
 				{

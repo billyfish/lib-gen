@@ -239,11 +239,6 @@ STATIC BOOL WriteMakefileAmigaSources (BPTR makefile_p, CONST CONST_STRPTR libra
 				}
 		}
 
-	if (success_flag)
-		{
-			success_flag = (IDOS->FPrintf (makefile_p, "\n\n%s_SRCS = $(ORIGINAL_LIB_SRC) $(AMIGA_LIB_SRC)\n\n\n", library_s) >= 0);
-		}
-
 	LEAVE ();
 	return success_flag;
 }

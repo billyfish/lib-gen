@@ -1,6 +1,6 @@
 TODO:
 
-FIX add original library sources in makefile.
+.
 FIX Parser only finds definitions after the first semi-colon in the file E.g.
 
 ~~~~~~~~~~~~~~~
@@ -51,4 +51,5 @@ FIX library definitions should include the generated header file rather than the
 FIX vectors.h to include proto files for library definitions rather than use the extern declarations
 FIX add path to original library includes in makefile.
 FIX write generated header file names to vectors.h 
+FIX add original library sources in makefile
 

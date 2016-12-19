@@ -304,7 +304,7 @@ int32 ScanDirectories (CONST_STRPTR dir_s, struct List *filenames_p, CONST_STRPT
 
 			if (v >= VB_NORMAL)
 				{
-					IDOS->Printf ("Scanning %s\n", dir_s);
+					IDOS->Printf ("Scanning %s\n with pattern %s", dir_s, filename_pattern_s);
 				}
 
 			while ((dat_p = IDOS->ExamineDir (context_p)))

@@ -150,7 +150,7 @@ static BOOL WriteIDLHeader (BPTR out_p, CONST CONST_STRPTR library_s, CONST CONS
 														break;
 												}
 
-											if (WriteFunctionDefinitionListIncludes (out_p, function_definitions_p, "\t<include>", "</include>"))
+											if (WriteFunctionDefinitionListIncludes (out_p, function_definitions_p, "\t<include>", "</include>\n"))
 												{
 													if (IDOS->FPrintf (out_p, "\n\t<interface name=\"main\" version=\"%lu.0\" flags=\"%s\" prefix=\"%s\" struct=\"%sIFace\" asmprefix=\"I%s\" global=\"I%s\">\n", 
 														version, flags_s, prefix_s, capitalized_library_s, capitalized_library_s, capitalized_library_s) >= 0)

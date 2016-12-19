@@ -45,7 +45,8 @@
 #include "vectors.h"
 
 
-static CONST CONST_STRPTR S_DEFAULT_FILENAME_PATTERN_S = "#?.h";
+static CONST CONST_STRPTR S_DEFAULT_HEADER_FILENAME_PATTERN_S = "#?.h";
+static CONST CONST_STRPTR S_DEFAULT_SOURCE_FILENAME_PATTERN_S = "#?.c";
 static CONST CONST_STRPTR S_DEFAULT_PROTOTYPE_PATTERN_S = "LIB_API{#?}";
 
 
@@ -60,7 +61,7 @@ BOOL GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR 
 STRPTR CreateRegEx (CONST_STRPTR pattern_s, BOOL capture_flag);
 void ClearCapturedExpression (struct CapturedExpression *capture_p);
 
-int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, CONST_STRPTR prefix_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag, const BOOL gen_source_flag);
+int Run (CONST_STRPTR root_path_s, CONST_STRPTR header_filename_pattern_s, CONST_STRPTR source_filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, CONST_STRPTR prefix_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag, const BOOL gen_source_flag);
 
 STRPTR MakePrototypePattern (CONST_STRPTR pattern_s);
 
@@ -82,7 +83,8 @@ enum Args
 	AR_INPUT_DIR,
 	AR_RECURSE,
 	AR_LIBRARY_NAME,
-	AR_INPUT_FILE_PATTERN,
+	AR_INPUT_HEADER_FILE_PATTERN,
+	AR_INPUT_SOURCE_FILE_PATTERN,
 	AR_PROTOTYPE_PATTERN,
 	AR_VERSION,
 	AR_FLAGS,
@@ -106,7 +108,8 @@ int main (int argc, char *argv [])
 			CONST_STRPTR input_dir_s = NULL;
 			CONST_STRPTR library_s = NULL;
 			STRPTR prefix_s = NULL;
-			CONST_STRPTR filename_pattern_s = S_DEFAULT_FILENAME_PATTERN_S;
+			CONST_STRPTR header_filename_pattern_s = S_DEFAULT_HEADER_FILENAME_PATTERN_S;
+			CONST_STRPTR source_filename_pattern_s = S_DEFAULT_SOURCE_FILENAME_PATTERN_S;
 			STRPTR prototype_pattern_s = S_DEFAULT_PROTOTYPE_PATTERN_S;
 			CONST_STRPTR format_s = "idl";
 			int32 version = 1;
@@ -118,7 +121,7 @@ int main (int argc, char *argv [])
 
 			memset (args, 0, AR_NUM_ARGS * sizeof (int32));
 
-			args_p = IDOS->ReadArgs ("I=Input/A,R=Recurse/S,L=LibraryName/A,IP=InputPattern/K,PP=PrototypePattern/K,VER=Version/N,FL=Flags/K,GC=GenerateCode/S,FMT=Format/K,V=Verbose/N", args, NULL);
+			args_p = IDOS->ReadArgs ("I=Input/A,R=Recurse/S,L=LibraryName/A,HP=HeaderFilePattern/K,SP=SourceFilePattern/K,PP=PrototypePattern/K,VER=Version/N,FL=Flags/K,GC=GenerateCode/S,FMT=Format/K,V=Verbose/N", args, NULL);
 
 			if (args_p != NULL)
 				{
@@ -130,11 +133,15 @@ int main (int argc, char *argv [])
 							recurse_flag = TRUE;
 						}
 
-					if (args [AR_INPUT_FILE_PATTERN])
+					if (args [AR_INPUT_HEADER_FILE_PATTERN])
 						{
-							filename_pattern_s = (CONST_STRPTR) args [AR_INPUT_FILE_PATTERN];
+							header_filename_pattern_s = (CONST_STRPTR) args [AR_INPUT_HEADER_FILE_PATTERN];
 						}
 
+					if (args [AR_INPUT_SOURCE_FILE_PATTERN])
+						{
+							source_filename_pattern_s = (CONST_STRPTR) args [AR_INPUT_SOURCE_FILE_PATTERN];
+						}
 
 					if ((args [AR_PROTOTYPE_PATTERN]) && (strlen ((CONST_STRPTR) args [AR_PROTOTYPE_PATTERN]) > 0))
 						{
@@ -193,7 +200,8 @@ int main (int argc, char *argv [])
 						{
 							IDOS->Printf ("Input Dir = \"%s\"\n", input_dir_s);
 							IDOS->Printf ("Library Name  = \"%s\"\n", library_s);
-							IDOS->Printf ("Filename Pattern = \"%s\"\n", filename_pattern_s);
+							IDOS->Printf ("Header Filename Pattern = \"%s\"\n", header_filename_pattern_s);
+							IDOS->Printf ("Source Filename Pattern = \"%s\"\n", source_filename_pattern_s);
 							IDOS->Printf ("Recurse = \"%s\"\n", recurse_flag ? "TRUE" : "FALSE");
 							IDOS->Printf ("Generate Code = \"%s\"\n", generate_code_flag ? "TRUE" : "FALSE");
 							IDOS->Printf ("Prototype Pattern = \"%s\"\n", prototype_pattern_s);
@@ -218,13 +226,13 @@ int main (int argc, char *argv [])
 						}		/* if (verbose_flag) */
 
 
-					if (input_dir_s && filename_pattern_s && library_s && prototype_pattern_s)
+					if (input_dir_s && header_filename_pattern_s && library_s && prototype_pattern_s)
 						{
 							prefix_s = GetPrefixString (library_s);
 							
 							if (prefix_s)
 								{
-									result = Run (input_dir_s, filename_pattern_s, prototype_pattern_s, library_s, prefix_s, recurse_flag, version, flag, generate_code_flag);
+									result = Run (input_dir_s, header_filename_pattern_s, source_filename_pattern_s, prototype_pattern_s, library_s, prefix_s, recurse_flag, version, flag, generate_code_flag);
 								}
 								
 						}		/* if (input_dir_s && filename_pattern_s) */
@@ -318,12 +326,13 @@ STRPTR CreateRegEx (CONST_STRPTR pattern_s, BOOL capture_flag)
 }
 
 
-int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, CONST_STRPTR prefix_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag, const BOOL gen_source_flag)
+int Run (CONST_STRPTR root_path_s, CONST_STRPTR header_filename_pattern_s, CONST_STRPTR source_filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, CONST_STRPTR prefix_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag, const BOOL gen_source_flag)
 {
 	int res = 0;
 	STRPTR prototype_regexp_s = NULL;
-	STRPTR filename_regexp_s = NULL;
-
+	STRPTR header_filename_regexp_s = NULL;
+	STRPTR source_filename_regexp_s = NULL;
+	
 	/* List of FunctionDefinitionsNodes */
 	struct List function_defs;
 
@@ -336,17 +345,13 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 	struct List previous_fns_ordering_list;
 
 	
-	/*
-	 List of all the source files 
-	*/
-	struct List source_files_list;
+
 
 	ENTER ();
 
 
 	IExec->NewList (&function_defs);
 	IExec->NewList (&previous_fns_ordering_list);
-	IExec->NewList (&source_files_list);
 	
 	if (prototype_pattern_s)
 		{
@@ -359,91 +364,114 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 				}
 		}
 
-	if (filename_pattern_s)
+	if (source_filename_pattern_s)
 		{
-			filename_regexp_s = CreateRegEx (filename_pattern_s, TRUE);
+			source_filename_regexp_s = CreateRegEx (source_filename_pattern_s, TRUE);
 
-			if (!filename_regexp_s)
+			if (!source_filename_regexp_s)
 				{
 					LEAVE ();
 					return -1;
 				}
 		}
 
-	if (GeneratePrototypesList (root_path_s, filename_regexp_s, prototype_regexp_s, recurse_flag, &function_defs))
+	if (header_filename_pattern_s)
 		{
-			Writer *writer_p = AllocateIDLWriter ();
+			header_filename_regexp_s = CreateRegEx (header_filename_pattern_s, TRUE);
 
-			DB (KPRINTF ("%s %ld - writer %ld", __FILE__, __LINE__, writer_p));
-
-			if (writer_p)
+			if (!header_filename_regexp_s)
 				{
-					STRPTR output_s = ConcatenateStrings (library_s, GetWriterFileSuffix (writer_p));
+					LEAVE ();
+					return -1;
+				}
+		}
 
-					DB (KPRINTF ("%s %ld - output_s %s", __FILE__, __LINE__, output_s));
+	IDOS->Printf ("source pattern \"%s\" regexp \"%s\"\n", source_filename_pattern_s, source_filename_regexp_s);
+	IDOS->Printf ("header pattern \"%s\" regexp \"%s\"\n", header_filename_pattern_s, header_filename_regexp_s);
+	
+	if (GeneratePrototypesList (root_path_s, header_filename_regexp_s, prototype_regexp_s, recurse_flag, &function_defs))
+		{
+			struct List *source_files_p = GetFilesList (root_path_s, source_filename_regexp_s, recurse_flag);
+			
+			if (source_files_p)
+				{
+					Writer *writer_p = AllocateIDLWriter ();
 
-					if (output_s)
+					DB (KPRINTF ("%s %ld - writer %ld", __FILE__, __LINE__, writer_p));
+		
+					if (writer_p)
 						{
-							BPTR out_p = IDOS->FOpen (output_s, MODE_NEWFILE, 0);
-
-							if (out_p)
+							STRPTR output_s = ConcatenateStrings (library_s, GetWriterFileSuffix (writer_p));
+		
+							DB (KPRINTF ("%s %ld - output_s %s", __FILE__, __LINE__, output_s));
+		
+							if (output_s)
 								{
-									DB (KPRINTF ("%s %ld - opened output_s %s", __FILE__, __LINE__, output_s));
-
-									IDOS->Printf ("%lu headers\n", GetListSize (&function_defs));
-
-									if (WriteFunctionDefinitionsList (writer_p, &function_defs, library_s, prefix_s, version, flag, out_p))
+									BPTR out_p = IDOS->FOpen (output_s, MODE_NEWFILE, 0);
+		
+									if (out_p)
 										{
-											STRPTR makefile_s = ConcatenateStrings (library_s, ".makefile");
-
-											IDOS->Printf ("Successfully wrote header definitions to %s\n", output_s);
-
-											if (makefile_s)
+											DB (KPRINTF ("%s %ld - opened output_s %s", __FILE__, __LINE__, output_s));
+		
+											IDOS->Printf ("%lu headers\n", GetListSize (&function_defs));
+		
+											if (WriteFunctionDefinitionsList (writer_p, &function_defs, library_s, prefix_s, version, flag, out_p))
 												{
-													if (WriteMakefile (makefile_s, root_path_s, library_s, &function_defs, &source_files_list))
+													STRPTR makefile_s = ConcatenateStrings (library_s, ".makefile");
+		
+													IDOS->Printf ("Successfully wrote header definitions to %s\n", output_s);
+		
+													if (makefile_s)
 														{
-															DB (KPRINTF ("%s %ld - wrote makefile to %s", __FILE__, __LINE__, makefile_s));
+															if (WriteMakefile (makefile_s, root_path_s, library_s, &function_defs, source_files_p))
+																{
+																	DB (KPRINTF ("%s %ld - wrote makefile to %s", __FILE__, __LINE__, makefile_s));
+																}
+															else
+																{
+		
+																}
+		
+															IExec->FreeVec (makefile_s);
 														}
 													else
 														{
-
+															IDOS->Printf ("Failed to create makefile at %s", makefile_s);
 														}
-
-													IExec->FreeVec (makefile_s);
+		
+													/*
+														Write the makefile, vectors, init, autoinit_base, obtain and release files
+													*/
+		
 												}
 											else
 												{
-													IDOS->Printf ("Failed to create makefile at %s", makefile_s);
+													DB (KPRINTF ("%s %ld - failed to open output_s %s", __FILE__, __LINE__, output_s));
+													IDOS->Printf ("Failed to write header definitions to %s\n", output_s);
 												}
-
-											/*
-												Write the makefile, vectors, init, autoinit_base, obtain and release files
-											*/
-
+		
+											IDOS->FClose (out_p);
 										}
 									else
 										{
-											DB (KPRINTF ("%s %ld - failed to open output_s %s", __FILE__, __LINE__, output_s));
-											IDOS->Printf ("Failed to write header definitions to %s\n", output_s);
+											IDOS->Printf ("Failed to open %s for writing\n", output_s);
 										}
-
-									IDOS->FClose (out_p);
+		
+									IExec->FreeVec (output_s);
 								}
-							else
-								{
-									IDOS->Printf ("Failed to open %s for writing\n", output_s);
-								}
-
-							IExec->FreeVec (output_s);
+		
+							FreeIDLWriter (writer_p);
+						}		/* if (writer_p) */
+					else
+						{
+							IDOS->Printf ("Failed to get Writer\n");
 						}
-
-					FreeIDLWriter (writer_p);
-				}		/* if (writer_p) */
-			else
-				{
-					IDOS->Printf ("Failed to get Writer\n");
-				}
-		}
+						
+					ClearList (source_files_p);
+				}		/* if (source_files_p) */
+		
+				
+		}		/* if (GeneratePrototypesList (root_path_s, header_filename_regexp_s, prototype_regexp_s, recurse_flag, &function_defs)) */
 
 	DB (KPRINTF ("%s %ld - prototype_regexp_s:= \"%s\"\n", __FILE__, __LINE__, prototype_regexp_s));
 
@@ -453,12 +481,17 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 		}
 
 
-	DB (KPRINTF ("%s %ld - filename_regexp_s:= \"%s\"\n", __FILE__, __LINE__, filename_regexp_s));
-	if (filename_regexp_s)
+	DB (KPRINTF ("%s %ld - header_filename_regexp_s:= \"%s\"\n", __FILE__, __LINE__, header_filename_regexp_s));
+	if (header_filename_regexp_s)
 		{
-			IExec->FreeVec (filename_regexp_s);
+			IExec->FreeVec (header_filename_regexp_s);
 		}
 
+	DB (KPRINTF ("%s %ld - source_filename_regexp_s:= \"%s\"\n", __FILE__, __LINE__, source_filename_regexp_s));
+	if (source_filename_regexp_s)
+		{
+			IExec->FreeVec (source_filename_regexp_s);
+		}
 
 	if (gen_source_flag)
 		{
@@ -544,9 +577,6 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 	DB (KPRINTF ("%s %ld - pre ClearFunctionDefinitionsList\n", __FILE__, __LINE__));
 	ClearFunctionDefinitionsList (&function_defs);
 	DB (KPRINTF ("%s %ld - post ClearFunctionDefinitionsList\n", __FILE__, __LINE__));
-
-
-	ClearList (&source_files_list);
 
 	LEAVE ();
 	return res;
