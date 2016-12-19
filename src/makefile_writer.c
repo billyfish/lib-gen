@@ -13,15 +13,17 @@
 
 
 
-STATIC BOOL WriteMakefileSources (BPTR makefile_p, CONST CONST_STRPTR library_s, struct List * const src_files_p);
+STATIC BOOL WriteMakefileAmigaSources (BPTR makefile_p, CONST CONST_STRPTR library_s, struct List * const src_files_p);
 
 
 STATIC BOOL WriteMakefileHeader (BPTR makefile_p, CONST CONST_STRPTR input_dir_s, CONST CONST_STRPTR library_s, CONST CONST_STRPTR output_dir_s);
 
 STATIC BOOL WriteMakefileFooter (BPTR makefile_p, CONST CONST_STRPTR library_s);
 
+STATIC BOOL WriteMakefileOriginalSources (BPTR makefile_p, struct List * const original_filenames_p);
 
-BOOL WriteMakefile (CONST CONST_STRPTR  makefile_s, CONST CONST_STRPTR input_dir_s, CONST CONST_STRPTR library_s, struct List * const function_defs_p)
+
+BOOL WriteMakefile (CONST CONST_STRPTR  makefile_s, CONST CONST_STRPTR input_dir_s, CONST CONST_STRPTR library_s, struct List * const function_defs_p, struct List *original_source_filenames_p)
 {
 	ENTER ();
 	BOOL success_flag = FALSE;
@@ -35,21 +37,35 @@ BOOL WriteMakefile (CONST CONST_STRPTR  makefile_s, CONST CONST_STRPTR input_dir
 				{
 					if (WriteMakefileHeader (makefile_p, input_dir_s, library_s, src_dir_s))
 						{
-							if (WriteMakefileSources (makefile_p, library_s, function_defs_p))
+							if (WriteMakefileAmigaSources (makefile_p, library_s, function_defs_p))
 								{
-									if (WriteMakefileFooter (makefile_p, library_s))
+									if (WriteMakefileOriginalSources (makefile_p, original_source_filenames_p))
 										{
-											success_flag = TRUE;
+											if (IDOS->FPrintf (makefile_p, "\n\n%s_SRCS = $(ORIGINAL_LIB_SRC) $(AMIGA_LIB_SRC)\n\n\n", library_s) >= 0)
+												{
+													if (WriteMakefileFooter (makefile_p, library_s))
+														{
+															success_flag = TRUE;
+														}
+													else
+														{
+															IDOS->Printf ("Failed to write footer block to makefile \"%s\"\n", makefile_s);
+														}
+												}
+											else
+												{
+													IDOS->Printf ("Failed to write combined sources block to makefile \"%s\"\n", makefile_s);
+												}
+								
 										}
 									else
 										{
-											IDOS->Printf ("Failed to write footer block to makefile \"%s\"\n", makefile_s);
+											IDOS->Printf ("Failed to write original sources block to makefile \"%s\"\n", makefile_s);
 										}
-
 								}
 							else
 								{
-									IDOS->Printf ("Failed to write sources block to makefile \"%s\"\n", makefile_s);
+									IDOS->Printf ("Failed to write amiga sources block to makefile \"%s\"\n", makefile_s);
 								}
 						}
 					else
@@ -142,7 +158,7 @@ static BOOL WriteMakefileHeader (BPTR makefile_p, CONST CONST_STRPTR input_dir_s
 }
 
 
-static BOOL WriteMakefileFooter (BPTR makefile_p, CONST CONST_STRPTR library_s)
+STATIC BOOL WriteMakefileFooter (BPTR makefile_p, CONST CONST_STRPTR library_s)
 {
 	ENTER ();
 	BOOL success_flag = FALSE;
@@ -165,7 +181,7 @@ static BOOL WriteMakefileFooter (BPTR makefile_p, CONST CONST_STRPTR library_s)
 		"\n" \
 		".PHONY: revision\n" \
 		"revision:\n" \
-		"\tbumprev $(VERSION) $(DIR_SRC)/$(TARGET)\n";		
+		"\tbumprev $(VERSION) $(DIR_AMIGA_LIB_SRC)/$(TARGET)\n";		
 
 	if (IDOS->FPrintf (makefile_p, "%s%s%s", part0_s, library_s, part1_s) >= 0)
 		{
@@ -177,15 +193,15 @@ static BOOL WriteMakefileFooter (BPTR makefile_p, CONST CONST_STRPTR library_s)
 }
 
 
-BOOL WriteMakefileSources (BPTR makefile_p, CONST CONST_STRPTR library_s, struct List * const function_defs_p)
+STATIC BOOL WriteMakefileAmigaSources (BPTR makefile_p, CONST CONST_STRPTR library_s, struct List * const function_defs_p)
 {
 	ENTER ();
 
 	struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (function_defs_p);
 	CONST_STRPTR current_source_filename_s = "";
 	BOOL success_flag = (IDOS->FPrintf (makefile_p, 
-		"#Add the library initialization code\n$(AMIGA_LIB_SRC) = \\\n\t$(DIR_AMIGA_LIB_SRC)/init.c \\\n\t$(DIR_AMIGA_LIB_SRC)/lib_init.c \\\n\n#Add the source files\n") >= 0);
-
+		"#Add the library initialization code\nAMIGA_LIB_SRC = \\\n\t$(DIR_AMIGA_LIB_SRC)/init.c \\\n\t$(DIR_AMIGA_LIB_SRC)/lib_init.c\n\n#Add the source files\n") >= 0);
+	
 	while (node_p && success_flag)
 		{
 			CONST_STRPTR function_source_filename_s = node_p -> fdn_function_def_p -> fd_header_filename_s;
@@ -195,16 +211,16 @@ BOOL WriteMakefileSources (BPTR makefile_p, CONST CONST_STRPTR library_s, struct
 					STRPTR c_filename_s = GetSourceFilename (library_s, function_source_filename_s, 'c');
 
 					if (c_filename_s)
-						{
+						{							
+							success_flag = IDOS->FPrintf (makefile_p, "AMIGA_LIB_SRC += $(DIR_AMIGA_LIB_SRC)/%s\n", c_filename_s) >= 0;
 							
-							if (IDOS->FPrintf (makefile_p, "$(AMIGA_LIB_SRC) += %s\n$(ORIGINAL_LIB_SRC) += %s\n\n", c_filename_s, function_source_filename_s) >= 0)
+							if (success_flag)
 								{
 									current_source_filename_s = function_source_filename_s;
 								}
 							else
 								{
 									IDOS->Printf ("Failed to write src filename %s to makefile\n", c_filename_s);
-									success_flag = FALSE;
 								}
 
 							IExec->FreeVec (c_filename_s);
@@ -212,6 +228,7 @@ BOOL WriteMakefileSources (BPTR makefile_p, CONST CONST_STRPTR library_s, struct
 					else
 						{
 							IDOS->Printf ("Failed to make src filename from %s\n", function_source_filename_s);
+							success_flag = FALSE;
 						}
 
 				}
@@ -224,7 +241,39 @@ BOOL WriteMakefileSources (BPTR makefile_p, CONST CONST_STRPTR library_s, struct
 
 	if (success_flag)
 		{
-			success_flag = (IDOS->FPrintf (makefile_p, "\n\n%s_SRCS = $(DIR_ORIGINAL_LIB_SRC) $(DIR_AMIGA_LIB_SRC)\n\n\n", library_s) >= 0);
+			success_flag = (IDOS->FPrintf (makefile_p, "\n\n%s_SRCS = $(ORIGINAL_LIB_SRC) $(AMIGA_LIB_SRC)\n\n\n", library_s) >= 0);
+		}
+
+	LEAVE ();
+	return success_flag;
+}
+
+
+
+STATIC BOOL WriteMakefileOriginalSources (BPTR makefile_p, struct List * const original_filenames_p)
+{
+	ENTER ();
+
+	struct Node *node_p = IExec->GetHead (original_filenames_p);
+	BOOL success_flag = (IDOS->FPrintf (makefile_p,"#Add the original source files\n") >= 0);
+	BOOL first_time_flag = TRUE;
+	
+	while (node_p && success_flag)
+		{
+			if (first_time_flag)
+				{
+					success_flag = IDOS->FPrintf (makefile_p, "ORIGINAL_LIB_SRC = %s\n", node_p -> ln_Name) >= 0;
+					first_time_flag = FALSE;
+				}
+			else
+				{
+					success_flag = IDOS->FPrintf (makefile_p, "ORIGINAL_LIB_SRC += %s\n", node_p -> ln_Name) >= 0;
+				}
+					
+			if (success_flag)
+				{
+					node_p = IExec->GetSucc (node_p);
+				}
 		}
 
 	LEAVE ();

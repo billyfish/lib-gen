@@ -64,7 +64,9 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 
 STRPTR MakePrototypePattern (CONST_STRPTR pattern_s);
 
-struct List *GetHeaderFilesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_regexp_s, const BOOL recurse_flag);
+struct List *GetFilesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_regexp_s, const BOOL recurse_flag);
+
+static void ClearList (struct List *list_p);
 
 
 BOOL WriteHeaderFiles (struct List *function_defs_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR output_dir_s);
@@ -333,12 +335,19 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 	*/
 	struct List previous_fns_ordering_list;
 
+	
+	/*
+	 List of all the source files 
+	*/
+	struct List source_files_list;
+
 	ENTER ();
 
 
 	IExec->NewList (&function_defs);
 	IExec->NewList (&previous_fns_ordering_list);
-
+	IExec->NewList (&source_files_list);
+	
 	if (prototype_pattern_s)
 		{
 			prototype_regexp_s = CreateRegEx (prototype_pattern_s, TRUE);
@@ -391,7 +400,7 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 
 											if (makefile_s)
 												{
-													if (WriteMakefile (makefile_s, root_path_s, library_s, &function_defs))
+													if (WriteMakefile (makefile_s, root_path_s, library_s, &function_defs, &source_files_list))
 														{
 															DB (KPRINTF ("%s %ld - wrote makefile to %s", __FILE__, __LINE__, makefile_s));
 														}
@@ -536,10 +545,32 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR filename_pattern_s, CONST_STRPTR
 	ClearFunctionDefinitionsList (&function_defs);
 	DB (KPRINTF ("%s %ld - post ClearFunctionDefinitionsList\n", __FILE__, __LINE__));
 
+
+	ClearList (&source_files_list);
+
 	LEAVE ();
 	return res;
 }
 
+
+static void ClearList (struct List *list_p)
+{
+	ENTER ();
+
+	struct Node *current_node_p = IExec->GetHead (list_p);
+	
+	while (current_node_p)
+		{
+			struct Node *next_node_p = IExec->GetSucc (current_node_p);
+			
+			IExec->FreeVec (current_node_p -> ln_Name);
+			IExec->FreeVec (current_node_p);
+			
+			current_node_p = next_node_p;
+		}
+
+	LEAVE ();	
+}
 
 
 BOOL WriteHeaderFiles (struct List *function_defs_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR output_dir_s)
@@ -642,7 +673,7 @@ BOOL GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR 
 	ENTER ();
 
 	BOOL success_flag = FALSE;
-	struct List *headers_p = GetHeaderFilesList (root_path_s, filename_regexp_s, recurse_flag);
+	struct List *headers_p = GetFilesList (root_path_s, filename_regexp_s, recurse_flag);
 
 	if (headers_p)
 		{
@@ -690,7 +721,7 @@ BOOL GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR 
 
 
 
-struct List *GetHeaderFilesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_regexp_s, const BOOL recurse_flag)
+struct List *GetFilesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_regexp_s, const BOOL recurse_flag)
 {
 	ENTER ();
 
@@ -709,7 +740,6 @@ struct List *GetHeaderFilesList (CONST_STRPTR root_path_s, CONST_STRPTR filename
 	LEAVE ();
 	return filenames_p;
 }
-
 
 
 BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, struct DocumentParser *parser_p, struct List *function_defs_p)

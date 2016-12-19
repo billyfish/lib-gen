@@ -72,7 +72,7 @@ BOOL WriteInterfaceHeader (struct List *function_defs_p, CONST CONST_STRPTR libr
 													if (WriteHeaderTop (out_p, upper_case_library_s))
 														{
 															/* Write library includes */
-															if (WriteFunctionDefinitionListIncludes (out_p, function_defs_p, "#include \"", "\""))
+															if (WriteFunctionDefinitionListIncludes (out_p, function_defs_p, "#include \"", "\"\n"))
 																{
 																	if (WritePreInterface (out_p))
 																		{
