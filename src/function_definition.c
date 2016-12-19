@@ -876,6 +876,7 @@ BOOL WriteSourceForAllFunctionDeclarations (struct List *fn_defs_p, CONST_STRPTR
 	struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (fn_defs_p);
 	//BPTR makefile_p = GetMakefileHandle (library_s);
 	CONST_STRPTR current_filename_s = "";
+	STRPTR current_include_guard_s = NULL;
 	BPTR output_f = ZERO;
 
 	while (node_p && success_flag)
