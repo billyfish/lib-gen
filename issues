@@ -1,7 +1,8 @@
 TODO:
 
-.
-FIX Parser only finds definitions after the first semi-colon in the file E.g.
+
+
+
 
 ~~~~~~~~~~~~~~~
 #ifndef ADD_IMPL
@@ -52,4 +53,6 @@ FIX vectors.h to include proto files for library definitions rather than use the
 FIX add path to original library includes in makefile.
 FIX write generated header file names to vectors.h 
 FIX add original library sources in makefile
+FIX Parser doesn't ignore preprprocessor macros when prototype pattern is #?
+FIX Parser only finds definitions after the first semi-colon in the file E.g.
 

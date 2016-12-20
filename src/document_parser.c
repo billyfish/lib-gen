@@ -135,15 +135,22 @@ BOOL StripComments (struct DocumentParser *parser_p)
 
 	STRPTR data_start_p = parser_p -> dp_line_p -> frld_Line;
 	STRPTR cpp_comment_p = strstr (data_start_p, "//");
+	STRPTR preproc_p = strchr (data_start_p, '#');
 	BOOL loop_flag = TRUE;
 	BOOL success_flag = TRUE;
+
+
+	if (preproc_p)
+		{
+			return TRUE;
+		}
+	
 
 	while (loop_flag && success_flag)
 		{
 			#if DOCUMENT_PARSER_DEBUG > 10
 			DB (KPRINTF ("%s %ld - data_start \"%s\"\n", __FILE__, __LINE__, data_start_p));
 			#endif
-
 
 			if (parser_p -> dp_comment_flag)
 				{
@@ -270,8 +277,10 @@ char *ParseDocument (struct DocumentParser *parser_p)
 
 					if (!prototype_s)
 						{
-							printf ("Failed to extract prototype from \"%s\"\n", parser_p -> dp_buffer_p -> bb_data_p);
-						}
+							IDOS->Printf ("Failed to extract prototype from \"%s\"\n", parser_p -> dp_buffer_p -> bb_data_p);
+						}							
+						
+				
 				}
 			else
 				{

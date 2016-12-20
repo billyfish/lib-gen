@@ -47,7 +47,7 @@
 
 static CONST CONST_STRPTR S_DEFAULT_HEADER_FILENAME_PATTERN_S = "#?.h";
 static CONST CONST_STRPTR S_DEFAULT_SOURCE_FILENAME_PATTERN_S = "#?.c";
-static CONST CONST_STRPTR S_DEFAULT_PROTOTYPE_PATTERN_S = "LIB_API{#?}";
+static CONST CONST_STRPTR S_DEFAULT_PROTOTYPE_PATTERN_S = "{#?}";
 
 
 static BOOL OpenLibs (void);
@@ -111,7 +111,6 @@ int main (int argc, char *argv [])
 			CONST_STRPTR header_filename_pattern_s = S_DEFAULT_HEADER_FILENAME_PATTERN_S;
 			CONST_STRPTR source_filename_pattern_s = S_DEFAULT_SOURCE_FILENAME_PATTERN_S;
 			STRPTR prototype_pattern_s = S_DEFAULT_PROTOTYPE_PATTERN_S;
-			CONST_STRPTR format_s = "idl";
 			int32 version = 1;
 			enum InterfaceFlag flag = IF_PUBLIC;
 			BOOL recurse_flag = FALSE;
@@ -121,7 +120,7 @@ int main (int argc, char *argv [])
 
 			memset (args, 0, AR_NUM_ARGS * sizeof (int32));
 
-			args_p = IDOS->ReadArgs ("I=Input/A,R=Recurse/S,L=LibraryName/A,HP=HeaderFilePattern/K,SP=SourceFilePattern/K,PP=PrototypePattern/K,VER=Version/N,FL=Flags/K,GC=GenerateCode/S,FMT=Format/K,V=Verbose/N", args, NULL);
+			args_p = IDOS->ReadArgs ("I=Input/A,R=Recurse/S,L=LibraryName/A,HP=HeaderFilePattern/K,SP=SourceFilePattern/K,PP=PrototypePattern/K,VER=Version/N,FL=Flags/K,GC=GenerateCode/S,V=Verbose/N", args, NULL);
 
 			if (args_p != NULL)
 				{
@@ -146,11 +145,6 @@ int main (int argc, char *argv [])
 					if ((args [AR_PROTOTYPE_PATTERN]) && (strlen ((CONST_STRPTR) args [AR_PROTOTYPE_PATTERN]) > 0))
 						{
 							prototype_pattern_s = MakePrototypePattern ((CONST_STRPTR) args [AR_PROTOTYPE_PATTERN]);
-						}
-
-					if (args [AR_OUTPUT_FORMAT])
-						{
-							format_s = (CONST_STRPTR) args [AR_OUTPUT_FORMAT];
 						}
 
 					if (args [AR_FLAGS])
@@ -205,7 +199,6 @@ int main (int argc, char *argv [])
 							IDOS->Printf ("Recurse = \"%s\"\n", recurse_flag ? "TRUE" : "FALSE");
 							IDOS->Printf ("Generate Code = \"%s\"\n", generate_code_flag ? "TRUE" : "FALSE");
 							IDOS->Printf ("Prototype Pattern = \"%s\"\n", prototype_pattern_s);
-							IDOS->Printf ("Output Format = \"%s\"\n", format_s);
 							IDOS->Printf ("Version = \"%ld\"\n", version);
 
 							switch (flag)
@@ -344,8 +337,7 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR header_filename_pattern_s, CONST
 	*/
 	struct List previous_fns_ordering_list;
 
-	
-
+	const enum Verbosity verbosity = GetVerbosity ();
 
 	ENTER ();
 
@@ -386,9 +378,12 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR header_filename_pattern_s, CONST
 				}
 		}
 
-	IDOS->Printf ("source pattern \"%s\" regexp \"%s\"\n", source_filename_pattern_s, source_filename_regexp_s);
-	IDOS->Printf ("header pattern \"%s\" regexp \"%s\"\n", header_filename_pattern_s, header_filename_regexp_s);
-	
+	if (verbosity >= VB_LOUD)
+		{
+			IDOS->Printf ("source pattern \"%s\" regexp \"%s\"\n", source_filename_pattern_s, source_filename_regexp_s);
+			IDOS->Printf ("header pattern \"%s\" regexp \"%s\"\n", header_filename_pattern_s, header_filename_regexp_s);
+		}
+			
 	if (GeneratePrototypesList (root_path_s, header_filename_regexp_s, prototype_regexp_s, recurse_flag, &function_defs))
 		{
 			struct List *source_files_p = GetFilesList (root_path_s, source_filename_regexp_s, recurse_flag);
@@ -413,13 +408,19 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR header_filename_pattern_s, CONST
 										{
 											DB (KPRINTF ("%s %ld - opened output_s %s", __FILE__, __LINE__, output_s));
 		
-											IDOS->Printf ("%lu headers\n", GetListSize (&function_defs));
-		
+											if (verbosity >= VB_NORMAL)
+												{
+													IDOS->Printf ("%lu headers\n", GetListSize (&function_defs));
+												}
+												
 											if (WriteFunctionDefinitionsList (writer_p, &function_defs, library_s, prefix_s, version, flag, out_p))
 												{
 													STRPTR makefile_s = ConcatenateStrings (library_s, ".makefile");
 		
-													IDOS->Printf ("Successfully wrote header definitions to %s\n", output_s);
+													if (verbosity >= VB_NORMAL)
+														{
+															IDOS->Printf ("Successfully wrote header definitions to %s\n", output_s);
+														}		
 		
 													if (makefile_s)
 														{
@@ -502,12 +503,18 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR header_filename_pattern_s, CONST
 					if (EnsureDirectoryExists (output_dir_s))
 						{
 							if (WriteSourceForAllFunctionDefinitions (&function_defs, output_dir_s, library_s, prefix_s))
-								{
-									IDOS->Printf ("Generating source succeeded\n");
+								{	
+									if (verbosity >= VB_NORMAL)
+										{
+											IDOS->Printf ("Generating source succeeded\n");
+										}	
 						
 									if (WriteSourceForAllFunctionDeclarations (&function_defs, output_dir_s, library_s, prefix_s))
 										{
-											IDOS->Printf ("Generating headers succeeded\n");
+											if (verbosity >= VB_NORMAL)
+												{
+													IDOS->Printf ("Generating headers succeeded\n");
+												}	
 								
 											if (WriteInitFiles (library_s, output_dir_s))
 												{
@@ -516,8 +523,11 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR header_filename_pattern_s, CONST
 															if (WriteHeaderFiles (&function_defs, library_s, output_dir_s))
 																{						
 																	STRPTR init_s = NULL;
-															
-																	IDOS->Printf ("Generating vectors succeeded\n");
+						
+																	if (verbosity >= VB_NORMAL)
+																		{
+																			IDOS->Printf ("Generating vectors succeeded\n");
+																		}	
 																	
 																	init_s = MakeFilename (output_dir_s, "lib_init.c");
 																	
@@ -716,20 +726,28 @@ BOOL GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR 
 					if (document_parser_p)
 						{
 							struct Node *node_p;
-
+							enum Verbosity verbosity = GetVerbosity ();
+							 
 							success_flag = TRUE;
-							IDOS->Printf ("Found %lu header files\n", num_header_files);
-
+							
+							if (verbosity >= VB_NORMAL)
+								{
+									IDOS->Printf ("Found %lu header files\n", num_header_files);
+								}
+								
 							for (node_p = IExec->GetHead (headers_p); node_p != NULL; node_p = IExec->GetSucc (node_p))
 								{
 									CONST_STRPTR filename_s = node_p -> ln_Name;
 
-									IDOS->Printf ("Parsing \"%s\"\n", filename_s);
+									if (verbosity >= VB_NORMAL)
+										{
+											IDOS->Printf ("Parsing \"%s\"\n", filename_s);
+										}
 
 									/* Get the list of matching prototypes in each file */
 									if (!ParseFile (prototype_regexp_s, filename_s, function_definitions_p, document_parser_p))
 										{
-											success_flag = FALSE;
+											IDOS->Printf ("Failed to parse \"%s\"\n", filename_s);
 										}
 								}
 

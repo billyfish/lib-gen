@@ -250,7 +250,7 @@ STATIC BOOL WriteMakefileOriginalSources (BPTR makefile_p, struct List * const o
 	ENTER ();
 
 	struct Node *node_p = IExec->GetHead (original_filenames_p);
-	BOOL success_flag = (IDOS->FPrintf (makefile_p,"#Add the original source files\n") >= 0);
+	BOOL success_flag = (IDOS->FPrintf (makefile_p,"\n\n#Add the original source files\n") >= 0);
 	BOOL first_time_flag = TRUE;
 	
 	while (node_p && success_flag)

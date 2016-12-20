@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Libgen - A library converter to AmigaOS from other platforms</title>
+</head>
+
+<body>
+
+<section>
+<h1>Introduction</h1>
+
+<p>
+Libgen is a tool to take the source of a non-AmigaOS library and generate an
+AmigaOS library from it. It's primarily aimed at developers/porters. The
+reason for developing it is I wanted to be able to run the cross-platform tools
+that I develop for my day job on my Amiga. With Windows and Linux it's pretty easy
+to develop shared libraries and I wanted the same on the Amiga side.
+</p>
+
+<p>
+AmigaOS 4.x comes with a tool to do this called idltool and a lot of the code
+that libgen produces is based upon how idltool does it. The difference between
+the two is that with idltool you write an XML file that generates the skeleton code
+that you then populate. With Libgen, you take the already existing code and generate
+the library from that.
+</p>
+</section>
+
+<section>
+<h1>License</h1>
+
+<p>
+Libgen is Public Domain software. You may redistribute the package as long as
+it is unaltered and the authorship remains intact.
+</p>
+</section>
+
+<section>
+<h1>Usage</h1>
+
+<table>
+	<tr><th>Argument</th><th>Description</th></tr>
+	<tr><td>I=Input/A</td><td>The directory of source files to generate the library for</td></tr>
+	<tr><td>R=Recurse/S</td><td>A switch to recurse through the source directory and its children</td></tr>
+	<tr><td>L=LibraryName/A</td><td>The name of the library to generate</td></tr>
+	<tr><td>HP=HeaderFilePattern/K</td><td>The regular expression specifying the header files to read. This defaults to #?.h</td></tr>
+	<tr><td>SP=SourceFilePattern/K</td><td>The regular expression specifying the header files to read. This defaults to #?.c</td></tr>
+	<tr><td>PP=PrototypePattern/K</td><td>The regular expression specifying the signature of functions to put in the library. This 
+	regular expression omits the trailing semi-colon. This should include the {} brackets for the capturing group. This defaults to {#?}. </td></tr>
+	<tr><td>VER=Version/N</td><td>The version of the generated library 's interface</td></tr>
+	<tr><td>FL=Flags/K</td><td>The flags to put int the flags element within the generated XML file for idltool.</td></tr>
+	<tr><td>GC=GenerateCode/S</td><td>This switch will get Libgen to generate the code rather than just generate the XML file to use with idltool</td></tr>
+	<tr><td>V=Verbose/N</td><td>Set to 0, 1 or 2 for increasing level of messages as Libgen is ran</td></tr>
+</table>
+
+</section>
+
+
+<section>
+<h1>Example</h1>
+
+<p>
+An example is contained in this archive to create a "sample.library" which is an extended
+library based upon the example available at the
+<a href="http://wiki.amigaos.net/wiki/How_to_create_an_AmigaOS_4_library">AmigaOS Wiki</a>.
+</p>
+
+<p>
+It consists of two folders; the first is "sample_impl" which contains the code for the library
+and "sample_impl_test" which has an example file that opens the library and calls its
+functions.
+</p>
+
+<p>
+So we start by getting Libgen to create the source code for the Amiga library for "sample.library"
+</p>
+
+<code>
+libgen i sample_impl l sample gc r
+</code>
+
+<p>
+Taking each set of arguments in turn:
+
+<ul>
+	<li><strong>i sample_impl</strong>: This sets the input directory to <code>sample_impl</code></li>
+	<li><strong>l sample</strong>: This sets the name for the generated library to <code>sample.library</code></li>
+	<li><strong>gc</strong>: This tells Libgen to generate the Amiga library code</li>
+	<li><strong>r</strong>: This tells Libgen to recurse through the input directory.</li>
+</ul>
+
+This will create two files, <code>sample.makefile</code>, which is used to build the library, and <code>sample.xml</code>, 
+which can be used with <code>idltool</code> along with a 
+directory called <code>sample_source</code> containing the generated library code with the following content:
+
+<pre>
+7.Data:Projects/libgen> dir all sample_source
+     include (dir)
+          interfaces (dir)
+            sample.h
+          proto (dir)
+            sample.h
+          inline4 (dir)
+            sample.h
+  init.c                       init.h
+  lib_init.c                   lib_init.h
+  sample_addition_impl.c       sample_addition_impl.h
+  sample_division_impl.c       sample_division_impl.h
+  sample_modulus_impl.c        sample_modulus_impl.h
+  sample_multiplication_impl.c sample_multiplication_impl.h
+  vectors.h
+</pre>
+</p>
+
+<p>
+To build <code>sample.library</code>, the first task is to set the version data with:
+</p>
+
+<code>
+make -f sample.makefile revision
+</code>
+
+<p>followed by</p>
+
+<code>
+make -f sample.makefile
+</code>
+
+<p>to build the library, <code>sample.library</code></p>
+
+<p>To test this library, copy it into the <code>sample_impl_test</code> directory</p>
+
+<code>copy sample.library sample_impl_test/</code>
+
+<p>and cd into that directory. By running <code>compile_test_sample</code>, a test program
+<code>test_sample</code> will be built which can be run to test the generated library:</p>
+
+<pre>
+7.Data:Projects/libgen/sample_impl_test> test_sample 
+Addition: 6 + 4 = 10
+Subtract: 6 - 4 = 2
+Multiply: 6 * 4 = 24
+Divide: 6 / 4 = 1.500000
+Modulus: 6 % 4 = 2
+7.Data:Projects/libgen/sample_impl_test> 
+</pre>
+
+</section>
+
+
+
+
+<section>
+<h1>Credits</h1>
+
+<p>
+Libgen is &copy;2016 Simon Tyrrell and you can contact me at tyrrell.simon@gmail.com.
+</p>
+</section>
+
+
+</body>
+
+</html>
+
+   
