@@ -180,7 +180,9 @@ BOOL StripComments (struct DocumentParser *parser_p)
 							STRPTR comment_p = strstr (data_start_p, "/*");
 							STRPTR cpp_comment_p = strstr (data_start_p, "//");
 							STRPTR typedef_p = strstr (data_start_p, "typedef");
-							
+							STRPTR enum_p = strstr (data_start_p, "enum");
+							STRPTR struct_p = strstr (data_start_p, "struct");
+														
 							#if DOCUMENT_PARSER_DEBUG > 10
 							DB (KPRINTF ("%s %ld - comment_flag off \"%s\" sub \"%s\"\n", __FILE__, __LINE__, data_start_p, comment_p));
 							#endif

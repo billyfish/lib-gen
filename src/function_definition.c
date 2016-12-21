@@ -233,8 +233,10 @@ struct Parameter *GetNextParameter (const char **start_pp, BOOL function_flag)
 
 
 */
-struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s, CONST_STRPTR filename_s, const int32 line_number)
+
+int8 TokenizeFunctionPrototype (struct FunctionDefinition **fn_def_pp, const char *prototype_s, CONST_STRPTR filename_s, const int32 line_number)
 {
+	int8 res = -1;
 	BOOL success_flag = FALSE;
 	struct FunctionDefinition *fd_p = AllocateFunctionDefinition (filename_s, line_number);
 
@@ -318,17 +320,21 @@ struct FunctionDefinition *TokenizeFunctionPrototype (const char *prototype_s, C
 
 				}		/* while (start_p) */
 
-			if (!success_flag)
+			if (success_flag)
+				{
+					*fn_def_pp = fd_p;
+					res = 1;
+				}
+			else
 				{
 					FreeFunctionDefinition (fd_p);
-					fd_p = NULL;
 				}
 
 		}		/* if (fd_p) */
 
 
 	LEAVE ();
-	return fd_p;
+	return res;
 }
 
 

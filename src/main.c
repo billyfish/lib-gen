@@ -875,7 +875,8 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, str
 							if (prototype_s)
 								{
 									struct FunctionDefinition *fn_def_p = NULL;
-
+									int8 tokenized_flag = 0;
+									
 									//IDOS->Printf (">>> matched line:= %s", line_p -> frld_Line);
 
 									/* For easier debugging, overwrite the \n with a \0 */
@@ -885,39 +886,48 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, str
 											* (prototype_s + l - 1) = '\0';
 										}
 
-									fn_def_p = TokenizeFunctionPrototype (prototype_s, filename_s, parser_p -> dp_line_number);
+									tokenized_flag = TokenizeFunctionPrototype (&fn_def_p, prototype_s, filename_s, parser_p -> dp_line_number);
 
-									if (fn_def_p)
+									switch (tokenized_flag)
 										{
-											enum Verbosity v = GetVerbosity ();
+											case 1:
+												{
+													enum Verbosity v = GetVerbosity ();
+													
+													if (v >= VB_LOUD)
+														{
+															IDOS->Printf ("Function definition for \"%s\" :: -> \n", prototype_s);
+															BPTR out_p = IDOS->Output ();
+															PrintFunctionDefinition (out_p, fn_def_p);
+														}
+													else
+														{
+															IDOS->Printf ("v %ld :: LOUD %ld -> \n", v, VB_LOUD);
+														}
+													
+													/* Add the prototype */
+				
+													if (AddFunctionDefinitionToList (fn_def_p, function_defs_p))
+														{
+															DB (KPRINTF ("%s %ld - GetMatchingPrototypes: Added function definition for \"%s\"\n", __FILE__, __LINE__, prototype_s));
+														}
+													else
+														{
+															IDOS->Printf ("Failed to add function definition for \"%s\"\n", prototype_s);
+															success_flag = FALSE;
+														}
+												}
+												break;
+												
 											
-											if (v >= VB_LOUD)
-												{
-													IDOS->Printf ("Function definition for \"%s\" :: -> \n", prototype_s);
-													BPTR out_p = IDOS->Output ();
-													PrintFunctionDefinition (out_p, fn_def_p);
-												}
-											else
-												{
-													IDOS->Printf ("v %ld :: LOUD %ld -> \n", v, VB_LOUD);
-												}
-											
-											/* Add the prototype */
-
-											if (AddFunctionDefinitionToList (fn_def_p, function_defs_p))
-												{
-													DB (KPRINTF ("%s %ld - GetMatchingPrototypes: Added function definition for \"%s\"\n", __FILE__, __LINE__, prototype_s));
-												}
-											else
-												{
-													IDOS->Printf ("Failed to add function definition for \"%s\"\n", prototype_s);
-													success_flag = FALSE;
-												}
-										}
-									else
-										{
-											IDOS->Printf ("Failed to tokenize \"%s\"\n", prototype_s);
-											success_flag = FALSE;
+											case 0:
+												/* function callback ignore */
+												break;
+										
+											case -1:
+												IDOS->Printf ("Failed to tokenize \"%s\"\n", prototype_s);
+												success_flag = FALSE;
+												break;
 										}
 
 									IDOS->ReleaseCapturedExpressions (capture_p);
