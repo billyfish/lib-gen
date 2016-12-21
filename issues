@@ -4,6 +4,37 @@ TODO:
 
 
 
+
+DONE:
+
+Version 0.9.1
+
+FIX failure to copy lib manager template had error message referring to init.c rather than lib_init.c
+FIX ReadArgs parser out of sync due to output format parameter being removed
+FIX Function signatures with a single parameter missing the comma after the interface parameter
+
+Version 0.9:
+
+FIX library declarations so that first parameter is of type "struct TIFace *" rather than "struct t*"
+FIX library definitions so that first parameter is of type "struct TIFace *" rather than "struct t*"
+FIX Obtain and Release functions in init.c have "struct tIFace *" rather than "struct TIFace *" as their first parameter type.
+FIX Obtain and Release function declarations need to be in a header file so that vectors.h can see them.
+FIX Obtain and Release functions need to be "_t_Obtain" rather than "t_Obtain". Add initial underscore.
+FIX Create init.h
+FIX Create lib_init.h
+FIX Move static functions from libinit.c to available declarations for init.c to see.
+FIX add '#include "proto/t.h"' to library definitions so that they can see "struct TIFace *"  
+FIX add include guards to vectors.h
+FIX add include guards to generated declaration header files -> code to fix is  WriteSouceForAllFunctionDecalarations in function_definition.c
+FIX library definitions should include the generated header file rather than the input source one. 
+     E.g "t_bitstring.c" should include "t_bitstring.h" rather than "test/bitstring.h".
+FIX vectors.h to include proto files for library definitions rather than use the extern declarations
+FIX add path to original library includes in makefile.
+FIX write generated header file names to vectors.h 
+FIX add original library sources in makefile
+FIX Parser doesn't ignore preprprocessor macros when prototype pattern is #?
+FIX Parser only finds definitions after the first semi-colon in the file E.g.
+
 ~~~~~~~~~~~~~~~
 #ifndef ADD_IMPL
 #define ADD_IMPL
@@ -33,26 +64,4 @@ LIB_API int Subtract (int value1, int value2);
 ~~~~~~~~~~~~~~~
 
 would get Addition as well due to the semi-colon above it
-
-DONE:
-
-FIX library declarations so that first parameter is of type "struct TIFace *" rather than "struct t*"
-FIX library definitions so that first parameter is of type "struct TIFace *" rather than "struct t*"
-FIX Obtain and Release functions in init.c have "struct tIFace *" rather than "struct TIFace *" as their first parameter type.
-FIX Obtain and Release function declarations need to be in a header file so that vectors.h can see them.
-FIX Obtain and Release functions need to be "_t_Obtain" rather than "t_Obtain". Add initial underscore.
-FIX Create init.h
-FIX Create lib_init.h
-FIX Move static functions from libinit.c to available declarations for init.c to see.
-FIX add '#include "proto/t.h"' to library definitions so that they can see "struct TIFace *"  
-FIX add include guards to vectors.h
-FIX add include guards to generated declaration header files -> code to fix is  WriteSouceForAllFunctionDecalarations in function_definition.c
-FIX library definitions should include the generated header file rather than the input source one. 
-     E.g "t_bitstring.c" should include "t_bitstring.h" rather than "test/bitstring.h".
-FIX vectors.h to include proto files for library definitions rather than use the extern declarations
-FIX add path to original library includes in makefile.
-FIX write generated header file names to vectors.h 
-FIX add original library sources in makefile
-FIX Parser doesn't ignore preprprocessor macros when prototype pattern is #?
-FIX Parser only finds definitions after the first semi-colon in the file E.g.
 

@@ -21,12 +21,25 @@
 
 #include "byte_buffer.h"
 
+
+enum ParserState
+{
+	PS_NORMAL,
+	PS_STRUCT,
+	PS_TYPEDEF_STRUCT,
+	PS_ENUM,
+	PS_TYPEDEF_ENUM,
+	PS_C_COMMENT,
+	PS_CPP_COMMENT
+};
+
+
 struct DocumentParser
 {
 	struct ByteBuffer *dp_buffer_p;
 	struct FReadLineData *dp_line_p;
 	BOOL dp_matched_flag;
-	BOOL dp_comment_flag;
+	enum ParserState dp_state;
 	BPTR dp_file_handle_p;
 	int32 dp_line_number;
 };

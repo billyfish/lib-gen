@@ -663,15 +663,17 @@ BOOL PrintParameter (BPTR out_p, const struct Parameter * const param_p)
 
 BOOL PrintParameterList (BPTR out_p, struct List * const params_p)
 {
-	struct ParameterNode *curr_node_p = (struct ParameterNode *) IExec->GetHead (params_p);
-	struct ParameterNode *next_node_p = NULL;
+	struct ParameterNode *curr_node_p;
 	uint32 i = 0;
-
+			
 	ENTER ();
 
+	curr_node_p = (struct ParameterNode *) IExec->GetHead (params_p);
 
-	while ((next_node_p = (struct ParameterNode *) IExec->GetSucc (& (curr_node_p -> pn_node))) != NULL)
+	while (curr_node_p)
 		{
+			struct ParameterNode *next_node_p = (struct ParameterNode *) IExec->GetSucc (& (curr_node_p -> pn_node));
+			
 			IDOS->FPrintf (out_p, " %lu: ", i);
 			if (PrintParameter (out_p, curr_node_p -> pn_param_p))
 				{
@@ -680,11 +682,14 @@ BOOL PrintParameterList (BPTR out_p, struct List * const params_p)
 				}
 			else
 				{
+					IDOS->Printf ("Failed to print param");
 					return FALSE;
 				}
-
+			
 			curr_node_p = next_node_p;
-		}
+		}		/* while (curr_node_p) */
+
+
 
 	LEAVE ();
 	return TRUE;

@@ -34,7 +34,7 @@
 static BOOL WriteIncludes (BPTR out_p, CONST_STRPTR header_name_s,  CONST_STRPTR lib_name_s);
 
 
-static BPTR GetSourceFileHandle (const struct FunctionDefinition *fn_def_p, CONST_STRPTR library_s, CONST_STRPTR output_dir_s, char file_suffix);
+static BPTR GetSourceFileHandle (const struct FunctionDefinition *fn_def_p, CONST_STRPTR library_s, CONST_STRPTR output_dir_s, char file_suffix, STRPTR *output_filename_ss);
 
 static BOOL WriteLibraryFunctionDefinitionVariant (BPTR out_p, CONST CONST_STRPTR library_s, const struct FunctionDefinition * const fd_p, CONST CONST_STRPTR type_prefix_s, CONST CONST_STRPTR type_suffix_s, CONST CONST_STRPTR function_prefix_s, CONST CONST_STRPTR function_suffix_s, CONST CONST_STRPTR self_type_s);
 
@@ -461,6 +461,8 @@ BOOL PrintFunctionDefinition (BPTR out_p, const struct FunctionDefinition * cons
 					if (IDOS->FPrintf (out_p, "\nPARAMS:\n") >= 0)
 						{
 							success_flag = PrintParameterList (out_p, fn_p -> fd_args_p);
+							
+							IDOS->FPrintf (out_p, "\n");
 						}
 				}
 		}
@@ -614,7 +616,7 @@ static BOOL WriteLibraryFunctionDefinitionVariant (BPTR out_p, CONST CONST_STRPT
 												}		/* if (curr_node_p != final_node_p) */
 											else
 												{
-													success_flag = TRUE;
+													success_flag = (IDOS->FPrintf (out_p, ", ", library_s) >= 0);
 												}
 
 											if (success_flag)
@@ -805,6 +807,8 @@ BOOL WriteSourceForAllFunctionDefinitions (struct List *fn_defs_p, CONST_STRPTR 
 			/* are we changing the source file that we are writing to? */
 			if (strcmp (current_filename_s, fn_def_p -> fd_header_filename_s) != 0)
 				{
+					STRPTR output_filename_s = NULL;
+					
 					if (output_f)
 						{
 							if (IDOS->FClose (output_f) == 0)
@@ -816,8 +820,8 @@ BOOL WriteSourceForAllFunctionDefinitions (struct List *fn_defs_p, CONST_STRPTR 
 						}
 
 					success_flag = FALSE;
-
-					output_f = GetSourceFileHandle (fn_def_p, library_s, output_dir_s, 'c');
+					
+					output_f = GetSourceFileHandle (fn_def_p, library_s, output_dir_s, 'c', &output_filename_s);
 
 					if (output_f)
 						{
@@ -845,9 +849,14 @@ BOOL WriteSourceForAllFunctionDefinitions (struct List *fn_defs_p, CONST_STRPTR 
 						}
 					else
 						{
-							IDOS->Printf ("Error opening %s", fn_def_p -> fd_header_filename_s);
+							IDOS->Printf ("Error opening %s\n\n", output_filename_s);
 						}
 
+					if (output_filename_s)
+						{
+							IExec->FreeVec (output_filename_s);
+						}
+					
 				}		/* if (strcmp (current_filename_s, fn_def_p -> fd_filename_s) != 0) */
 
 			if (success_flag)
@@ -895,6 +904,8 @@ BOOL WriteSourceForAllFunctionDeclarations (struct List *fn_defs_p, CONST_STRPTR
 			/* are we changing the source file that we are writing to? */
 			if (strcmp (current_filename_s, fn_def_p -> fd_header_filename_s) != 0)
 				{
+					STRPTR output_filename_s = NULL;
+					
 					if (output_f)
 						{
 							if (IDOS->FPrintf (output_f, "\n\n#endif\t/* #ifndef %s */\n\n", current_include_guard_s) < 0)
@@ -913,7 +924,7 @@ BOOL WriteSourceForAllFunctionDeclarations (struct List *fn_defs_p, CONST_STRPTR
 
 					success_flag = FALSE;
 
-					output_f = GetSourceFileHandle (fn_def_p, library_s, output_dir_s, 'h');
+					output_f = GetSourceFileHandle (fn_def_p, library_s, output_dir_s, 'h', &output_filename_s);
 
 					if (output_f)
 						{
@@ -948,7 +959,12 @@ BOOL WriteSourceForAllFunctionDeclarations (struct List *fn_defs_p, CONST_STRPTR
 						}
 					else
 						{
-							IDOS->Printf ("Error opening %s", fn_def_p -> fd_header_filename_s);
+							IDOS->Printf ("Error opening %s\n\n", output_filename_s);
+						}
+
+					if (output_filename_s)
+						{
+							IExec->FreeVec (output_filename_s);
 						}
 
 				}		/* if (strcmp (current_filename_s, fn_def_p -> fd_filename_s) != 0) */
@@ -1045,19 +1061,21 @@ BOOL WriteAllInterfaceFunctionDefinitions (struct List *fn_defs_p, BPTR out_p, C
 }
 
 
-static BPTR GetSourceFileHandle (const struct FunctionDefinition *fn_def_p, CONST_STRPTR library_s, CONST_STRPTR output_dir_s, char file_suffix)
+static BPTR GetSourceFileHandle (const struct FunctionDefinition *fn_def_p, CONST_STRPTR library_s, CONST_STRPTR output_dir_s, char file_suffix, STRPTR *output_filename_ss)
 {
 	ENTER ();
 
 	BPTR src_f = ZERO;
 
-	/* Get the .c filename */
+	/* Get the filename */
 	STRPTR filename_s = GetSourceFilename (library_s, fn_def_p -> fd_header_filename_s, file_suffix);
 
 
 	if (filename_s)
 		{
 			STRPTR full_name_s = NULL;;
+
+			*output_filename_ss = filename_s;
 
 			/* Make the full filename */
 			/* @TODO Make sure output dir already exists */
@@ -1078,8 +1096,8 @@ static BPTR GetSourceFileHandle (const struct FunctionDefinition *fn_def_p, CONS
 				{
 					DB (KPRINTF ("%s %ld - Failed to make filename from %s and %s\n", __FILE__, __LINE__, output_dir_s, filename_s));
 				}
-
-			IExec->FreeVec (filename_s);
+				
+				
 		}		/* if (filename_s) */
 	else
 		{

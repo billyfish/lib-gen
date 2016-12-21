@@ -91,7 +91,7 @@ enum Args
 	AR_GENERATE_CODE,
 
 	/** The output format */
-	AR_OUTPUT_FORMAT,
+//	AR_OUTPUT_FORMAT,
 	AR_VERBOSE,
 	AR_NUM_ARGS
 };
@@ -540,7 +540,7 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR header_filename_pattern_s, CONST
 																				}
 																			else
 																				{
-																					IDOS->Printf ("Failed to generate init.c");
+																					IDOS->Printf ("Failed to generate lib_init.c");
 																				}
 																			
 																			IExec->FreeVec (init_s);	
@@ -889,6 +889,19 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, str
 
 									if (fn_def_p)
 										{
+											enum Verbosity v = GetVerbosity ();
+											
+											if (v >= VB_LOUD)
+												{
+													IDOS->Printf ("Function definition for \"%s\" :: -> \n", prototype_s);
+													BPTR out_p = IDOS->Output ();
+													PrintFunctionDefinition (out_p, fn_def_p);
+												}
+											else
+												{
+													IDOS->Printf ("v %ld :: LOUD %ld -> \n", v, VB_LOUD);
+												}
+											
 											/* Add the prototype */
 
 											if (AddFunctionDefinitionToList (fn_def_p, function_defs_p))

@@ -9,7 +9,8 @@ enum Verbosity
 {
 	VB_QUIET,
 	VB_NORMAL,
-	VB_LOUD
+	VB_LOUD,
+	VB_LOUDER
 };
 
 #ifdef ALLOCATE_GLOBALS
