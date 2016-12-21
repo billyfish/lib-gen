@@ -15,12 +15,14 @@
 
 STATIC BOOL WriteMakefileAmigaSources (BPTR makefile_p, CONST CONST_STRPTR library_s, struct List * const src_files_p);
 
-
-STATIC BOOL WriteMakefileHeader (BPTR makefile_p, CONST CONST_STRPTR input_dir_s, CONST CONST_STRPTR library_s, CONST CONST_STRPTR output_dir_s);
+STATIC BOOL WriteMakefileHeader (BPTR makefile_p, CONST CONST_STRPTR input_dir_s, CONST CONST_STRPTR library_s, CONST CONST_STRPTR output_dir_s, struct List *function_defs_p);
 
 STATIC BOOL WriteMakefileFooter (BPTR makefile_p, CONST CONST_STRPTR library_s);
 
 STATIC BOOL WriteMakefileOriginalSources (BPTR makefile_p, struct List * const original_filenames_p);
+
+STATIC BOOL WriteOriginalLibraryIncludePaths (BPTR makefile_p, struct List * const function_defs_p);
+
 
 
 BOOL WriteMakefile (CONST CONST_STRPTR  makefile_s, CONST CONST_STRPTR input_dir_s, CONST CONST_STRPTR library_s, struct List * const function_defs_p, struct List *original_source_filenames_p)
@@ -35,7 +37,7 @@ BOOL WriteMakefile (CONST CONST_STRPTR  makefile_s, CONST CONST_STRPTR input_dir
 
 			if (src_dir_s)
 				{
-					if (WriteMakefileHeader (makefile_p, input_dir_s, library_s, src_dir_s))
+					if (WriteMakefileHeader (makefile_p, input_dir_s, library_s, src_dir_s, function_defs_p))
 						{
 							if (WriteMakefileAmigaSources (makefile_p, library_s, function_defs_p))
 								{
@@ -96,7 +98,7 @@ BOOL WriteMakefile (CONST CONST_STRPTR  makefile_s, CONST CONST_STRPTR input_dir
 }
 
 
-static BOOL WriteMakefileHeader (BPTR makefile_p, CONST CONST_STRPTR input_dir_s, CONST CONST_STRPTR library_s, CONST CONST_STRPTR output_dir_s)
+STATIC BOOL WriteMakefileHeader (BPTR makefile_p, CONST CONST_STRPTR input_dir_s, CONST CONST_STRPTR library_s, CONST CONST_STRPTR output_dir_s, struct List *function_defs_p)
 {
 	ENTER ();
 	BOOL success_flag = FALSE;
@@ -125,7 +127,7 @@ static BOOL WriteMakefileHeader (BPTR makefile_p, CONST CONST_STRPTR input_dir_s
 		
 	CONST CONST_STRPTR part1_s = "OPTIMIZE = -O3\n" \
 		"DEBUG    = # -gstabs -DDEBUG\n" \
-		"CFLAGS   = -Wall $(OPTIMIZE) $(DEBUG) -I$(DIR_AMIGA_LIB_SRC)/include -I$(DIR_AMIGA_LIB_SRC) -I$(DIR_ORIGINAL_LIB_INCLUDES)\n" \
+		"CFLAGS   = -Wall $(OPTIMIZE) $(DEBUG) -I$(DIR_AMIGA_LIB_SRC)/include -I$(DIR_AMIGA_LIB_SRC)\n" \
 		"\n" \
 		"# Flags passed to gcc during linking\n" \
 		"LINK = \n" \
@@ -146,14 +148,70 @@ static BOOL WriteMakefileHeader (BPTR makefile_p, CONST CONST_STRPTR input_dir_s
 	if (IDOS->FPrintf (makefile_p, 
 		"# Makefile for project %s\n"
 		"%sDIR_AMIGA_LIB_SRC = %s\n"
-		"DIR_ORIGINAL_LIB_INCLUDES = .\n"
 		"%s%s%s", 
 		library_s, part0_s, output_dir_s, part1_s, library_s, part2_s) >= 0)
 		{
-			success_flag = TRUE;
+			success_flag = WriteOriginalLibraryIncludePaths (makefile_p, function_defs_p);
 		}
 
 	LEAVE ();
+	return success_flag;
+}
+
+/*
+ Get a list of all of the include dircteories to include
+*/
+STATIC BOOL WriteOriginalLibraryIncludePaths (BPTR makefile_p, struct List * const function_defs_p)
+{
+	BOOL success_flag = (IDOS->FPrintf (makefile_p, "\n# Adding teh include paths for the original library\n") > 0);	
+
+	ENTER ();	
+
+	struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (function_defs_p);
+	STRPTR old_parent_s = NULL;
+	
+	
+	
+	while (node_p && success_flag)
+		{
+			STRPTR parent_s = GetParentName (node_p -> fdn_function_def_p -> fd_header_filename_s);
+			
+			if (parent_s)
+				{
+					if ((!old_parent_s) || (strcmp (old_parent_s, parent_s) != 0))	
+						{
+							if (GetVerbosity () >= VB_LOUD)
+								{
+									IDOS->Printf ("Adding \"%s\" to original include path from \"%s\"\n", parent_s, node_p -> fdn_function_def_p -> fd_header_filename_s);
+								}
+								
+							success_flag = (IDOS->FPrintf (makefile_p, "CFLAGS += -I%s\n", parent_s) >= 0);
+						}
+						
+					if (old_parent_s)
+						{
+							IExec->FreeVec (old_parent_s);
+						}
+						
+					old_parent_s = parent_s;
+				}
+			
+
+			if (success_flag)
+				{
+					node_p = (struct FunctionDefinitionNode *) IExec->GetSucc (& (node_p -> fdn_node));
+				}
+		}	
+	
+	
+	if (old_parent_s)
+		{
+			IExec->FreeVec (old_parent_s);
+		}
+	
+	
+	LEAVE ();
+	
 	return success_flag;
 }
 
@@ -200,7 +258,7 @@ STATIC BOOL WriteMakefileAmigaSources (BPTR makefile_p, CONST CONST_STRPTR libra
 	struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (function_defs_p);
 	CONST_STRPTR current_source_filename_s = "";
 	BOOL success_flag = (IDOS->FPrintf (makefile_p, 
-		"#Add the library initialization code\nAMIGA_LIB_SRC = \\\n\t$(DIR_AMIGA_LIB_SRC)/init.c \\\n\t$(DIR_AMIGA_LIB_SRC)/lib_init.c\n\n#Add the source files\n") >= 0);
+		"\n\n#Add the library initialization code\nAMIGA_LIB_SRC = \\\n\t$(DIR_AMIGA_LIB_SRC)/init.c \\\n\t$(DIR_AMIGA_LIB_SRC)/lib_init.c\n\n#Add the source files\n") >= 0);
 	
 	while (node_p && success_flag)
 		{

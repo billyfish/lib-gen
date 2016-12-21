@@ -56,19 +56,20 @@ static void CloseLibs (void);
 
 BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, struct DocumentParser *document_parser_p, struct List *function_defs_p);
 BOOL ParseFile (CONST_STRPTR pattern_s, CONST_STRPTR filename_s, struct List *function_defs_p, struct DocumentParser *document_parser_p);
-BOOL GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR filename_regexp_s, CONST CONST_STRPTR prototype_regexp_s, CONST BOOL recurse_flag, struct List *function_definitions_p);
+BOOL GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR filename_regexp_s, CONST CONST_STRPTR prototype_regexp_s, CONST BOOL recurse_flag, struct List *function_definitions_p, struct List *paths_to_ignore_p);
 
 STRPTR CreateRegEx (CONST_STRPTR pattern_s, BOOL capture_flag);
 void ClearCapturedExpression (struct CapturedExpression *capture_p);
 
-int Run (CONST_STRPTR root_path_s, CONST_STRPTR header_filename_pattern_s, CONST_STRPTR source_filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, CONST_STRPTR prefix_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag, const BOOL gen_source_flag);
+int Run (CONST_STRPTR root_path_s, CONST_STRPTR header_filename_pattern_s, CONST_STRPTR source_filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, CONST_STRPTR prefix_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag, const BOOL gen_source_flag, struct List *paths_to_ignore_p);
 
 STRPTR MakePrototypePattern (CONST_STRPTR pattern_s);
 
-struct List *GetFilesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_regexp_s, const BOOL recurse_flag);
+struct List *GetFilesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_regexp_s, const BOOL recurse_flag, struct List *paths_to_ignore_p);
 
-static void ClearList (struct List *list_p);
+static void ClearList (struct List *list_p, BOOL free_list_flag);
 
+static struct List *ParsePaths (CONST_STRPTR root_path_s, CONST_STRPTR paths_s);
 
 BOOL WriteHeaderFiles (struct List *function_defs_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR output_dir_s);
 
@@ -93,6 +94,8 @@ enum Args
 	/** The output format */
 //	AR_OUTPUT_FORMAT,
 	AR_VERBOSE,
+	AR_NEWLIB,
+	AR_PATHS_TO_IGNORE,
 	AR_NUM_ARGS
 };
 
@@ -107,6 +110,7 @@ int main (int argc, char *argv [])
 		{
 			CONST_STRPTR input_dir_s = NULL;
 			CONST_STRPTR library_s = NULL;
+			CONST_STRPTR paths_to_ignore_s = NULL;
 			STRPTR prefix_s = NULL;
 			CONST_STRPTR header_filename_pattern_s = S_DEFAULT_HEADER_FILENAME_PATTERN_S;
 			CONST_STRPTR source_filename_pattern_s = S_DEFAULT_SOURCE_FILENAME_PATTERN_S;
@@ -117,15 +121,16 @@ int main (int argc, char *argv [])
 			BOOL generate_code_flag = FALSE;
 			int32 args [AR_NUM_ARGS];
 			struct RDArgs *args_p = NULL;
-
+			
 			memset (args, 0, AR_NUM_ARGS * sizeof (int32));
 
-			args_p = IDOS->ReadArgs ("I=Input/A,R=Recurse/S,L=LibraryName/A,HP=HeaderFilePattern/K,SP=SourceFilePattern/K,PP=PrototypePattern/K,VER=Version/N,FL=Flags/K,GC=GenerateCode/S,V=Verbose/N", args, NULL);
+			args_p = IDOS->ReadArgs ("I=Input/A,R=Recurse/S,L=LibraryName/A,HP=HeaderFilePattern/K,SP=SourceFilePattern/K,PP=PrototypePattern/K,VER=Version/N,FL=Flags/K,GC=GenerateCode/S,V=Verbose/N,NL=Newlib/S,IGN=Ignore/F", args, NULL);
 
 			if (args_p != NULL)
 				{
 					input_dir_s = (CONST_STRPTR) args [AR_INPUT_DIR];
 					library_s = (CONST_STRPTR) args [AR_LIBRARY_NAME];
+					paths_to_ignore_s = (CONST_STRPTR) args [AR_PATHS_TO_IGNORE];
 
 					if (args [AR_RECURSE])
 						{
@@ -189,6 +194,10 @@ int main (int argc, char *argv [])
 							generate_code_flag = TRUE;
 						}
 
+					if (args [AR_NEWLIB])
+						{
+							SetNewlibNeeded (TRUE);
+						}
 
 					if (GetVerbosity () >= VB_LOUD)
 						{
@@ -200,7 +209,8 @@ int main (int argc, char *argv [])
 							IDOS->Printf ("Generate Code = \"%s\"\n", generate_code_flag ? "TRUE" : "FALSE");
 							IDOS->Printf ("Prototype Pattern = \"%s\"\n", prototype_pattern_s);
 							IDOS->Printf ("Version = \"%ld\"\n", version);
-
+							IDOS->Printf ("Newlib = \"%s\"\n", IsNewlibNeeded () ? "TRUE" : "FALSE");
+							
 							switch (flag)
 								{
 									case IF_PUBLIC:
@@ -225,7 +235,20 @@ int main (int argc, char *argv [])
 							
 							if (prefix_s)
 								{
-									result = Run (input_dir_s, header_filename_pattern_s, source_filename_pattern_s, prototype_pattern_s, library_s, prefix_s, recurse_flag, version, flag, generate_code_flag);
+									struct List *paths_to_ignore_p = NULL;
+									
+									if (paths_to_ignore_s)
+										{
+											paths_to_ignore_p = ParsePaths (input_dir_s, paths_to_ignore_s);
+										}
+									
+									result = Run (input_dir_s, header_filename_pattern_s, source_filename_pattern_s, prototype_pattern_s, library_s, prefix_s, recurse_flag, version, flag, generate_code_flag, paths_to_ignore_p);
+								
+									if (paths_to_ignore_p)
+										{
+											ClearList (paths_to_ignore_p, TRUE);	
+										}
+								
 								}
 								
 						}		/* if (input_dir_s && filename_pattern_s) */
@@ -252,10 +275,191 @@ int main (int argc, char *argv [])
 			printf ("no libs\n");
 		}
 
-	DB (KPRINTF ("%s %ld - exiting\n", __FILE__, __LINE__));
-
 	LEAVE ();
 	return 0;
+}
+
+
+static struct List *ParsePaths (CONST_STRPTR root_path_s, CONST_STRPTR paths_s)
+{
+	struct List *paths_p = NULL;	
+	
+	ENTER ();
+
+	paths_p = IExec->AllocSysObjectTags (ASOT_LIST, TAG_DONE);
+	
+	if (paths_p)
+		{
+			CONST_STRPTR start_p = paths_s;
+			CONST_STRPTR token_p = paths_s;
+			BOOL in_quotes_flag = FALSE;
+			BOOL loop_flag = TRUE;
+			BOOL success_flag = TRUE;
+			BOOL in_whitespace_flag = FALSE;
+			
+			/*
+				test "foo bar" trump toot
+				
+				Ignoring path: "test"
+				Ignoring path: "foo bar"
+				Ignoring path: "foo bar""
+				Ignoring path: "foo bar" trump"
+			*/
+			
+			while (loop_flag && success_flag)
+				{
+					STRPTR path_s = NULL;
+					
+					if (*token_p == '\"')
+						{
+							if (in_quotes_flag)
+								{
+									path_s = CopyToNewString (start_p, token_p - 1, FALSE);
+									
+									if (path_s)
+										{
+											start_p = NULL;
+										}
+									else
+										{
+											DB (KPRINTF ("%s %ld - Failed to copy string starting from \"%s\" to \"%s\"\n", __FILE__, __LINE__, start_p, token_p));
+											success_flag = FALSE;
+										}
+									
+									in_quotes_flag = FALSE;
+								}	
+							else
+								{
+									start_p = token_p + 1;
+									
+									if (*start_p == '\0')
+										{
+											DB (KPRINTF ("%s %ld - Error with \" after \"%s\"\n", __FILE__, __LINE__, token_p));
+											success_flag = FALSE;
+										}	
+										
+									in_quotes_flag = TRUE;
+								}
+						}		/* f (*token_p == '\"') */
+					else
+						{
+							if (!in_quotes_flag)
+								{
+									if (isspace (*token_p))
+										{
+											if (!in_whitespace_flag)
+												{
+													if (start_p)
+														{
+															path_s = CopyToNewString (start_p, token_p - 1, FALSE);
+															
+															if (path_s)
+																{
+																	start_p = NULL;
+																}
+															else
+																{
+																	DB (KPRINTF ("%s %ld - Failed to copy string starting from \"%s\" to \"%s\"\n", __FILE__, __LINE__, start_p, token_p));
+																	success_flag = FALSE;
+																}													
+														}
+														
+													in_whitespace_flag = TRUE;
+												}
+										}
+									else
+										{
+											if (in_whitespace_flag)
+												{
+													start_p = token_p;
+													in_whitespace_flag = FALSE;
+												}
+										}
+								}
+						}
+						
+
+					/* increment the pointer through the paths */
+					if (success_flag)
+						{
+							++ token_p;
+							
+							if (*token_p == '\0')
+								{
+									if (start_p)
+										{
+											path_s = CopyToNewString (start_p, token_p - 1, FALSE);
+										}
+									
+									if (!path_s)
+										{
+											DB (KPRINTF ("%s %ld - Failed to copy string starting from \"%s\" to \"%s\"\n", __FILE__, __LINE__, start_p, token_p));
+											success_flag = FALSE;
+										}	
+									
+									loop_flag = FALSE;	
+								}		
+						}
+				
+					if (path_s)
+						{
+							STRPTR full_filename_s = MakeFilename (root_path_s, path_s);
+							
+							if (full_filename_s)
+								{
+									struct Node *node_p = IExec->AllocSysObjectTags (ASOT_NODE,
+										ASONODE_Name, full_filename_s,
+										ASONODE_Size, sizeof (struct Node),
+										TAG_DONE);
+					
+									if (node_p)
+										{
+											IExec->AddTail (paths_p, node_p);
+											success_flag = TRUE;
+										}						
+									else
+										{
+											DB (KPRINTF ("%s %ld - Failed to allocate node for \"%s\"\n", __FILE__, __LINE__, full_filename_s));
+											IExec->FreeVec (full_filename_s);
+											
+											success_flag = FALSE;								
+										}						
+														
+								}		/* if (full_filename_s) */
+							else
+								{
+									IDOS->Printf ("Failed to make ignore path for \"%s\" and \"%s\" \n", __FILE__, __LINE__, root_path_s, path_s);											
+									success_flag = FALSE;			
+								}							
+							
+							IExec->FreeVec (path_s);
+						}
+	
+				}		/* hile (loop_flag && success_flag) */
+			
+			if (GetVerbosity () >= VB_LOUD)
+				{
+					struct Node *curr_node_p = IExec->GetHead (paths_p);
+				
+					while (curr_node_p)
+						{
+							struct Node *next_node_p = IExec->GetSucc (curr_node_p);
+							
+							IDOS->Printf ("Ignoring path: \"%s\"\n", curr_node_p -> ln_Name);
+														
+							curr_node_p = next_node_p;
+						}		/* while (curr_node_p) */
+				}
+			
+		}		/* if (paths_p) */
+	else
+		{
+			DB (KPRINTF ("%s %ld - Failed to allocate list for ParsePaths\n", __FILE__, __LINE__));
+		}
+		
+	LEAVE ();
+
+	return paths_p;
 }
 
 
@@ -319,7 +523,7 @@ STRPTR CreateRegEx (CONST_STRPTR pattern_s, BOOL capture_flag)
 }
 
 
-int Run (CONST_STRPTR root_path_s, CONST_STRPTR header_filename_pattern_s, CONST_STRPTR source_filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, CONST_STRPTR prefix_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag, const BOOL gen_source_flag)
+int Run (CONST_STRPTR root_path_s, CONST_STRPTR header_filename_pattern_s, CONST_STRPTR source_filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, CONST_STRPTR prefix_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag, const BOOL gen_source_flag, struct List *paths_to_ignore_p)
 {
 	int res = 0;
 	STRPTR prototype_regexp_s = NULL;
@@ -384,9 +588,9 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR header_filename_pattern_s, CONST
 			IDOS->Printf ("header pattern \"%s\" regexp \"%s\"\n", header_filename_pattern_s, header_filename_regexp_s);
 		}
 			
-	if (GeneratePrototypesList (root_path_s, header_filename_regexp_s, prototype_regexp_s, recurse_flag, &function_defs))
+	if (GeneratePrototypesList (root_path_s, header_filename_regexp_s, prototype_regexp_s, recurse_flag, &function_defs, paths_to_ignore_p))
 		{
-			struct List *source_files_p = GetFilesList (root_path_s, source_filename_regexp_s, recurse_flag);
+			struct List *source_files_p = GetFilesList (root_path_s, source_filename_regexp_s, recurse_flag, paths_to_ignore_p);
 			
 			if (source_files_p)
 				{
@@ -410,7 +614,7 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR header_filename_pattern_s, CONST
 		
 											if (verbosity >= VB_NORMAL)
 												{
-													IDOS->Printf ("%lu headers\n", GetListSize (&function_defs));
+													IDOS->Printf ("Found %lu functions\n", GetListSize (&function_defs));
 												}
 												
 											if (WriteFunctionDefinitionsList (writer_p, &function_defs, library_s, prefix_s, version, flag, out_p))
@@ -468,7 +672,7 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR header_filename_pattern_s, CONST
 							IDOS->Printf ("Failed to get Writer\n");
 						}
 						
-					ClearList (source_files_p);
+					ClearList (source_files_p, TRUE);
 				}		/* if (source_files_p) */
 		
 				
@@ -593,7 +797,7 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR header_filename_pattern_s, CONST
 }
 
 
-static void ClearList (struct List *list_p)
+static void ClearList (struct List *list_p, BOOL free_list_flag)
 {
 	ENTER ();
 
@@ -609,6 +813,11 @@ static void ClearList (struct List *list_p)
 			current_node_p = next_node_p;
 		}
 
+	if (free_list_flag)
+		{
+			IExec->FreeVec (list_p);
+		}
+		
 	LEAVE ();	
 }
 
@@ -708,12 +917,12 @@ BOOL GetPreviousLibraryOrder (CONST_STRPTR filename_s, CONST_STRPTR struct_name_
 
 
 
-BOOL GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR filename_regexp_s, CONST CONST_STRPTR prototype_regexp_s, CONST BOOL recurse_flag, struct List *function_definitions_p)
+BOOL GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR filename_regexp_s, CONST CONST_STRPTR prototype_regexp_s, CONST BOOL recurse_flag, struct List *function_definitions_p, struct List *paths_to_ignore_p)
 {
 	ENTER ();
 
 	BOOL success_flag = FALSE;
-	struct List *headers_p = GetFilesList (root_path_s, filename_regexp_s, recurse_flag);
+	struct List *headers_p = GetFilesList (root_path_s, filename_regexp_s, recurse_flag, paths_to_ignore_p);
 
 	if (headers_p)
 		{
@@ -769,7 +978,7 @@ BOOL GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR 
 
 
 
-struct List *GetFilesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_regexp_s, const BOOL recurse_flag)
+struct List *GetFilesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_regexp_s, const BOOL recurse_flag, struct List *paths_to_ignore_p)
 {
 	ENTER ();
 
@@ -777,7 +986,7 @@ struct List *GetFilesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_regex
 
 	if (filenames_p)
 		{
-			if (!ScanDirectories (root_path_s, filenames_p, filename_regexp_s, recurse_flag))
+			if (!ScanDirectories (root_path_s, filenames_p, filename_regexp_s, recurse_flag, paths_to_ignore_p))
 				{
 					FreeList (filenames_p);
 					filenames_p = NULL;
@@ -894,15 +1103,11 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, str
 												{
 													enum Verbosity v = GetVerbosity ();
 													
-													if (v >= VB_LOUD)
+													if (v >= VB_LOUDER)
 														{
 															IDOS->Printf ("Function definition for \"%s\" :: -> \n", prototype_s);
 															BPTR out_p = IDOS->Output ();
 															PrintFunctionDefinition (out_p, fn_def_p);
-														}
-													else
-														{
-															IDOS->Printf ("v %ld :: LOUD %ld -> \n", v, VB_LOUD);
 														}
 													
 													/* Add the prototype */

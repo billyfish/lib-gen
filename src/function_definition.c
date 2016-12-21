@@ -712,7 +712,15 @@ BOOL WriteLibraryFunctionImplementation (BPTR out_p, const struct FunctionDefini
 
 									if (success_flag)
 										{
-											success_flag =  (IDOS->FPrintf (out_p, "%s);\n}\n\n", final_node_p -> pn_param_p -> pa_name_s) >= 0);
+											if (final_node_p)
+												{
+													success_flag = (IDOS->FPrintf (out_p, "%s", final_node_p -> pn_param_p -> pa_name_s) >= 0);
+												}
+											
+											if (success_flag)
+												{
+													success_flag =  (IDOS->FPrintf (out_p, ");\n}\n\n") >= 0);
+												}
 										}
 								}
 						}
@@ -889,6 +897,112 @@ BOOL WriteSourceForAllFunctionDefinitions (struct List *fn_defs_p, CONST_STRPTR 
 		}
 
 	LEAVE ();
+	return success_flag;
+}
+
+
+BOOL WriteInlineMacroForFunctionDeclaration (struct FunctionDefinition *fn_def_p, BPTR output_f, CONST_STRPTR interface_name_s)
+{
+	BOOL success_flag = TRUE;
+
+	if (interface_name_s)
+		{
+			success_flag = (IDOS->FPrintf (output_f, " %s->", interface_name_s) >= 0);
+		}
+	else
+		{
+			success_flag = (IDOS->FPrintf (output_f, "#define ") >= 0);		
+		}
+		
+	if (success_flag)
+		{
+			if (IDOS->FPrintf (output_f, "%s(", fn_def_p -> fd_definition_p -> pa_name_s) >= 0)
+				{
+					struct ParameterNode *curr_node_p = (struct ParameterNode *) IExec->GetHead (fn_def_p -> fd_args_p);
+					struct ParameterNode *final_node_p = (struct ParameterNode *) IExec->GetTail (fn_def_p -> fd_args_p);
+		
+					if (curr_node_p)
+						{
+							while ((curr_node_p != final_node_p) && success_flag)
+								{
+									if (interface_name_s)
+										{
+											success_flag = (IDOS->FPrintf (output_f, "(%s), ", curr_node_p -> pn_param_p -> pa_name_s) >= 0);
+										}
+									else
+										{
+											success_flag = (IDOS->FPrintf (output_f, "%s, ", curr_node_p -> pn_param_p -> pa_name_s) >= 0);
+										}
+										
+									if (success_flag)
+										{
+											curr_node_p = (struct ParameterNode *) IExec->GetSucc ((struct Node *) curr_node_p);
+										}
+		
+								}		/* while ((curr_node_p != final_node_p) && success_flag) */
+		
+							if (success_flag)
+								{
+									if (final_node_p)
+										{
+											if (interface_name_s)
+												{
+													success_flag = (IDOS->FPrintf (output_f, "(%s)", curr_node_p -> pn_param_p -> pa_name_s) >= 0);
+												}
+											else
+												{
+													success_flag = (IDOS->FPrintf (output_f, "%s", curr_node_p -> pn_param_p -> pa_name_s) >= 0);
+												}									
+										}	
+								}
+		
+						}		/* if (curr_node_p) */
+				}
+				
+			if (success_flag)
+				{
+					success_flag = (IDOS->FPrintf (output_f, ")") >= 0);
+					
+						if (interface_name_s && success_flag)
+							{
+								success_flag = (IDOS->FPrintf (output_f, "\n") >= 0);
+							}
+				}
+		}
+			
+	return success_flag;
+}
+
+BOOL WriteInlineMacrosForAllFunctionDeclarations (struct List *fn_defs_p, BPTR output_f, CONST_STRPTR interface_name_s)
+{
+	BOOL success_flag = TRUE;
+	struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (fn_defs_p);
+	
+	ENTER ();
+	
+	while (node_p && success_flag)
+		{
+			struct FunctionDefinition *fn_def_p = node_p -> fdn_function_def_p;
+
+			if (WriteInlineMacroForFunctionDeclaration (fn_def_p, output_f, NULL))
+				{
+					if (WriteInlineMacroForFunctionDeclaration (fn_def_p, output_f, interface_name_s))
+						{
+							node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p);
+						}	
+					else
+						{
+							success_flag = FALSE;	
+						}				
+				}
+			else
+				{
+					success_flag = FALSE;	
+				}			
+		}	
+	
+	LEAVE ();
+	
 	return success_flag;
 }
 
@@ -1183,9 +1297,13 @@ BOOL WriteSourceForFunctionDeclaration (const struct FunctionDefinition *fn_def_
 static BOOL WriteIncludes (BPTR out_p, CONST_STRPTR header_name_s, CONST_STRPTR lib_name_s)
 {
 	BOOL success_flag = FALSE;
+	CONST_STRPTR local_name_s = NULL;
+
 	ENTER ();
+
+	local_name_s = IDOS->FilePart (header_name_s);
 	
-	if (IDOS->FPrintf (out_p, "#include \"%s\"\n\n", header_name_s) > 0)
+	if (IDOS->FPrintf (out_p, "#include \"%s\"\n\n", local_name_s) > 0)
 		{
 			if (IDOS->FPrintf (out_p, "#include \"proto/%s.h\"\n\n", lib_name_s) > 0)
 				{
@@ -1217,12 +1335,11 @@ BOOL WriteFunctionDefinitionListIncludes (BPTR out_p, struct List *function_defi
 			
 			if (strcmp (current_filename_s, next_filename_s) != 0)
 				{
-					current_filename_s = next_filename_s;
-				
+					CONST_STRPTR local_name_s = IDOS->FilePart (next_filename_s);
 					
 					if ((!prefix_s) || (IDOS->FPrintf (out_p, prefix_s) >= 0))
 						{
-							if (IDOS->FPrintf (out_p, "%s", current_filename_s) >= 0)
+							if (IDOS->FPrintf (out_p, "%s", local_name_s) >= 0)
 								{
 									if (suffix_s && (IDOS->FPrintf (out_p, suffix_s) < 0))
 										{
@@ -1238,6 +1355,8 @@ BOOL WriteFunctionDefinitionListIncludes (BPTR out_p, struct List *function_defi
 						{
 							success_flag = FALSE;
 						}
+						
+					current_filename_s = next_filename_s;
 				} 
 
 			if (success_flag)

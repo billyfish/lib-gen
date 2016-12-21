@@ -18,6 +18,12 @@
 
 static enum Verbosity s_verbosity = VB_NORMAL;
 
+static BOOL s_newlib_flag = FALSE;
+
+
+static BOOL IsPathValid (CONST_STRPTR path_s, struct List *paths_to_ignore_p);
+
+
 
 void SetVerbosity (enum Verbosity v)
 {
@@ -35,6 +41,18 @@ enum Verbosity GetVerbosity (void)
 
 	LEAVE ();
 	return s_verbosity;
+}
+
+
+void SetNewlibNeeded (const BOOL value)
+{
+	s_newlib_flag = value;
+}
+
+
+BOOL IsNewlibNeeded (void)
+{
+	return s_newlib_flag;
 }
 
 
@@ -92,6 +110,32 @@ STRPTR MakeFilename (CONST_STRPTR first_s, CONST_STRPTR second_s)
 	return result_s;
 }
 
+
+STRPTR GetParentName (CONST_STRPTR filename_s)
+{
+	STRPTR parent_name_s = NULL;
+	
+	ENTER ();
+	STRPTR parent_p = strrchr (filename_s, '/');
+	
+	if (!parent_p)
+		{
+			parent_p = strrchr (filename_s, ':');
+		}
+
+	if (parent_p)
+		{
+			parent_name_s = CopyToNewString (filename_s, parent_p, FALSE);
+		}
+	else
+		{
+			
+		}		
+	
+	LEAVE ();
+	
+	return parent_name_s;
+}
 
 
 STRPTR ConcatenateStrings (CONST_STRPTR first_s, CONST_STRPTR second_s)
@@ -239,7 +283,7 @@ char *CopyToNewString (const char *start_p, const char *end_p, const BOOL trim_f
 }
 
 
-BOOL AddFullFilenameToList (struct List *filenames_p, CONST_STRPTR dir_s, CONST_STRPTR name_s)
+BOOL AddFullFilenameToList (struct List *filenames_p, CONST_STRPTR dir_s, CONST_STRPTR name_s, struct List *paths_to_ignore_p)
 {
 	ENTER ();
 
@@ -259,19 +303,22 @@ BOOL AddFullFilenameToList (struct List *filenames_p, CONST_STRPTR dir_s, CONST_
 
 			if (IDOS->AddPart (full_path_s, name_s, l) != 0)
 				{
-					struct Node *node_p = IExec->AllocSysObjectTags (ASOT_NODE,
-						ASONODE_Name, full_path_s,
-						ASONODE_Size, sizeof (struct Node),
-						TAG_DONE);
-
-					#if UTILS_DEBUG >= 1
-					DB (KPRINTF ("%s %ld - full_path_s \"%s\" dir \"%s\" name \"%s\"\n", __FILE__, __LINE__, full_path_s, dir_s, name_s));
-					#endif
-
-					if (node_p)
+					if (IsPathValid (full_path_s, paths_to_ignore_p))
 						{
-							IExec->AddTail (filenames_p, node_p);
-							success_flag = TRUE;
+							struct Node *node_p = IExec->AllocSysObjectTags (ASOT_NODE,
+								ASONODE_Name, full_path_s,
+								ASONODE_Size, sizeof (struct Node),
+								TAG_DONE);
+		
+							#if UTILS_DEBUG >= 1
+							DB (KPRINTF ("%s %ld - full_path_s \"%s\" dir \"%s\" name \"%s\"\n", __FILE__, __LINE__, full_path_s, dir_s, name_s));
+							#endif
+		
+							if (node_p)
+								{
+									IExec->AddTail (filenames_p, node_p);
+									success_flag = TRUE;
+								}
 						}
 
 				}
@@ -288,7 +335,7 @@ BOOL AddFullFilenameToList (struct List *filenames_p, CONST_STRPTR dir_s, CONST_
 }
 
 
-int32 ScanDirectories (CONST_STRPTR dir_s, struct List *filenames_p, CONST_STRPTR filename_pattern_s, const BOOL recurse_flag)
+int32 ScanDirectories (CONST_STRPTR dir_s, struct List *filenames_p, CONST_STRPTR filename_pattern_s, const BOOL recurse_flag, struct List *paths_to_ignore_p)
 {
 	ENTER ();
 
@@ -302,9 +349,9 @@ int32 ScanDirectories (CONST_STRPTR dir_s, struct List *filenames_p, CONST_STRPT
 			struct ExamineData *dat_p;
 			const enum Verbosity v = GetVerbosity ();
 
-			if (v >= VB_NORMAL)
+			if (v >= VB_LOUD)
 				{
-					IDOS->Printf ("Scanning %s\n with pattern %s\n", dir_s, filename_pattern_s);
+					IDOS->Printf ("Scanning \"%s\" with pattern %s\n", dir_s, filename_pattern_s);
 				}
 
 			while ((dat_p = IDOS->ExamineDir (context_p)))
@@ -336,7 +383,7 @@ int32 ScanDirectories (CONST_STRPTR dir_s, struct List *filenames_p, CONST_STRPT
 
 							if (add_flag)
 								{
-									if (AddFullFilenameToList (filenames_p, dir_s, dat_p -> Name))
+									if (AddFullFilenameToList (filenames_p, dir_s, dat_p -> Name, paths_to_ignore_p))
 										{
 											#if UTILS_DEBUG >= 2
 											DB (KPRINTF ("%s %ld - ScanDirectories; added %s size %lu\n", __FILE__, __LINE__, dat_p -> Name, GetHeaderDefinitionsListSize (header_definitions_p)));
@@ -357,9 +404,12 @@ int32 ScanDirectories (CONST_STRPTR dir_s, struct List *filenames_p, CONST_STRPT
 
 									if (path_s)
 										{
-											if (!ScanDirectories (path_s, filenames_p, filename_pattern_s, recurse_flag))  /* recurse */
+											if (IsPathValid (path_s, paths_to_ignore_p))
 												{
-													break;
+													if (!ScanDirectories (path_s, filenames_p, filename_pattern_s, recurse_flag, paths_to_ignore_p))  /* recurse */
+														{
+															break;
+														}
 												}
 
 											IExec->FreeVec (path_s);
@@ -391,6 +441,38 @@ int32 ScanDirectories (CONST_STRPTR dir_s, struct List *filenames_p, CONST_STRPT
 	LEAVE ();
 	return success;
 }
+
+
+static BOOL IsPathValid (CONST_STRPTR path_s, struct List *paths_to_ignore_p)
+{
+	BOOL valid_flag = TRUE;
+	
+	ENTER ();
+	
+	if (paths_to_ignore_p && valid_flag)
+		{
+			struct Node *curr_node_p = IExec->GetHead (paths_to_ignore_p);
+		
+			while (curr_node_p)
+				{
+					struct Node *next_node_p = IExec->GetSucc (curr_node_p);
+					
+					if (strcmp (path_s, curr_node_p -> ln_Name) == 0)
+						{
+							valid_flag = FALSE;
+						}
+												
+					curr_node_p = next_node_p;
+				}		/* while (curr_node_p) */			
+			
+		}
+	
+	
+	LEAVE ();
+	
+	return valid_flag;
+}
+
 
 
 BOOL CopyFile (CONST CONST_STRPTR src_s, CONST CONST_STRPTR dest_s)
@@ -443,7 +525,7 @@ BOOL CopyFile (CONST CONST_STRPTR src_s, CONST CONST_STRPTR dest_s)
 						
 							if (src_size != dest_size)
 								{
-									IDOS->Printf ("ScanDirectories: failed to copy %s to %s correctly, copied %ld instead of %ld\n", src_s, dest_s, dest_size, src_size);
+									IDOS->Printf ("CopyFile: failed to copy %s to %s correctly, copied %ld instead of %ld\n", src_s, dest_s, dest_size, src_size);
 								}
 						
 							
@@ -538,6 +620,24 @@ STRPTR GetInterfaceName (CONST CONST_STRPTR library_s)
 	return interface_s;
 }
 
+
+STRPTR GetGlobalInterfaceName (CONST CONST_STRPTR library_s)
+{
+	STRPTR interface_s = NULL;
+	
+	ENTER ();
+	
+	interface_s = ConcatenateStrings ("I", library_s);
+	
+	if (interface_s)
+		{
+			/* Captialize the first letter after the "I" */
+			* (interface_s + 1) = toupper (* (interface_s + 1));	
+		}
+
+	LEAVE ();
+	return interface_s;
+}
 
 
 STRPTR GetUpperCaseString (CONST_STRPTR src_s)

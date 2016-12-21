@@ -15,10 +15,14 @@ DONE:
 
 Version 0.9.1
 
-FIX failure to copy lib manager template had error message referring to init.c rather than lib_init.c
+FIX Failure to copy lib manager template had error message referring to init.c rather than lib_init.c
 FIX ReadArgs parser out of sync due to output format parameter being removed
 FIX Function signatures with a single parameter missing the comma after the interface parameter
-
+FIX Add Newlib command line switch to automate the handling of Newlib in the generated library's init and expunge functions 
+FIX Add Ignore command line switch to get libgen ignore given paths within the original library folder
+FIX Library includes are no longer included with the full path, the makefile takes care of setting the correct search path
+FIX inline4 headers were not being generated properly
+  
 Version 0.9:
 
 FIX library declarations so that first parameter is of type "struct TIFace *" rather than "struct t*"

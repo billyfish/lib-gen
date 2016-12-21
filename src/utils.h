@@ -35,15 +35,23 @@ STRPTR ConcatenateStrings (CONST_STRPTR first_s, CONST_STRPTR second_s);
 
 STRPTR MakeFilename (CONST_STRPTR first_s, CONST_STRPTR second_s);
 
-int32 ScanDirectories (CONST_STRPTR name_s, struct List *matching_files_list_p, CONST_STRPTR filename_pattern_s, const BOOL recurse_flag);
+STRPTR GetParentName (CONST_STRPTR filename_s);
 
-BOOL AddFullFilenameToList (struct List *header_definitions_p, CONST_STRPTR dir_s, CONST_STRPTR name_s);
+int32 ScanDirectories (CONST_STRPTR name_s, struct List *matching_files_list_p, CONST_STRPTR filename_pattern_s, const BOOL recurse_flag, struct List *paths_to_ignore_p);
+
+BOOL AddFullFilenameToList (struct List *header_definitions_p, CONST_STRPTR dir_s, CONST_STRPTR name_s, struct List *paths_to_ignore_p);
 
 void SetVerbosity (enum Verbosity v);
 
 enum Verbosity GetVerbosity (void);
 
+void SetNewlibNeeded (const BOOL value);
+
+BOOL IsNewlibNeeded (void);
+
 STRPTR GetInterfaceName (CONST CONST_STRPTR library_s);
+
+STRPTR GetGlobalInterfaceName (CONST CONST_STRPTR library_s);
 
 BOOL EnsureDirectoryExists (CONST_STRPTR dir_s);
 

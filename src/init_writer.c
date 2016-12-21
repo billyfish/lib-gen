@@ -117,79 +117,92 @@ static BOOL WriteDefintionsTop (BPTR out_p, CONST CONST_STRPTR library_s)
 				"#include \"vectors.h\"\n\n"
 				"#include \"lib_init.h\"\n\n"
 				"/* Uncomment this line (and see below) if your library has a 68k jump table */\n"
-				"/* extern APTR VecTable68K []; */\n\n"
-				"STATIC CONST struct TagItem %sTags [] =\n"
-				"{\n"
-				"\t{ MIT_Name, (Tag) \"main\" },\n"
-				"\t{ MIT_VectorTable, (Tag) %s_vectors },\n"
-				"\t{ MIT_Version,	1 },\n"
-				"\t{ TAG_DONE, 0 }\n"
-				"};\n\n", library_s, library_s) >= 0)
+				"/* extern APTR VecTable68K []; */\n\n") >= 0)
 				{
-					if (IDOS->FPrintf (out_p, 
-						"STATIC CONST CONST_APTR libInterfaces [] =\n"
-						"{\n"
-						"\tlib_managerTags,\n"
-						"\t%sTags,\n"
-						"\tNULL\n"
-						"};\n\n", library_s) >= 0)
+					BOOL continue_flag  = TRUE;
+					
+					if (IsNewlibNeeded ())
 						{
-							if (IDOS->FPrintf (out_p,
-								"STATIC CONST struct TagItem libCreateTags [] =\n"
+							continue_flag = (IDOS->FPrintf (out_p, "struct Library *NewlibBase = NULL;\nstruct Interface *INewlib = NULL;\n\n") >= 0);
+						}
+				
+					if (continue_flag)
+						{
+							if (IDOS->FPrintf (out_p, 
+								"STATIC CONST struct TagItem %sTags [] =\n"
 								"{\n"
-								"\t{ CLT_DataSize, sizeof (struct Library)	},\n"
-								"\t{ CLT_InitFunc, (Tag) LibInit },\n"
-								"\t{ CLT_Interfaces, (Tag) libInterfaces },\n\n"
-								"\t/* Uncomment the following line if you have a 68k jump table */\n"
-								"\t/* { CLT_Vector68K, (Tag) VecTable68K }, */\n\n"
-								"\t{TAG_DONE, 0 }\n"
-								"};\n\n") >= 0)       
+								"\t{ MIT_Name, (Tag) \"main\" },\n"
+								"\t{ MIT_VectorTable, (Tag) %s_vectors },\n"
+								"\t{ MIT_Version,	1 },\n"
+								"\t{ TAG_DONE, 0 }\n"
+								"};\n\n", library_s, library_s) >= 0)
 								{
 									if (IDOS->FPrintf (out_p, 
-										"\n/* ------------------- ROM Tag ------------------------ */\n"
-										"STATIC CONST struct Resident lib_res USED =\n"
+										"STATIC CONST CONST_APTR libInterfaces [] =\n"
 										"{\n"
-										"\tRTC_MATCHWORD,\n"
-										"\t(struct Resident *) &lib_res,\n"
-										"\t(APTR) (&lib_res + 1),\n"
-										"\tRTF_NATIVE | RTF_AUTOINIT, /* Add RTF_COLDSTART if you want to be resident */\n"
-										"\tVERSION,\n"
-										"\tNT_LIBRARY, /* Make this NT_DEVICE if needed */\n"
-										"\t0, /* PRI, usually not needed unless you're resident */\n"
-										"\t\"%s.library\",\n"
-										"\tVSTRING,\n"
-										"\t(APTR) libCreateTags\n"
+										"\tlib_managerTags,\n"
+										"\t%sTags,\n"
+										"\tNULL\n"
 										"};\n\n", library_s) >= 0)
 										{
-											STRPTR interface_s = GetInterfaceName (library_s);
-											
-											if (interface_s)
+											if (IDOS->FPrintf (out_p,
+												"STATIC CONST struct TagItem libCreateTags [] =\n"
+												"{\n"
+												"\t{ CLT_DataSize, sizeof (struct Library)	},\n"
+												"\t{ CLT_InitFunc, (Tag) LibInit },\n"
+												"\t{ CLT_Interfaces, (Tag) libInterfaces },\n\n"
+												"\t/* Uncomment the following line if you have a 68k jump table */\n"
+												"\t/* { CLT_Vector68K, (Tag) VecTable68K }, */\n\n"
+												"\t{TAG_DONE, 0 }\n"
+												"};\n\n") >= 0)       
 												{
-													
-													if (IDOS->FPrintf (out_p,
-														"uint32 _%s_Obtain (struct %s *Self)\n"
+													if (IDOS->FPrintf (out_p, 
+														"\n/* ------------------- ROM Tag ------------------------ */\n"
+														"STATIC CONST struct Resident lib_res USED =\n"
 														"{\n"
-														"\t/* Write me. Really, I dare you! */\n"
-														"\t((struct ExecIFace *) ((*(struct ExecBase **) 4)->MainInterface))->DebugPrintF (\"Function test::Obtain not implemented\");\n"
-														"\n\treturn (uint32) 0;\n"
-														"}\n\n"
-														"uint32 _%s_Release (struct %s *Self)\n"
-														"{\n"
-														"\t/* Write me. Really, I dare you! */\n"
-														"\t((struct ExecIFace *) ((*(struct ExecBase **) 4)->MainInterface))->DebugPrintF (\"Function test::Release not implemented\");\n"
-														"\treturn (uint32) 0;\n"
-														"}\n\n", library_s, interface_s, library_s, interface_s) >= 0)            
-														{	
-															if (WriteLibManagerFunctionDefinitions (out_p, library_s))
+														"\tRTC_MATCHWORD,\n"
+														"\t(struct Resident *) &lib_res,\n"
+														"\t(APTR) (&lib_res + 1),\n"
+														"\tRTF_NATIVE | RTF_AUTOINIT, /* Add RTF_COLDSTART if you want to be resident */\n"
+														"\tVERSION,\n"
+														"\tNT_LIBRARY, /* Make this NT_DEVICE if needed */\n"
+														"\t0, /* PRI, usually not needed unless you're resident */\n"
+														"\t\"%s.library\",\n"
+														"\tVSTRING,\n"
+														"\t(APTR) libCreateTags\n"
+														"};\n\n", library_s) >= 0)
+														{
+															STRPTR interface_s = GetInterfaceName (library_s);
+															
+															if (interface_s)
 																{
-																	success_flag = TRUE;
+																	
+																	if (IDOS->FPrintf (out_p,
+																		"uint32 _%s_Obtain (struct %s *Self)\n"
+																		"{\n"
+																		"\t/* Write me. Really, I dare you! */\n"
+																		"\t((struct ExecIFace *) ((*(struct ExecBase **) 4)->MainInterface))->DebugPrintF (\"Function test::Obtain not implemented\");\n"
+																		"\n\treturn (uint32) 0;\n"
+																		"}\n\n"
+																		"uint32 _%s_Release (struct %s *Self)\n"
+																		"{\n"
+																		"\t/* Write me. Really, I dare you! */\n"
+																		"\t((struct ExecIFace *) ((*(struct ExecBase **) 4)->MainInterface))->DebugPrintF (\"Function test::Release not implemented\");\n"
+																		"\treturn (uint32) 0;\n"
+																		"}\n\n", library_s, interface_s, library_s, interface_s) >= 0)            
+																		{	
+																			if (WriteLibManagerFunctionDefinitions (out_p, library_s))
+																				{
+																					success_flag = TRUE;
+																				}
+																		}
+																	
+																	IExec->FreeVec (interface_s);		
 																}
 														}
-													
-													IExec->FreeVec (interface_s);		
-												}
-										}
-                }     
+				                }     
+				            }
+								}
 						}
 				}
 		}
@@ -404,12 +417,29 @@ STATIC BOOL WriteLibInit (BPTR out_f, CONST CONST_STRPTR library_s, CONST CONST_
     "\tlib_base_p -> libNode.lib_Revision     = REVISION;\n"
     "\tlib_base_p -> libNode.lib_IdString     = VSTRING;\n\n"
     "\tlib_base_p -> segList = (BPTR) seglist;\n\n"
-    "\t/* Add any additional code here */\n"
-		"\treturn (struct Library *) lib_base_p;\n"
-		"}\n\n",
+    "\t/* Add any additional code here */\n",
 		capitalized_library_s, capitalized_library_s, library_s) >= 0)            
 		{	
 			success_flag = TRUE;
+			
+			if (IsNewlibNeeded ())
+				{
+					success_flag = (IDOS->FPrintf (out_f, 
+						"\tNewlibBase = IExec->OpenLibrary (\"newlib.library\", 52);\n"
+						"\tif (NewlibBase)\n"
+						"\t\t{\n"
+						"\t\t\tINewlib = (struct Interface *) IExec->GetInterface (NewlibBase, \"main\", 1, NULL);\n\n"
+						"\t\t\tif(!INewlib)\n"
+						"\t\t\t\t{\n"
+						"\t\t\t\t\treturn NULL;\n"
+						"\t\t\t\t}\n"
+						"\t\t}\n") >= 0);
+				}
+								
+			if (success_flag)
+				{
+					success_flag = (IDOS->FPrintf (out_f, "\treturn (struct Library *) lib_base_p;\n""}\n\n") >= 0);
+				}
 		}
 
 	LEAVE ();
@@ -439,15 +469,35 @@ STATIC BOOL WriteLibExpunge (BPTR out_f, CONST CONST_STRPTR capitalized_library_
 		"\telse\n"
 		"\t\t{\n"
 		"\t\t\tresult_p = (APTR) lib_base_p -> segList;\n"
-		"\t\t\t/* Undo the code in LibInit */\n\n"
-		"\t\t\tIExec->Remove ((struct Node *) lib_base_p);\n"
-    "\t\t\tIExec->DeleteLibrary ((struct Library *) lib_base_p);\n"
-		"\t\t}\n"
-		"\treturn result_p;\n"
-		"}\n\n",
+		"\t\t\t/* Undo the code in LibInit */\n\n",
 		capitalized_library_s, capitalized_library_s) >= 0)            
 		{	
 			success_flag = TRUE;
+			
+			if (IsNewlibNeeded ())
+				{
+					success_flag = (IDOS->FPrintf (out_f, 
+						"\t\t\tif (NewlibBase)\n"
+						"\t\t\t\t{\n"
+						"\t\t\t\t\tif (INewlib)\n"
+						"\t\t\t\t\t\t{\n"
+						"\t\t\t\t\t\t\tIExec->DropInterface (INewlib);\n"
+						"\t\t\t\t\t\t\tINewlib = NULL;\n"
+						"\t\t\t\t\t\t}\n\n"
+						"\t\t\t\t\tIExec->CloseLibrary (NewlibBase);\n"
+						"\t\t\t\t\tNewlibBase = NULL;\n"
+						"\t\t\t\t}\n\n") >= 0);
+				}
+		
+			if (success_flag)
+				{
+					success_flag = (IDOS->FPrintf (out_f, 		
+						"\t\t\tIExec->Remove ((struct Node *) lib_base_p);\n"
+    				"\t\t\tIExec->DeleteLibrary ((struct Library *) lib_base_p);\n"
+						"\t\t}\n"
+						"\treturn result_p;\n"
+						"}\n\n") >= 0);
+				}		
 		}
 
 	LEAVE ();

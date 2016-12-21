@@ -84,6 +84,9 @@ BOOL PrintFunctionDefinition (BPTR out_p, const struct FunctionDefinition * cons
 BOOL WriteLibraryFunctionImplementation (BPTR out_p, const struct FunctionDefinition * const fd_p, CONST_STRPTR interface_struct_s, CONST_STRPTR prefix_s);
 
 
+BOOL WriteInlineMacrosForAllFunctionDeclarations (struct List *fn_defs_p, BPTR output_f, CONST_STRPTR interface_name_s);
+
+
 BOOL WriteSourceForAllFunctionDefinitions (struct List *fn_defs_p, CONST_STRPTR output_dir_s, CONST_STRPTR library_s, CONST_STRPTR prefix_s);
 
 

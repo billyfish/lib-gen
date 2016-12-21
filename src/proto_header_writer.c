@@ -154,7 +154,7 @@ static BOOL WriteProtoBottom (BPTR out_p, CONST CONST_STRPTR library_s)
 						"  #define CLIB_%s_PROTOS_H 1\n" \
 						" #endif /* CLIB_%s_PROTOS_H */\n" \
 						" #ifndef __NOGLOBALIFACE__\n" \
-						"  extern struct %sIFace I%s;\n" \
+						"  extern struct %sIFace *I%s;\n" \
 						" #endif /* __NOGLOBALIFACE__ */\n" \
 						"#else /* __amigaos4__ */\n" \
 						" #ifndef CLIB_%s_PROTOS_H\n" \
