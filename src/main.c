@@ -1130,7 +1130,10 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, str
 												break;
 										
 											case -1:
-												IDOS->Printf ("Failed to tokenize \"%s\"\n", prototype_s);
+												if (v >= LB_LOUDER)
+													{
+														IDOS->Printf ("Could not parse \"%s\" as a function prototype\n", prototype_s);
+													}	
 												success_flag = FALSE;
 												break;
 										}

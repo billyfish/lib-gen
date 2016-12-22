@@ -248,9 +248,27 @@ BOOL StripComments (struct DocumentParser *parser_p)
 						}
 						break;
 					
-					
-					
-					
+
+					case PS_STRUCT:
+						break;
+
+
+					case PS_TYPEDEF_STRUCT:
+						break;
+
+
+					case PS_ENUM:
+						break;
+
+
+					case PS_TYPEDEF_ENUM:
+						break;
+
+
+					case PS_CPP_COMMENT:
+						break;
+
+
 					default:
 						break;
 				}
@@ -281,30 +299,78 @@ char *ParseDocument (struct DocumentParser *parser_p)
 {
 	ENTER ();
 
-	char *prototype_s = NULL;
+	STRPTR *prototype_s = NULL;
 
 	if (StripComments (parser_p))
 		{
-			char *delim_p = strchr (parser_p -> dp_buffer_p -> bb_data_p, ';');
-
-			if (delim_p)
+			STRPTR data_s = ScrollPastWhitespace (parser_p -> dp_buffer_p -> bb_data_p);
+						
+			if (data_s)
 				{
-					/* cut the string from the buffer */
-					prototype_s = ExtractSubstring (parser_p -> dp_buffer_p, delim_p);
-
-					if (!prototype_s)
+					switch (parse_p -> dp_state)
 						{
-							IDOS->Printf ("Failed to extract prototype from \"%s\"\n", parser_p -> dp_buffer_p -> bb_data_p);
-						}							
+							case PS_NORMAL:
+							
+								break;
+
+							case PS_STRUCT,
+								break;
+
+							case PS_TYPEDEF_STRUCT,
+								break;
+
+							case PS_ENUM,
+								break;
+
+							case PS_TYPEDEF_ENUM,
+								break;
+
+							case PS_C_COMMENT,
+								break;
+
+							case PS_CPP_COMMENT						
+								break;						
+						}
+				
+				
+					char *delim_p = strchr (data_s, ';');
+
+					if (delim_p)
+						{
+							/* cut the string from the buffer */
+							STRPTR data_s = ExtractSubstring (parser_p -> dp_buffer_p, delim_p);
+
+							if (data_s)
+								{
+							
+
+									if (start_s)
+										{
+											if (strncmp ("struct", start_s, 6) == 0)
+												{
+										
+												}
+											 
+										}
+
+
+								}
+							else
+								{
+									IDOS->Printf ("Failed to extract prototype from \"%s\"\n", parser_p -> dp_buffer_p -> bb_data_p);
+								}							
 						
 				
+						}
+					else
+						{
+							#if DOCUMENT_PARSER_DEBUG > 10
+							DB (KPRINTF ("%s %ld - no delim in \"%s\"\n", __FILE__, __LINE__, parser_p -> dp_buffer_p -> bb_data_p));
+							#endif
+						}
+				
 				}
-			else
-				{
-					#if DOCUMENT_PARSER_DEBUG > 10
-					DB (KPRINTF ("%s %ld - no delim in \"%s\"\n", __FILE__, __LINE__, parser_p -> dp_buffer_p -> bb_data_p));
-					#endif
-				}
+			
 		}
 
 	LEAVE ();

@@ -717,4 +717,46 @@ void ReplaceChars (STRPTR value_s, CONST CONST_STRPTR old_values_s, const char n
 
 }
 	
+	
+STRPTR ScrollPastWhitespace (STRPTR data_s)
+{
+	STRPTR start_s = NULL;
+	
+	ENTER ();
+
+
+	start_s = data_s;
+
+	if (start_s)
+		{
+			/*
+				Check to see whether possible function prototype 
+			*/	
+			BOOL loop_flag = TRUE;
+			
+			/* scroll to the start of the next token */		
+			while (loop_flag)
+				{
+					if (*start_s == '\0)
+						{
+							start_s = NULL;
+							loop_flag = FALSE;
+						}
+					else if (isspace (*start_s))
+						{
+							++ start_s;
+						}							
+					else
+						{
+							loop_flag = FALSE;
+						}		
+				}
+		
+		}		/* if (start_s) */	
+
+
+	LEAVE ();
+	
+	return start_s;
+}	
 
