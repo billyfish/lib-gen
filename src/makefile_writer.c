@@ -13,7 +13,7 @@
 
 
 
-STATIC BOOL WriteMakefileAmigaSources (BPTR makefile_p, CONST CONST_STRPTR library_s, struct List * const src_files_p, const BOOL auto_init_flag);
+STATIC BOOL WriteMakefileAmigaSources (BPTR makefile_p, CONST CONST_STRPTR library_s, struct List * const src_files_p);
 
 STATIC BOOL WriteMakefileHeader (BPTR makefile_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR output_dir_s, struct List *function_defs_p);
 
@@ -25,7 +25,7 @@ STATIC BOOL WriteOriginalLibraryIncludePaths (BPTR makefile_p, struct List * con
 
 
 
-BOOL WriteMakefile (CONST CONST_STRPTR makefile_s, CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR library_s, struct List * const function_defs_p, struct List *original_source_filenames_p, const BOOL auto_init_flag)
+BOOL WriteMakefile (CONST CONST_STRPTR makefile_s, CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR library_s, struct List * const function_defs_p, struct List *original_source_filenames_p)
 {
 	ENTER ();
 	BOOL success_flag = FALSE;
@@ -39,7 +39,7 @@ BOOL WriteMakefile (CONST CONST_STRPTR makefile_s, CONST CONST_STRPTR root_path_
 				{
 					if (WriteMakefileHeader (makefile_p, library_s, src_dir_s, function_defs_p))
 						{
-							if (WriteMakefileAmigaSources (makefile_p, library_s, function_defs_p, auto_init_flag))
+							if (WriteMakefileAmigaSources (makefile_p, library_s, function_defs_p))
 								{
 									if (WriteMakefileOriginalSources (makefile_p, original_source_filenames_p))
 										{
@@ -119,7 +119,9 @@ STATIC BOOL WriteMakefileHeader (BPTR makefile_p, CONST CONST_STRPTR library_s, 
 		"AS     = $(CROSS_COMPILE)as \n" \
 		"LD     = $(CROSS_COMPILE)ld \n" \
 		"RANLIB = $(CROSS_COMPILE)ranlib \n" \
+		"AR     = $(CROSS_COMPILE)ar \n" \
 		"RM     = delete\n" \
+		"CP     = copy\n" \
 		"# RM     = rm\n" \
 		"\n" \
 		"# Change these as required\n";
@@ -220,16 +222,17 @@ STATIC BOOL WriteMakefileFooter (BPTR makefile_p, CONST CONST_STRPTR library_s)
 {
 	ENTER ();
 	BOOL success_flag = FALSE;
-
-	CONST CONST_STRPTR part0_s =
+	
+	if (IDOS->FPrintf (makefile_p,
 		"# -------------------------------------------------------------\n" \
 		"# Nothing should need changing below this line\n" \
 		"\n" \
-		"OBJS = $(";
-
-	CONST_STRPTR part1_s =
-		"_SRCS:.c=.o)\n" \
-		"# Rules for building\n" \
+		"OBJS = $(%s_SRCS:.c=.o)\n" \
+		"# Rules for building\n\n" \
+		".PHONY: all\n" \
+		"all: clean revision lib autoinit \n\n" \
+		".PHONY: lib\n" \
+		"lib:\n" \
 		"$(TARGET): $(OBJS)\n" \
 		"	$(CC) $(LINK) -nostartfiles -o $(TARGET) $(OBJS) $(LIBS)\n" \
 		"\n" \
@@ -239,19 +242,28 @@ STATIC BOOL WriteMakefileFooter (BPTR makefile_p, CONST CONST_STRPTR library_s)
 		"\n" \
 		".PHONY: revision\n" \
 		"revision:\n" \
-		"\tbumprev $(VERSION) $(DIR_AMIGA_LIB_SRC)/$(TARGET)\n";		
-
-	if (IDOS->FPrintf (makefile_p, "%s%s%s", part0_s, library_s, part1_s) >= 0)
-		{
+		"\tbumprev $(VERSION) $(DIR_AMIGA_LIB_SRC)/$(TARGET)\n\n" \
+		".PHONY: autoinit\n" \
+		"autoinit:\n" \
+		"\t$(CC) -O2 -Wall autoinit_%s_base.c -c -o autoinit_%s_base.o\n" \
+		"\t$(CC) -O2 -Wall autoinit_%s_main.c -c -o autoinit_%s_main.o\n" \
+		"\t$(AR) -crv -o lib%s_auto.a autoinit_%s_base.o autoinit_%s_main.o\n" \
+		"\t$(CP) lib%s_auto.a SDK:local/newlib/lib\n\n", 
+		library_s,
+		library_s, library_s, library_s, library_s, 
+		library_s, library_s, library_s,
+		library_s) >= 0)
+		{	
 			success_flag = TRUE;
 		}
+		
 
 	LEAVE ();
 	return success_flag;
 }
 
 
-STATIC BOOL WriteMakefileAmigaSources (BPTR makefile_p, CONST CONST_STRPTR library_s, struct List * const function_defs_p, const BOOL auto_init_flag)
+STATIC BOOL WriteMakefileAmigaSources (BPTR makefile_p, CONST CONST_STRPTR library_s, struct List * const function_defs_p)
 {
 	ENTER ();
 
@@ -260,18 +272,15 @@ STATIC BOOL WriteMakefileAmigaSources (BPTR makefile_p, CONST CONST_STRPTR libra
 	BOOL success_flag = (IDOS->FPrintf (makefile_p, 
 		"\n\n#Add the library initialization code\n"
 		"AMIGA_LIB_SRC = \\\n\t$(DIR_AMIGA_LIB_SRC)/init.c \\\n"
-		"\t$(DIR_AMIGA_LIB_SRC)/lib_init.c \\\n") >= 0);
+		"\t$(DIR_AMIGA_LIB_SRC)/lib_init.c\n") >= 0);
 		
 	if (success_flag)
 		{
-			if (auto_init_flag)
-				{
-					success_flag = (IDOS->FPrintf (makefile_p,
-						"AMIGA_LIB_SRC += \\\n"
-						"\t$(DIR_AMIGA_LIB_SRC)/library_auto_init.c\\\n"
-						"\t$(DIR_AMIGA_LIB_SRC)/interface_auto_init.c\\\n\n") >= 0);
-				}	
-				
+			success_flag = (IDOS->FPrintf (makefile_p,
+				"\nAUTO_INIT_LIB_SRC = \\\n"
+				"\t$(DIR_AMIGA_LIB_SRC)/library_auto_init.c\\\n"
+				"\t$(DIR_AMIGA_LIB_SRC)/interface_auto_init.c\\\n\n") >= 0);
+							
 				
 			if (success_flag)
 				{
