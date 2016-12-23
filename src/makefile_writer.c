@@ -15,7 +15,7 @@
 
 STATIC BOOL WriteMakefileAmigaSources (BPTR makefile_p, CONST CONST_STRPTR library_s, struct List * const src_files_p);
 
-STATIC BOOL WriteMakefileHeader (BPTR makefile_p, CONST CONST_STRPTR input_dir_s, CONST CONST_STRPTR library_s, CONST CONST_STRPTR output_dir_s, struct List *function_defs_p);
+STATIC BOOL WriteMakefileHeader (BPTR makefile_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR output_dir_s, struct List *function_defs_p);
 
 STATIC BOOL WriteMakefileFooter (BPTR makefile_p, CONST CONST_STRPTR library_s);
 
@@ -25,7 +25,7 @@ STATIC BOOL WriteOriginalLibraryIncludePaths (BPTR makefile_p, struct List * con
 
 
 
-BOOL WriteMakefile (CONST CONST_STRPTR  makefile_s, CONST CONST_STRPTR input_dir_s, CONST CONST_STRPTR library_s, struct List * const function_defs_p, struct List *original_source_filenames_p)
+BOOL WriteMakefile (CONST CONST_STRPTR makefile_s, CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR library_s, struct List * const function_defs_p, struct List *original_source_filenames_p)
 {
 	ENTER ();
 	BOOL success_flag = FALSE;
@@ -37,7 +37,7 @@ BOOL WriteMakefile (CONST CONST_STRPTR  makefile_s, CONST CONST_STRPTR input_dir
 
 			if (src_dir_s)
 				{
-					if (WriteMakefileHeader (makefile_p, input_dir_s, library_s, src_dir_s, function_defs_p))
+					if (WriteMakefileHeader (makefile_p, library_s, src_dir_s, function_defs_p))
 						{
 							if (WriteMakefileAmigaSources (makefile_p, library_s, function_defs_p))
 								{
@@ -98,7 +98,7 @@ BOOL WriteMakefile (CONST CONST_STRPTR  makefile_s, CONST CONST_STRPTR input_dir
 }
 
 
-STATIC BOOL WriteMakefileHeader (BPTR makefile_p, CONST CONST_STRPTR input_dir_s, CONST CONST_STRPTR library_s, CONST CONST_STRPTR output_dir_s, struct List *function_defs_p)
+STATIC BOOL WriteMakefileHeader (BPTR makefile_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR output_dir_s, struct List *function_defs_p)
 {
 	ENTER ();
 	BOOL success_flag = FALSE;
@@ -258,7 +258,12 @@ STATIC BOOL WriteMakefileAmigaSources (BPTR makefile_p, CONST CONST_STRPTR libra
 	struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (function_defs_p);
 	CONST_STRPTR current_source_filename_s = "";
 	BOOL success_flag = (IDOS->FPrintf (makefile_p, 
-		"\n\n#Add the library initialization code\nAMIGA_LIB_SRC = \\\n\t$(DIR_AMIGA_LIB_SRC)/init.c \\\n\t$(DIR_AMIGA_LIB_SRC)/lib_init.c\n\n#Add the source files\n") >= 0);
+		"\n\n#Add the library initialization code\n"
+		"AMIGA_LIB_SRC = \\\n\t$(DIR_AMIGA_LIB_SRC)/init.c \\\n"
+		"\t$(DIR_AMIGA_LIB_SRC)/lib_init.c \\\n"
+		"\t$(DIR_AMIGA_LIB_SRC)/library_auto_init.c\\\n"
+		"\t$(DIR_AMIGA_LIB_SRC)/interface_auto_init.c\\\n\n"
+		"#Add the source files\n") >= 0);
 	
 	while (node_p && success_flag)
 		{

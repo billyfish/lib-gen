@@ -104,7 +104,7 @@ static BOOL WriteProtoTop (BPTR out_p, CONST CONST_STRPTR library_s)
 													
 													if (capitalized_library_s)
 														{
-															if (IDOS->FPrintf (out_p, "%sBase;\n #else\n  extern struct Library *%s", capitalized_library_s, capitalized_library_s) >= 0)
+															if (IDOS->FPrintf (out_p, "%sBase;\n #else\n  extern struct %sBase *%s", capitalized_library_s, capitalized_library_s, capitalized_library_s) >= 0)
 																{
 						
 																	if (IDOS->FPrintf (out_p, "Base;\n #endif /* __USE_BASETYPE__ */\n#endif /* __NOLIBBASE__ */\n\n"

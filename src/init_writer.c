@@ -84,7 +84,7 @@ STATIC BOOL WriteInitFile (CONST_STRPTR library_s, CONST_STRPTR out_dir_s, CONST
 		}
 	else
 		{
-			IDOS->Printf ("Failed to create vectors file name for \"%s\"\n", library_s);
+			IDOS->Printf ("Failed to create init file name for \"%s\" and \"%s\"\n", out_dir_s, filename_s);
 		}
 	
 	if (success_flag)

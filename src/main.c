@@ -36,6 +36,7 @@
 #include "debugging_utils.h"
 #include "idl_writer.h"
 #include "inline_header_writer.h"
+#include "auto_init_writer.h"
 #include "init_writer.h"
 #include "proto_header_writer.h"
 #include "interface_h_writer.h"
@@ -722,44 +723,52 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR header_filename_pattern_s, CONST
 								
 											if (WriteInitFiles (library_s, output_dir_s))
 												{
-													if (WriteVectorsFile (output_dir_s, library_s, prefix_s, &function_defs))
+													if (WriteAutoInitFiles (library_s, output_dir_s))
 														{
-															if (WriteHeaderFiles (&function_defs, library_s, output_dir_s))
-																{						
-																	STRPTR init_s = NULL;
-						
-																	if (verbosity >= VB_NORMAL)
-																		{
-																			IDOS->Printf ("Generating vectors succeeded\n");
-																		}	
-																	
-																	init_s = MakeFilename (output_dir_s, "lib_init.c");
-																	
-																	
-																	if (init_s)
-																		{
-																			if (CopyFile ("data/lib_manager.c.template", init_s))
+															if (WriteVectorsFile (output_dir_s, library_s, prefix_s, &function_defs))
+																{
+																	if (WriteHeaderFiles (&function_defs, library_s, output_dir_s))
+																		{						
+																			STRPTR init_s = NULL;
+								
+																			if (verbosity >= VB_NORMAL)
 																				{
+																					IDOS->Printf ("Generating vectors succeeded\n");
+																				}	
+																			
+																			init_s = MakeFilename (output_dir_s, "lib_init.c");
+																			
+																			
+																			if (init_s)
+																				{
+																					if (CopyFile ("data/lib_manager.c.template", init_s))
+																						{
+																							
+																						}
+																					else
+																						{
+																							IDOS->Printf ("Failed to generate lib_init.c");
+																						}
 																					
-																				}
+																					IExec->FreeVec (init_s);	
+																				}		/* if (init_s) */
 																			else
 																				{
-																					IDOS->Printf ("Failed to generate lib_init.c");
-																				}
-																			
-																			IExec->FreeVec (init_s);	
-																		}		/* if (init_s) */
-																	else
-																		{
-																			IDOS->Printf ("Failed to get init.c full filename");
-																		}		
-																		
-																}		/* if (WriteHeaderFiles (&function_defs, library_s, output_dir_s)) */
-															
+																					IDOS->Printf ("Failed to get init.c full filename");
+																				}		
+																				
+																		}		/* if (WriteHeaderFiles (&function_defs, library_s, output_dir_s)) */
+																	
+																}
+															else
+																{
+																	IDOS->Printf ("Generating vectors failed\n");
+																}
+														
 														}
 													else
 														{
-															IDOS->Printf ("Generating vectors failed\n");
+															IDOS->Printf ("Generating auto init files failed\n");
 														}
 																								
 												}		/* if (WriteInitFile (library_s, output_dir_s)) */
@@ -1085,7 +1094,7 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, str
 								{
 									struct FunctionDefinition *fn_def_p = NULL;
 									int8 tokenized_flag = 0;
-									
+									enum Verbosity v = GetVerbosity ();									
 									//IDOS->Printf (">>> matched line:= %s", line_p -> frld_Line);
 
 									/* For easier debugging, overwrite the \n with a \0 */
@@ -1100,9 +1109,7 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, str
 									switch (tokenized_flag)
 										{
 											case 1:
-												{
-													enum Verbosity v = GetVerbosity ();
-													
+												{													
 													if (v >= VB_LOUDER)
 														{
 															IDOS->Printf ("Function definition for \"%s\" :: -> \n", prototype_s);
@@ -1130,7 +1137,7 @@ BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, str
 												break;
 										
 											case -1:
-												if (v >= LB_LOUDER)
+												if (v >= VB_LOUDER)
 													{
 														IDOS->Printf ("Could not parse \"%s\" as a function prototype\n", prototype_s);
 													}	

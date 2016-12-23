@@ -10,7 +10,8 @@ extern "C" {
 #endif
 
 
-BOOL WriteAutoInitSource (CONST CONST_STRPTR library_s, CONST CONST_STRPTR header_s);
+
+BOOL WriteAutoInitFiles (CONST_STRPTR library_s, CONST_STRPTR out_dir_s);
 
 #ifdef __cplusplus
 }

@@ -9,7 +9,7 @@
 #include "utils.h"
 
 
-static BOOL WriteHeader (BPTR out_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR upper_case_library_s);
+static BOOL WriteHeader (BPTR out_p, CONST CONST_STRPTR upper_case_library_s);
 
 static BOOL WriteFooter (BPTR out_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR upper_case_library_s, struct List *function_definitions_list_p);
 
@@ -45,7 +45,7 @@ BOOL WriteInlineHeader (struct List *function_definitions_list_p, CONST CONST_ST
 											if (upper_case_library_s)
 												{
 											
-													if (WriteHeader (out_p, library_s, upper_case_library_s))
+													if (WriteHeader (out_p, upper_case_library_s))
 														{
 															if (WriteFunctionDefinitionListIncludes (out_p, function_definitions_list_p, "#include \"", "\"\n"))
 																{
@@ -83,7 +83,7 @@ BOOL WriteInlineHeader (struct List *function_definitions_list_p, CONST CONST_ST
 }
 
 
-static BOOL WriteHeader (BPTR out_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR upper_case_library_s)
+static BOOL WriteHeader (BPTR out_p, CONST CONST_STRPTR upper_case_library_s)
 {
 	BOOL success_flag = FALSE;
 

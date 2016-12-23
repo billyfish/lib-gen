@@ -737,7 +737,7 @@ STRPTR ScrollPastWhitespace (STRPTR data_s)
 			/* scroll to the start of the next token */		
 			while (loop_flag)
 				{
-					if (*start_s == '\0)
+					if (*start_s == '\0')
 						{
 							start_s = NULL;
 							loop_flag = FALSE;

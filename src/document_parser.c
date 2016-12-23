@@ -299,7 +299,7 @@ char *ParseDocument (struct DocumentParser *parser_p)
 {
 	ENTER ();
 
-	STRPTR *prototype_s = NULL;
+	STRPTR prototype_s = NULL;
 
 	if (StripComments (parser_p))
 		{
@@ -307,28 +307,28 @@ char *ParseDocument (struct DocumentParser *parser_p)
 						
 			if (data_s)
 				{
-					switch (parse_p -> dp_state)
+					switch (parser_p -> dp_state)
 						{
 							case PS_NORMAL:
 							
 								break;
 
-							case PS_STRUCT,
+							case PS_STRUCT:
 								break;
 
-							case PS_TYPEDEF_STRUCT,
+							case PS_TYPEDEF_STRUCT:
 								break;
 
-							case PS_ENUM,
+							case PS_ENUM:
 								break;
 
-							case PS_TYPEDEF_ENUM,
+							case PS_TYPEDEF_ENUM:
 								break;
 
-							case PS_C_COMMENT,
+							case PS_C_COMMENT:
 								break;
 
-							case PS_CPP_COMMENT						
+							case PS_CPP_COMMENT:						
 								break;						
 						}
 				
@@ -342,17 +342,8 @@ char *ParseDocument (struct DocumentParser *parser_p)
 
 							if (data_s)
 								{
-							
-
-									if (start_s)
-										{
-											if (strncmp ("struct", start_s, 6) == 0)
-												{
-										
-												}
-											 
-										}
-
+									
+									prototype_s = data_s;
 
 								}
 							else
