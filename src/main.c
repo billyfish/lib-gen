@@ -531,6 +531,8 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR header_filename_pattern_s, CONST
 	STRPTR header_filename_regexp_s = NULL;
 	STRPTR source_filename_regexp_s = NULL;
 	
+	BOOL auto_init_flag = FALSE;
+	
 	/* List of FunctionDefinitionsNodes */
 	struct List function_defs;
 
@@ -629,7 +631,7 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR header_filename_pattern_s, CONST
 		
 													if (makefile_s)
 														{
-															if (WriteMakefile (makefile_s, root_path_s, library_s, &function_defs, source_files_p))
+															if (WriteMakefile (makefile_s, root_path_s, library_s, &function_defs, source_files_p, auto_init_flag))
 																{
 																	DB (KPRINTF ("%s %ld - wrote makefile to %s", __FILE__, __LINE__, makefile_s));
 																}
@@ -722,8 +724,8 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR header_filename_pattern_s, CONST
 												}	
 								
 											if (WriteInitFiles (library_s, output_dir_s))
-												{
-													if (WriteAutoInitFiles (library_s, output_dir_s))
+												{													
+													if ((!auto_init_flag) || (WriteAutoInitFiles (library_s, output_dir_s)))
 														{
 															if (WriteVectorsFile (output_dir_s, library_s, prefix_s, &function_defs))
 																{
