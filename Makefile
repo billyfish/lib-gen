@@ -4,7 +4,7 @@
 #
 # Project: libgen
 #
-# Created on: 23-12-2016 16:08:26
+# Created on: 26-12-2016 21:43:34
 #
 #
 
@@ -23,7 +23,7 @@ BIN = libgen
 
 INCPATH = -I.
 
-CFLAGS = $(INCPATH) -Wall -Wextra -Wwrite-strings -D_AMIGA_  -D_DEBUG -gstabs
+CFLAGS = $(INCPATH) -Wall -Wextra -Wwrite-strings -D_AMIGA_  -gstabs
 
 LDFLAGS = 
 

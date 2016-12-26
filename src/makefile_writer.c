@@ -245,8 +245,8 @@ STATIC BOOL WriteMakefileFooter (BPTR makefile_p, CONST CONST_STRPTR library_s)
 		"\tbumprev $(VERSION) $(DIR_AMIGA_LIB_SRC)/$(TARGET)\n\n" \
 		".PHONY: autoinit\n" \
 		"autoinit:\n" \
-		"\t$(CC) -O2 -Wall autoinit_%s_base.c -c -o autoinit_%s_base.o\n" \
-		"\t$(CC) -O2 -Wall autoinit_%s_main.c -c -o autoinit_%s_main.o\n" \
+		"\t$(CC) $(CFLAGS) autoinit_%s_base.c -c -o autoinit_%s_base.o\n" \
+		"\t$(CC) $(CFLAGS) autoinit_%s_main.c -c -o autoinit_%s_main.o\n" \
 		"\t$(AR) -crv -o lib%s_auto.a autoinit_%s_base.o autoinit_%s_main.o\n" \
 		"\t$(CP) lib%s_auto.a SDK:local/newlib/lib\n\n", 
 		library_s,

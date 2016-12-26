@@ -45,7 +45,7 @@ it is unaltered and the authorship remains intact.
 	<tr><td>R=Recurse/S</td><td>A switch to recurse through the source directory and its children.</td></tr>
 	<tr><td>L=LibraryName/A</td><td>The name of the library to generate.</td></tr>
 	<tr><td>HP=HeaderFilePattern/K</td><td>The regular expression specifying the header files to read. This defaults to #?.h.</td></tr>
-	<tr><td>SP=SourceFilePattern/K</td><td>The regular expression specifying the header files to read. This defaults to #?.c.</td></tr>
+	<tr><td>SP=SourceFilePattern/K</td><td>The regular expression specifying the source files to read. This defaults to #?.c.</td></tr>
 	<tr><td>PP=PrototypePattern/K</td><td>The regular expression specifying the signature of functions to put in the library. This 
 	regular expression omits the trailing semi-colon. This should include the {} brackets for the capturing group. This defaults to {#?}. </td></tr>
 	<tr><td>VER=Version/N</td><td>The version of the generated library's interface.</td></tr>
@@ -77,6 +77,11 @@ with the options specifying the following:
 	and <code>.git</code> directories within the <code>libnsbmp</code> input directory when searching for appropriate header
   files.</li>
 </ul>
+
+<p>
+As a test of the nsbmp library, an example program based upon the <code>decode_bmp</code> program which comes as part of the libnsbmp project, 
+is in the <code>nsbmp_example</code> direectory.
+</p>
 
 </section>
 
@@ -184,9 +189,10 @@ v1.0
 	<li>Added option to ignore paths within the input directory</li>
 	<li>Made references to headers from the input directories no longer absolute
 	 and added the appropriate search paths to the generated makefiles instead</li>
+	<li>Added the generation of the autoinit code.</li>
 	<li>Fixed extern interface declaration in proto header</li>
 	<li>Fixed inline4 header generation</li>
-	<li>Fixed error message when failing  copy lib manager template referring to init.c rather than lib_init.c</li>
+	<li>Fixed error message when failing to copy lib manager template referring to init.c rather than lib_init.c</li>
 	<li>ReadArgs parser out of sync for verbose parameter due to output format parameter being removed</li>
 	<li>Fixed generated function signatures with a single parameter missing the comma after the interface parameter</li>
 </ul>
@@ -197,6 +203,12 @@ v0.9 (20/12/16)
 </ul>
 
 
+</section>
+
+<section>
+<h1>Thanks to Hypex, Chris, Salass00 and others for help and explanations.</h1>
+
+Thanks to 
 </section>
 
 <section>

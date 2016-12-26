@@ -198,7 +198,7 @@ struct Parameter *GetNextParameter (const char **start_pp, BOOL function_flag)
 				}
 			else
 				{
-					IDOS->Printf ("Failed to extract parameter from \"%s\"\n", start_p);
+					DB (KPRINTF ("%s %ld - Failed to extract parameter from \"%s\"\n", __FILE__, __LINE__, start_p));
 				}
 
 			#ifdef FUNCTION_DEFINITIONS_DEBUG
