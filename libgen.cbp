@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<CodeBench_Project name="libgen" path="DH6:Projects/libgen/libgen.cbp" created="1119285779" lastmodified="1230327802">
+<CodeBench_Project name="libgen" path="DH6:Projects/libgen/libgen.cbp" created="1119285779" lastmodified="1230388876">
 	<plugin name="PROGDIR:Plugins/AmigaOS4SDK.CCPlugin" flags="16" />
 	<label identifier="&#047;&#047;&#047;&#047;" />
 	<target name="libgen" run="libgen" />
@@ -55,6 +55,7 @@
 		<file name="src/interface_h_writer.c" open="0" />
 	</sources>
 	<others>
+		<file name="libgen.readme" open="0" />
 		<file name="issues" open="1" top="0" left="0" line="6" row="0" />
 		<file name="data/lib_manager.c.template" open="0" />
 	</others>

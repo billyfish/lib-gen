@@ -1,0 +1,19 @@
+Short:        A tool to automate building libraries
+Uploader:     tyrrell.simon@gmail.com (Billy)
+Author:       tyrrell.simon@gmail.com (Billy)
+Type:         dev/misc
+Version:      1.0
+Architecture: ppc-amigaos >= 4.0.0
+Distribution: Aminet
+
+Libgen is a tool to take the source of a non-AmigaOS library and generate an 
+AmigaOS library from it. It's primarily aimed at developers/porters. The reason
+for developing it is I wanted to be able to run the cross-platform tools that I 
+develop for my day job on my Amiga. With Windows and Linux it's pretty easy 
+to develop shared libraries and I wanted the same on the Amiga side.
+
+AmigaOS 4.x comes with a tool to do this called idltool and a lot of the code 
+that libgen produces is based upon how idltool does it. The difference between 
+the two is that with idltool you write an XML file that generates the skeleton 
+code that you then populate. With Libgen, you take the already existing code 
+and generate the library from that.
