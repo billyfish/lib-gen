@@ -585,6 +585,12 @@ static BOOL WriteLibraryFunctionDefinitionVariant (BPTR out_p, CONST CONST_STRPT
 
 	ENTER ();
 
+	/*
+	** @TODO
+	**
+	** Fix for declarations such as json_array (void);
+	*/
+
 	if (IDOS->FPrintf (out_p, "%s %s %s", type_prefix_s ? type_prefix_s : "", fd_p -> fd_definition_p -> pa_type_s, type_suffix_s ? type_suffix_s : "") >= 0)
 		{
 			if (WriteFunctionDefinitionFunctionName (out_p, function_prefix_s, fd_p))
@@ -619,19 +625,30 @@ static BOOL WriteLibraryFunctionDefinitionVariant (BPTR out_p, CONST CONST_STRPT
 
 														}		/* while ((curr_node_p != final_node_p) && success_flag) */
 
+													if (success_flag)
+														{
+															if (strcmp (final_node_p -> pn_param_p -> pa_type_s, "void") != 0)
+																{
+																	success_flag = WriteParameterAsSource (out_p, final_node_p -> pn_param_p);
+																}
+														}		/* if (success_flag) */
 												}		/* if (curr_node_p != final_node_p) */
 											else
 												{
-													success_flag = (IDOS->FPrintf (out_p, ", ", library_s) >= 0);
-												}
-
-											if (success_flag)
-												{
 													if (strcmp (final_node_p -> pn_param_p -> pa_type_s, "void") != 0)
 														{
-															success_flag = WriteParameterAsSource (out_p, final_node_p -> pn_param_p);
+															if (IDOS->FPrintf (out_p, ", ", library_s) >= 0)
+																{
+																	success_flag = WriteParameterAsSource (out_p, final_node_p -> pn_param_p);
+																}	
 														}
-												}		/* if (success_flag) */
+													else
+														{
+															success_flag = TRUE;	
+														}	
+													
+												}
+
 
 										}		/* if (IDOS->FPrintf (out_p, "struct %s *Self", library_s) >= 0) */
 

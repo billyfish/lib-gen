@@ -1,11 +1,6 @@
 TODO:
 
-FIX deal with function callbacks
-FIX deal with typedef function callbacks
-FIX deal with typedef structs
-FIX deal with typedef enums
-FIX deal with structs
-FIX deal with enums
+Fix for declarations such as json_array (void); and json_object(); in WriteLibraryFunctionDefinitionVariant
 
 
 

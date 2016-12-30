@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<CodeBench_Project name="libgen" path="DH6:Projects/libgen/libgen.cbp" created="1119285779" lastmodified="1230658895">
+<CodeBench_Project name="libgen" path="DH6:Projects/libgen/libgen.cbp" created="1119285779" lastmodified="1230663514">
 	<plugin name="PROGDIR:Plugins/AmigaOS4SDK.CCPlugin" flags="16"/>
 	<label identifier="////"/>
 	<target name="libgen" run="libgen"/>
@@ -64,5 +64,5 @@
 	<projectnotes open="0"/>
 	<buildwindow open="1"/>
 	<logfile name="RAM Disk:Build.log"/>
-	<repository plugin="PROGDIR:plugins/svntool.syncplugin" lastcommit="1230388908" lastupdate="1229981896"/>
+	<repository plugin="PROGDIR:plugins/svntool.syncplugin" lastcommit="1230659031" lastupdate="1229981896"/>
 </CodeBench_Project>

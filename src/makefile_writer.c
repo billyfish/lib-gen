@@ -120,9 +120,9 @@ STATIC BOOL WriteMakefileHeader (BPTR makefile_p, CONST CONST_STRPTR library_s, 
 		"LD     = $(CROSS_COMPILE)ld \n" \
 		"RANLIB = $(CROSS_COMPILE)ranlib \n" \
 		"AR     = $(CROSS_COMPILE)ar \n" \
-		"RM     = delete\n" \
+		"#RM     = delete\n" \
 		"CP     = copy\n" \
-		"# RM     = rm\n" \
+		"RM     = rm -f\n" \
 		"\n" \
 		"# Change these as required\n";
 		
@@ -165,7 +165,7 @@ STATIC BOOL WriteMakefileHeader (BPTR makefile_p, CONST CONST_STRPTR library_s, 
 */
 STATIC BOOL WriteOriginalLibraryIncludePaths (BPTR makefile_p, struct List * const function_defs_p)
 {
-	BOOL success_flag = (IDOS->FPrintf (makefile_p, "\n# Adding teh include paths for the original library\n") > 0);	
+	BOOL success_flag = (IDOS->FPrintf (makefile_p, "\n# Adding the include paths for the original library\n") > 0);	
 
 	ENTER ();	
 
@@ -232,8 +232,8 @@ STATIC BOOL WriteMakefileFooter (BPTR makefile_p, CONST CONST_STRPTR library_s)
 		".PHONY: all\n" \
 		"all: clean revision lib autoinit \n\n" \
 		".PHONY: lib\n" \
-		"lib:\n" \
-		"$(TARGET): $(OBJS)\n" \
+		"lib: $(DIR_AMIGA_LIB_SRC)/$(TARGET)\n\n" \
+		"$(DIR_AMIGA_LIB_SRC)/$(TARGET): $(OBJS)\n" \
 		"	$(CC) $(LINK) -nostartfiles -o $(TARGET) $(OBJS) $(LIBS)\n" \
 		"\n" \
 		".PHONY: clean\n" \
@@ -245,9 +245,9 @@ STATIC BOOL WriteMakefileFooter (BPTR makefile_p, CONST CONST_STRPTR library_s)
 		"\tbumprev $(VERSION) $(DIR_AMIGA_LIB_SRC)/$(TARGET)\n\n" \
 		".PHONY: autoinit\n" \
 		"autoinit:\n" \
-		"\t$(CC) $(CFLAGS) autoinit_%s_base.c -c -o autoinit_%s_base.o\n" \
-		"\t$(CC) $(CFLAGS) autoinit_%s_main.c -c -o autoinit_%s_main.o\n" \
-		"\t$(AR) -crv -o lib%s_auto.a autoinit_%s_base.o autoinit_%s_main.o\n" \
+		"\t$(CC) $(CFLAGS) $(DIR_AMIGA_LIB_SRC)/%s_interface_auto_init.c -c -o $(DIR_AMIGA_LIB_SRC)/%s_interface_auto_init.o\n" \
+		"\t$(CC) $(CFLAGS) $(DIR_AMIGA_LIB_SRC)/%s_library_auto_init.c -c -o $(DIR_AMIGA_LIB_SRC)/%s_library_auto_init.o\n" \
+		"\t$(AR) -crv -o lib%s_auto.a $(DIR_AMIGA_LIB_SRC)/%s_library_auto_init.o $(DIR_AMIGA_LIB_SRC)/%s_interface_auto_init.o\n" \
 		"\t$(CP) lib%s_auto.a SDK:local/newlib/lib\n\n", 
 		library_s,
 		library_s, library_s, library_s, library_s, 

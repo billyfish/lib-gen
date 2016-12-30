@@ -8,7 +8,7 @@
 
 /*******/
 
-STATIC BOOL WriteAutoInitFile (CONST_STRPTR library_s, CONST_STRPTR capitalized_library_s, CONST_STRPTR out_dir_s, CONST_STRPTR filename_s, BOOL (*callback_fn) (BPTR out_f, CONST CONST_STRPTR library_s, CONST CONST_STRPTR capitalized_library_s));
+STATIC BOOL WriteAutoInitFile (CONST_STRPTR library_s, CONST_STRPTR capitalized_library_s, CONST_STRPTR out_dir_s, CONST_STRPTR suffix_s, BOOL (*callback_fn) (BPTR out_f, CONST CONST_STRPTR library_s, CONST CONST_STRPTR capitalized_library_s));
 
 
 STATIC BOOL WriteAutoInitLibraryCode (BPTR out_f, CONST CONST_STRPTR library_s, CONST CONST_STRPTR capitalized_library_s);
@@ -31,9 +31,9 @@ BOOL WriteAutoInitFiles (CONST_STRPTR library_s, CONST_STRPTR out_dir_s)
 
 	if (capitalized_library_s)
 		{
-			if (WriteAutoInitFile (library_s, capitalized_library_s, out_dir_s, "library_auto_init.c", WriteAutoInitLibraryCode))
+			if (WriteAutoInitFile (library_s, capitalized_library_s, out_dir_s, "_library_auto_init.c", WriteAutoInitLibraryCode))
 				{
-					if (WriteAutoInitFile (library_s, capitalized_library_s, out_dir_s, "interface_auto_init.c", WriteAutoInitInterfaceCode))
+					if (WriteAutoInitFile (library_s, capitalized_library_s, out_dir_s, "_interface_auto_init.c", WriteAutoInitInterfaceCode))
 						{
 							success_flag = TRUE;	
 						}				
@@ -50,46 +50,46 @@ BOOL WriteAutoInitFiles (CONST_STRPTR library_s, CONST_STRPTR out_dir_s)
 /*******/
 
 
-STATIC BOOL WriteAutoInitFile (CONST_STRPTR library_s, CONST_STRPTR capitalized_library_s, CONST_STRPTR out_dir_s, CONST_STRPTR filename_s, BOOL (*callback_fn) (BPTR out_f, CONST CONST_STRPTR library_s, CONST CONST_STRPTR capitalized_library_s))
+STATIC BOOL WriteAutoInitFile (CONST_STRPTR library_s, CONST_STRPTR capitalized_library_s, CONST_STRPTR out_dir_s, CONST_STRPTR suffix_s, BOOL (*callback_fn) (BPTR out_f, CONST CONST_STRPTR library_s, CONST CONST_STRPTR capitalized_library_s))
 {
 	BOOL success_flag = FALSE;
-	STRPTR file_s = NULL;
+	STRPTR filename_s = NULL;
 	
 	ENTER ();
 	
-	file_s = MakeFilename (out_dir_s, filename_s);
-
-	if (file_s)
+	filename_s = ConcatenateStrings (library_s, suffix_s);
+	
+	if (filename_s)
 		{
-			BPTR out_p = IDOS->FOpen (file_s, MODE_NEWFILE, 0);
-
-			if (out_p)
+			STRPTR file_s = MakeFilename (out_dir_s, filename_s);
+			
+			if (file_s)
 				{
-					if (callback_fn (out_p, library_s, capitalized_library_s))
+					BPTR out_p = IDOS->FOpen (file_s, MODE_NEWFILE, 0);
+		
+					if (out_p)
 						{
-							success_flag = TRUE;
-						}		/* if (IDOS->FPrintf (out_p, code_s) >= 0) */
-
-
-					IDOS->FClose (out_p);
+							if (callback_fn (out_p, library_s, capitalized_library_s))
+								{
+									success_flag = TRUE;
+								}		/* if (IDOS->FPrintf (out_p, code_s) >= 0) */
+		
+		
+							IDOS->FClose (out_p);
+						}
+					else
+						{
+							IDOS->Printf ("Failed to open \"%s\"\n", file_s);
+						}
+		
+					IExec->FreeVec (file_s);
 				}
 			else
 				{
-					IDOS->Printf ("Failed to open \"%s\"\n", file_s);
+					IDOS->Printf ("Failed to create auto init file name for \"%s\" and \"%s\"\n", out_dir_s, filename_s);
 				}
-
-			IExec->FreeVec (file_s);
+			IExec->FreeVec (filename_s);	
 		}
-	else
-		{
-			IDOS->Printf ("Failed to create auto init file name for \"%s\" and \"%s\"\n", out_dir_s, filename_s);
-		}
-	
-	if (success_flag)
-		{
-			
-		}
-	
 	
 	LEAVE ();
 	
