@@ -585,6 +585,22 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR header_filename_pattern_s, CONST
 
 	if (verbosity >= VB_LOUD)
 		{
+			char buffer [4096] = "\0";
+			BPTR lock_p = IDOS->GetProgramDir ();
+			int32 success = IDOS->GetCliProgramName (buffer, 4096);
+			IDOS->Printf ("success %ld\n prog name \"%s\"\nIOErr %s", success, buffer, IDOS->PrintFault (success, NULL));
+			
+			success = IDOS->GetCliCurrentDirName (buffer, 4096);
+			IDOS->Printf ("success %ld\n dir name \"%s\"\nIOErr %s", success, buffer, IDOS->PrintFault (success, NULL));
+
+
+			if (lock_p)
+				{
+					success = IDOS->NameFromLock (lock_p, buffer, 4096);
+					IDOS->Printf ("success %ld\n lock \"%s\"\nIOErr %s", success, buffer, IDOS->PrintFault (success, NULL));
+					
+				}
+			
 			IDOS->Printf ("source pattern \"%s\" regexp \"%s\"\n", source_filename_pattern_s, source_filename_regexp_s);
 			IDOS->Printf ("header pattern \"%s\" regexp \"%s\"\n", header_filename_pattern_s, header_filename_regexp_s);
 		}
@@ -741,11 +757,33 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR header_filename_pattern_s, CONST
 																			
 																			if (init_s)
 																				{
-																					if (CopyFile ("data/lib_manager.c.template", init_s))
+																					/* Get the path to the libgen directory */
+																					BOOL success_flag = FALSE;
+																					BPTR lock_p = IDOS->GetProgramDir ();
+																		
+																					if (lock_p)
 																						{
+																							char buffer_s [4096] = "\0";
 																							
+																							int32 success = IDOS->NameFromLock (lock_p, buffer_s, 4095);
+																							
+																							if (success)
+																								{
+																									STRPTR full_filename_s = MakeFilename (buffer_s, "data/lib_manager.c.template");
+																									
+																									if (full_filename_s)
+																										{
+																											if (CopyFile (full_filename_s, init_s))
+																												{
+																													success_flag = TRUE;	
+																												}
+																										
+																											IExec->FreeVec (full_filename_s);
+																										}
+																								}
 																						}
-																					else
+																			
+																					if (!success_flag)
 																						{
 																							IDOS->Printf ("Failed to generate lib_init.c");
 																						}
