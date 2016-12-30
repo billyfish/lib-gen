@@ -899,6 +899,54 @@ BOOL WriteHeaderFiles (struct List *function_defs_p, CONST CONST_STRPTR library_
 }
 
 
+static BOOL ReadWindowsExportsFile (CONST_STRPTR filename_s, struct List *function_defs_p)
+{
+	BOOL success_flag = FALSE;
+	
+	ENTER ();
+	
+	BPTR handle_p = IDOS->FOpen (filename_s, MODE_OLDFILE, 0);
+
+	if (handle_p)
+		{
+			struct FReadLineData *line_data_p = IDOS->AllocDosObjectTags (DOS_FREADLINEDATA, TAG_DONE);
+			
+			if (line_data_p)
+				{
+					int32 count = IDOS->FReadLine (handle_p, line_data_p);
+					
+					if (count > 0)
+						{
+							if (strstr (line_data_p -> frld_Line, "EXPORTS"))
+								{
+									while ((count = IDOS->FReadLine (handle_p, line_data_p)) > 0)
+										{
+											
+						
+										}		/* while ((count = IDOS->FReadLine (handle_p, line_data_p)) > 0) */					
+								}
+								
+						}		/* if (count > 0) */	
+					
+					IDOS->FreeDosObject (DOS_FREADLINEDATA, line_data_p);
+				}		/* if (line_data_p) */
+
+			DB (KPRINTF ("%s %ld - GetPreviousLibraryOrder: pattern \"%s\"\n", __FILE__, __LINE__, reg_ex_s));
+
+			IDOS->FClose (handle_p);
+		}		/* if (handle_p) */
+	else
+		{
+			IDOS->Printf ("No handle for %s\n", filename_s);
+		}	
+	
+	
+	LEAVE ();
+	
+	return success_flag;
+}
+
+
 BOOL GetPreviousLibraryOrder (CONST_STRPTR filename_s, CONST_STRPTR struct_name_s, struct List *ordering_p, struct DocumentParser *parser_p)
 {
 	ENTER ();
@@ -924,7 +972,7 @@ BOOL GetPreviousLibraryOrder (CONST_STRPTR filename_s, CONST_STRPTR struct_name_
 						{
 
 
-						}		/* while ((count = GetNextPrototype (parser_p, &full_prototype_s)) > 0) */
+						}		/* while ((count = IDOS->FReadLine (parser_p -> dp_file_handle_p, parser_p -> dp_line_p)) > 0) */
 
 					IExec->FreeVec (reg_ex_s);
 				}		/* if (reg_ex_s) */

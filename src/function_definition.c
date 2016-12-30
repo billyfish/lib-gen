@@ -376,7 +376,7 @@ struct FunctionDefinition *AllocateFunctionDefinition (CONST CONST_STRPTR filena
 					fd_p -> fd_args_p = params_p;
 					fd_p -> fd_header_filename_s = filename_s;
 					fd_p -> fd_line_number = line_number;
-
+					fd_p -> fd_export_flag = TRUE;
 
 					return fd_p;
 				}
@@ -600,9 +600,10 @@ static BOOL WriteLibraryFunctionDefinitionVariant (BPTR out_p, CONST CONST_STRPT
 							struct ParameterNode *curr_node_p = (struct ParameterNode *) IExec->GetHead (fd_p -> fd_args_p);
 							struct ParameterNode *final_node_p = (struct ParameterNode *) IExec->GetTail (fd_p -> fd_args_p);
 
-							if (curr_node_p)
+
+							if (IDOS->FPrintf (out_p, "%s *Self", self_type_s) >= 0)
 								{
-									if (IDOS->FPrintf (out_p, "%s *Self", self_type_s) >= 0)
+									if (curr_node_p)
 										{
 											if (curr_node_p != final_node_p)
 												{
@@ -629,6 +630,7 @@ static BOOL WriteLibraryFunctionDefinitionVariant (BPTR out_p, CONST CONST_STRPT
 														{
 															if (strcmp (final_node_p -> pn_param_p -> pa_type_s, "void") != 0)
 																{
+																	//IDOS->FPrintf (out_p, "/* 1 */ ");
 																	success_flag = WriteParameterAsSource (out_p, final_node_p -> pn_param_p);
 																}
 														}		/* if (success_flag) */
@@ -639,6 +641,7 @@ static BOOL WriteLibraryFunctionDefinitionVariant (BPTR out_p, CONST CONST_STRPT
 														{
 															if (IDOS->FPrintf (out_p, ", ", library_s) >= 0)
 																{
+																	//IDOS->FPrintf (out_p, "/* 2 */ ");
 																	success_flag = WriteParameterAsSource (out_p, final_node_p -> pn_param_p);
 																}	
 														}
@@ -650,13 +653,13 @@ static BOOL WriteLibraryFunctionDefinitionVariant (BPTR out_p, CONST CONST_STRPT
 												}
 
 
-										}		/* if (IDOS->FPrintf (out_p, "struct %s *Self", library_s) >= 0) */
+										}		/* if (curr_node_p) */
+									else
+										{
+											success_flag = TRUE;
+										}
+								}		/* if (IDOS->FPrintf (out_p, "struct %s *Self", library_s) >= 0) */
 
-								}		/* if (curr_node_p) */
-							else
-								{
-									success_flag = TRUE;
-								}
 
 						}		/* if (IDOS->FPrintf (out_p, " (") >= 0) */
 					else
@@ -892,8 +895,11 @@ BOOL WriteSourceForAllFunctionDefinitions (struct List *fn_defs_p, CONST_STRPTR 
 
 			if (success_flag)
 				{
-					success_flag  = WriteSourceForFunctionDefinition (fn_def_p, output_f, library_s, prefix_s);
-
+					if (fn_def_p -> fd_export_flag)
+						{
+							success_flag  = WriteSourceForFunctionDefinition (fn_def_p, output_f, library_s, prefix_s);
+						}
+						
 					if (success_flag)
 						{
 							node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p);
@@ -1179,17 +1185,19 @@ BOOL WriteAllInterfaceFunctionDefinitions (struct List *fn_defs_p, BPTR out_p, C
 		{
 			struct FunctionDefinition *fn_def_p = node_p -> fdn_function_def_p;
 			
-			success_flag  = WriteInterfaceHeaderDefinition (out_p, interface_s, fn_def_p);
-
+			if (fn_def_p -> fd_export_flag)
+				{
+					success_flag  = WriteInterfaceHeaderDefinition (out_p, interface_s, fn_def_p);
+				}
+				
 			if (success_flag)
 				{
 					node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p);
 				}
 			else
 				{
-					IDOS->Printf ("Error writing source for %s", fn_def_p -> fd_header_filename_s);
+					IDOS->Printf ("Error writing source for %s", fn_def_p -> fd_header_filename_s);								
 				}
-			
 		}
 		
 		

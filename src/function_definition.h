@@ -33,6 +33,7 @@ struct FunctionDefinition
 {
 	CONST_STRPTR fd_header_filename_s;
 	uint32 fd_line_number;
+	BOOL fd_export_flag;
 	struct Parameter *fd_definition_p;
 	struct List *fd_args_p;
 };

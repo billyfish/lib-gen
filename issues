@@ -1,6 +1,6 @@
 TODO:
 
-Fix for declarations such as json_array (void); and json_object(); in WriteLibraryFunctionDefinitionVariant
+FIX for static JSON_INLINE declarartions in jansson.h e.g. json_incref and json_decref
 
 
 

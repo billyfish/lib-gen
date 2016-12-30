@@ -29,8 +29,6 @@
 
 static BOOL WriteFunctionDeclarations (BPTR vector_file_p, CONST CONST_STRPTR library_s, struct List *function_defs_p);
 
-static BOOL WriteFunctionDeclaration (BPTR vector_file_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR interface_s, CONST CONST_STRPTR prefix_s, const struct FunctionDefinition * const function_def_p);
-
 static BOOL WriteVectorsArray (BPTR vector_file_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR prefix_s, struct List *function_defs_p);
 
 static BOOL WriteVectors (BPTR vector_file_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR prefix_s, struct List *function_defs_p);
@@ -181,31 +179,6 @@ static BOOL WriteFunctionDeclarations (BPTR vector_file_p, CONST CONST_STRPTR li
 }
 
 
-static BOOL WriteFunctionDeclaration (BPTR vector_file_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR interface_s, CONST CONST_STRPTR prefix_s, const struct FunctionDefinition * const function_def_p)
-{
-	ENTER ();
-
-	if (WriteInterfaceFunctionDefinition (vector_file_p, library_s, interface_s, prefix_s, function_def_p))
-		{
-			if (IDOS->FPrintf (vector_file_p, ";\n") >= 0)
-				{
-					return TRUE;
-				}
-			else
-				{
-					DB (KPRINTF ("%s %ld - Failed to add semi-colon after %s\n", __FILE__, __LINE__, function_def_p -> fd_definition_p -> pa_name_s ));
-				}
-		}
-	else
-		{
-			DB (KPRINTF ("%s %ld - WriteLibraryFunctionDefinition failed for %s\n", __FILE__, __LINE__, function_def_p -> fd_definition_p -> pa_name_s ));
-		}
-
-	LEAVE ();
-	return FALSE;
-}
-
-
 static BOOL WriteVectorsArray (BPTR vector_file_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR prefix_s, struct List *function_defs_p)
 {
 	ENTER ();
@@ -219,14 +192,15 @@ static BOOL WriteVectorsArray (BPTR vector_file_p, CONST CONST_STRPTR library_s,
 			while (node_p && success_flag)
 				{
 					struct FunctionDefinition *function_def_p = node_p -> fdn_function_def_p;
-
-					if (WriteFunctionNameIntoArray (vector_file_p, library_s, prefix_s, function_def_p))
+					
+					if (function_def_p -> fd_export_flag)
+						{
+							success_flag = WriteFunctionNameIntoArray (vector_file_p, library_s, prefix_s, function_def_p);
+						}
+						
+					if (success_flag)
 						{
 							node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p);
-						}
-					else
-						{
-							success_flag = FALSE;
 						}
 
 				}		/* while (node_p && success_flag) */
