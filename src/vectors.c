@@ -193,7 +193,7 @@ static BOOL WriteVectorsArray (BPTR vector_file_p, CONST CONST_STRPTR library_s,
 				{
 					struct FunctionDefinition *function_def_p = node_p -> fdn_function_def_p;
 					
-					if (function_def_p -> fd_export_flag)
+					if (function_def_p -> fd_export_index >= 0)
 						{
 							success_flag = WriteFunctionNameIntoArray (vector_file_p, library_s, prefix_s, function_def_p);
 						}

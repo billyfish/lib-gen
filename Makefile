@@ -4,7 +4,7 @@
 #
 # Project: libgen
 #
-# Created on: 30-12-2016 20:53:58
+# Created on: 31-12-2016 00:56:30
 #
 #
 
@@ -23,7 +23,7 @@ BIN = libgen
 
 INCPATH = -I.
 
-CFLAGS = $(INCPATH) -Wall -Wextra -Wwrite-strings -D_AMIGA_  -gstabs
+CFLAGS = $(INCPATH) -Wall -Wextra -Wwrite-strings -D_AMIGA_  -D_DEBUG -gstabs
 
 LDFLAGS = 
 
@@ -91,7 +91,7 @@ utils.o: src/utils.c src/debugging_utils.h src/utils.h src/parameter.h src/funct
 
 parameter.o: src/parameter.c src/debugging_utils.h src/parameter.h src/utils.h
 
-function_definition.o: src/function_definition.c src/function_definition.h src/parameter.h src/debugging_utils.h src/utils.h
+function_definition.o: src/function_definition.c src/function_definition.h src/parameter.h src/debugging_utils.h src/utils.h src/list_utils.h
 
 writer.o: src/writer.c src/writer.h src/function_definition.h src/parameter.h src/debugging_utils.h
 

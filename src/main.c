@@ -62,7 +62,7 @@ BOOL GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR 
 STRPTR CreateRegEx (CONST_STRPTR pattern_s, BOOL capture_flag);
 void ClearCapturedExpression (struct CapturedExpression *capture_p);
 
-int Run (CONST_STRPTR root_path_s, CONST_STRPTR header_filename_pattern_s, CONST_STRPTR source_filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, CONST_STRPTR prefix_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag, const BOOL gen_source_flag, struct List *paths_to_ignore_p);
+int Run (CONST_STRPTR root_path_s, CONST_STRPTR header_filename_pattern_s, CONST_STRPTR source_filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, CONST_STRPTR prefix_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag, const BOOL gen_source_flag, CONST_STRPTR defs_filename_s, struct List *paths_to_ignore_p);
 
 STRPTR MakePrototypePattern (CONST_STRPTR pattern_s);
 
@@ -73,6 +73,9 @@ static void ClearList (struct List *list_p, BOOL free_list_flag);
 static struct List *ParsePaths (CONST_STRPTR root_path_s, CONST_STRPTR paths_s);
 
 BOOL WriteHeaderFiles (struct List *function_defs_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR output_dir_s);
+
+
+static BOOL ReadWindowsExportsFile (CONST_STRPTR filename_s, struct List *function_defs_p);
 
 
 
@@ -96,6 +99,7 @@ enum Args
 //	AR_OUTPUT_FORMAT,
 	AR_VERBOSE,
 	AR_NEWLIB,
+	AR_DEFS_FILENAME,
 	AR_PATHS_TO_IGNORE,
 	AR_NUM_ARGS
 };
@@ -115,6 +119,7 @@ int main (int argc, char *argv [])
 			STRPTR prefix_s = NULL;
 			CONST_STRPTR header_filename_pattern_s = S_DEFAULT_HEADER_FILENAME_PATTERN_S;
 			CONST_STRPTR source_filename_pattern_s = S_DEFAULT_SOURCE_FILENAME_PATTERN_S;
+			CONST_STRPTR defs_filename_s = NULL;
 			STRPTR prototype_pattern_s = S_DEFAULT_PROTOTYPE_PATTERN_S;
 			int32 version = 1;
 			enum InterfaceFlag flag = IF_PUBLIC;
@@ -125,7 +130,7 @@ int main (int argc, char *argv [])
 			
 			memset (args, 0, AR_NUM_ARGS * sizeof (int32));
 
-			args_p = IDOS->ReadArgs ("I=Input/A,R=Recurse/S,L=LibraryName/A,HP=HeaderFilePattern/K,SP=SourceFilePattern/K,PP=PrototypePattern/K,VER=Version/N,FL=Flags/K,GC=GenerateCode/S,V=Verbose/N,NL=Newlib/S,IGN=Ignore/F", args, NULL);
+			args_p = IDOS->ReadArgs ("I=Input/A,R=Recurse/S,L=LibraryName/A,HP=HeaderFilePattern/K,SP=SourceFilePattern/K,PP=PrototypePattern/K,VER=Version/N,FL=Flags/K,GC=GenerateCode/S,V=Verbose/N,NL=Newlib/S,D=DefsFilename/A,IGN=Ignore/F", args, NULL);
 
 			if (args_p != NULL)
 				{
@@ -151,6 +156,12 @@ int main (int argc, char *argv [])
 					if ((args [AR_PROTOTYPE_PATTERN]) && (strlen ((CONST_STRPTR) args [AR_PROTOTYPE_PATTERN]) > 0))
 						{
 							prototype_pattern_s = MakePrototypePattern ((CONST_STRPTR) args [AR_PROTOTYPE_PATTERN]);
+						}
+
+
+					if (args [AR_DEFS_FILENAME])
+						{
+							defs_filename_s = (CONST_STRPTR) args [AR_DEFS_FILENAME];
 						}
 
 					if (args [AR_FLAGS])
@@ -243,7 +254,7 @@ int main (int argc, char *argv [])
 											paths_to_ignore_p = ParsePaths (input_dir_s, paths_to_ignore_s);
 										}
 									
-									result = Run (input_dir_s, header_filename_pattern_s, source_filename_pattern_s, prototype_pattern_s, library_s, prefix_s, recurse_flag, version, flag, generate_code_flag, paths_to_ignore_p);
+									result = Run (input_dir_s, header_filename_pattern_s, source_filename_pattern_s, prototype_pattern_s, library_s, prefix_s, recurse_flag, version, flag, generate_code_flag, defs_filename_s, paths_to_ignore_p);
 								
 									if (paths_to_ignore_p)
 										{
@@ -524,7 +535,7 @@ STRPTR CreateRegEx (CONST_STRPTR pattern_s, BOOL capture_flag)
 }
 
 
-int Run (CONST_STRPTR root_path_s, CONST_STRPTR header_filename_pattern_s, CONST_STRPTR source_filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, CONST_STRPTR prefix_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag, const BOOL gen_source_flag, struct List *paths_to_ignore_p)
+int Run (CONST_STRPTR root_path_s, CONST_STRPTR header_filename_pattern_s, CONST_STRPTR source_filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, CONST_STRPTR prefix_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag, const BOOL gen_source_flag, CONST_STRPTR defs_filename_s, struct List *paths_to_ignore_p)
 {
 	int res = 0;
 	STRPTR prototype_regexp_s = NULL;
@@ -633,6 +644,16 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR header_filename_pattern_s, CONST
 												{
 													IDOS->Printf ("Found %lu functions\n", GetListSize (&function_defs));
 												}
+												
+											
+											if (defs_filename_s)
+												{
+													if (ReadWindowsExportsFile (defs_filename_s, &function_defs))
+														{
+															SortFunctionDefinitions (&function_defs, NULL);
+														}
+												}	
+												
 												
 											if (WriteFunctionDefinitionsList (writer_p, &function_defs, library_s, prefix_s, version, flag, out_p))
 												{
@@ -919,19 +940,73 @@ static BOOL ReadWindowsExportsFile (CONST_STRPTR filename_s, struct List *functi
 						{
 							if (strstr (line_data_p -> frld_Line, "EXPORTS"))
 								{
+									int32 index = 0;
+									
 									while ((count = IDOS->FReadLine (handle_p, line_data_p)) > 0)
 										{
+											STRPTR start_s = ScrollPastWhitespace (line_data_p -> frld_Line);
 											
-						
-										}		/* while ((count = IDOS->FReadLine (handle_p, line_data_p)) > 0) */					
+											if ((start_s != NULL) && (*start_s != '\0'))
+												{
+													BOOL loop_flag = TRUE;
+													STRPTR end_s = start_s;
+													STRPTR function_s = NULL;
+													
+													while (loop_flag)
+														{
+															++ end_s;	
+															
+															if (*end_s == '\0') 
+																{
+																	loop_flag = FALSE;	
+																	-- end_s;
+																}
+															else if (isspace (*end_s))
+																{
+																	loop_flag = FALSE;	
+																	-- end_s;
+																}
+														}
+														
+													function_s = CopyToNewString (start_s, end_s, FALSE);
+													
+													if (function_s)
+														{
+															struct FunctionDefinition *fn_def_p = GetNamedFunctionDefinition (function_defs_p, function_s);
+															
+															if (fn_def_p)
+																{
+																	fn_def_p -> fd_export_index = index;
+																	DB (KPRINTF ("%s %ld - Setting function \"%s\" to index %ld\n", __FILE__, __LINE__, function_s, index));
+																}
+															else
+																{
+																	IDOS->Printf ("Failed to find exported function \"%s\" in parsed declarations\n", function_s);	
+																}					
+																										
+															++ index;
+															
+															IExec->FreeVec (function_s);	
+														}
+													else
+														{
+															IDOS->Printf ("Failed to allocate memory for function name from \"%s\"\n", start_s);	
+														}
+													
+												}
+											
+										}		/* while ((count = IDOS->FReadLine (handle_p, line_data_p)) > 0) */			
+										
+									if (index > 0)
+										{
+											SortFunctionDefinitions (function_defs_p, NULL);
+										}
 								}
 								
 						}		/* if (count > 0) */	
 					
 					IDOS->FreeDosObject (DOS_FREADLINEDATA, line_data_p);
 				}		/* if (line_data_p) */
-
-			DB (KPRINTF ("%s %ld - GetPreviousLibraryOrder: pattern \"%s\"\n", __FILE__, __LINE__, reg_ex_s));
 
 			IDOS->FClose (handle_p);
 		}		/* if (handle_p) */

@@ -24,6 +24,7 @@
 #include "function_definition.h"
 #include "debugging_utils.h"
 #include "utils.h"
+#include "list_utils.h"
 
 
 #ifdef _DEBUG
@@ -37,6 +38,8 @@ static BOOL WriteIncludes (BPTR out_p, CONST_STRPTR header_name_s,  CONST_STRPTR
 static BPTR GetSourceFileHandle (const struct FunctionDefinition *fn_def_p, CONST_STRPTR library_s, CONST_STRPTR output_dir_s, char file_suffix, STRPTR *output_filename_ss);
 
 static BOOL WriteLibraryFunctionDefinitionVariant (BPTR out_p, CONST CONST_STRPTR library_s, const struct FunctionDefinition * const fd_p, CONST CONST_STRPTR type_prefix_s, CONST CONST_STRPTR type_suffix_s, CONST CONST_STRPTR function_prefix_s, CONST CONST_STRPTR function_suffix_s, CONST CONST_STRPTR self_type_s);
+
+static int CompareFunctionDefinitionExportIndices (const void *node0_p, const void *node1_p);
 
 
 
@@ -376,7 +379,7 @@ struct FunctionDefinition *AllocateFunctionDefinition (CONST CONST_STRPTR filena
 					fd_p -> fd_args_p = params_p;
 					fd_p -> fd_header_filename_s = filename_s;
 					fd_p -> fd_line_number = line_number;
-					fd_p -> fd_export_flag = TRUE;
+					fd_p -> fd_export_index = 0;
 
 					return fd_p;
 				}
@@ -895,7 +898,7 @@ BOOL WriteSourceForAllFunctionDefinitions (struct List *fn_defs_p, CONST_STRPTR 
 
 			if (success_flag)
 				{
-					if (fn_def_p -> fd_export_flag)
+					if (fn_def_p -> fd_export_index >= 0)
 						{
 							success_flag  = WriteSourceForFunctionDefinition (fn_def_p, output_f, library_s, prefix_s);
 						}
@@ -1174,6 +1177,51 @@ BOOL WriteSourceForAllFunctionDeclarations (struct List *fn_defs_p, CONST_STRPTR
 
 
 
+struct FunctionDefinition *GetNamedFunctionDefinition (struct List *fn_defs_p, CONST CONST_STRPTR function_name_s)
+{
+	ENTER ();
+
+	struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (fn_defs_p);
+
+	while (node_p)
+		{
+			struct FunctionDefinition *fn_def_p = node_p -> fdn_function_def_p;
+			
+			if (strcmp (fn_def_p -> fd_definition_p -> pa_name_s, function_name_s) == 0)
+				{ 
+					return fn_def_p;	
+				}
+			else
+				{
+					node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p);
+				}
+		}
+		
+		
+	LEAVE ();
+	return NULL;
+}
+
+
+
+void ClearAllFunctionDefintionExportFlags (struct List *fn_defs_p)
+{
+	ENTER ();
+
+	struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (fn_defs_p);
+
+	while (node_p)
+		{
+			struct FunctionDefinition *fn_def_p = node_p -> fdn_function_def_p;
+			
+			fn_def_p -> fd_export_index = -1;
+		}
+		
+		
+	LEAVE ();
+}
+
+
 BOOL WriteAllInterfaceFunctionDefinitions (struct List *fn_defs_p, BPTR out_p, CONST CONST_STRPTR interface_s)
 {
 	ENTER ();
@@ -1185,7 +1233,7 @@ BOOL WriteAllInterfaceFunctionDefinitions (struct List *fn_defs_p, BPTR out_p, C
 		{
 			struct FunctionDefinition *fn_def_p = node_p -> fdn_function_def_p;
 			
-			if (fn_def_p -> fd_export_flag)
+			if (fn_def_p -> fd_export_index >= 0)
 				{
 					success_flag  = WriteInterfaceHeaderDefinition (out_p, interface_s, fn_def_p);
 				}
@@ -1204,6 +1252,66 @@ BOOL WriteAllInterfaceFunctionDefinitions (struct List *fn_defs_p, BPTR out_p, C
 	LEAVE ();
 	return success_flag;
 }
+
+
+void SortFunctionDefinitions (struct List *fn_defs_p, int (*compare_fn) (const void *node0_p, const void *node1_p))
+{
+	ENTER ();
+
+	if (!compare_fn)
+		{
+			compare_fn = CompareFunctionDefinitionExportIndices;
+		}
+
+		
+ 	SortList (fn_defs_p, CompareFunctionDefinitionExportIndices);
+
+	
+	LEAVE ();
+}
+
+
+static int CompareFunctionDefinitionExportIndices (const void *node0_p, const void *node1_p)
+{
+	int res = 0;
+	
+	ENTER ();
+	
+	const struct FunctionDefinition *fd0_p = ((const struct FunctionDefinitionNode *) node0_p) -> fdn_function_def_p;
+	const struct FunctionDefinition *fd1_p = ((const struct FunctionDefinitionNode *) node1_p) -> fdn_function_def_p;
+	
+	IDOS->Printf ("\nCompareFunctionDefinitionExportIndices\n");
+	PrintFunctionDefinition (IDOS->Output (), fd0_p);
+	PrintFunctionDefinition (IDOS->Output (), fd1_p);
+		
+	if (fd0_p -> fd_export_index >= 0)
+		{
+			if (fd1_p -> fd_export_index >= 0)
+				{
+					res = ((fd0_p -> fd_export_index) - (fd1_p -> fd_export_index));
+				}
+			else
+				{
+					res = -1;
+				}			
+		}
+	else
+		{
+			if (fd1_p -> fd_export_index >= 0)
+				{
+					res = 1;
+				}
+			else
+				{
+
+				}			
+		}
+		
+	LEAVE ();
+	
+	return res;
+}
+
 
 
 static BPTR GetSourceFileHandle (const struct FunctionDefinition *fn_def_p, CONST_STRPTR library_s, CONST_STRPTR output_dir_s, char file_suffix, STRPTR *output_filename_ss)

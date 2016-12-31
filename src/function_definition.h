@@ -33,7 +33,7 @@ struct FunctionDefinition
 {
 	CONST_STRPTR fd_header_filename_s;
 	uint32 fd_line_number;
-	BOOL fd_export_flag;
+	int32 fd_export_index;
 	struct Parameter *fd_definition_p;
 	struct List *fd_args_p;
 };
@@ -120,6 +120,14 @@ BOOL WriteInterfaceHeaderDefinition (BPTR out_p, CONST CONST_STRPTR library_s, c
 
 
 BOOL WriteFunctionDefinitionListIncludes (BPTR out_p, struct List *function_definitions_list_p, CONST CONST_STRPTR prefix_s, CONST CONST_STRPTR suffix_s);
+
+
+struct FunctionDefinition *GetNamedFunctionDefinition (struct List *fn_defs_p, CONST CONST_STRPTR function_name_s);
+
+void ClearAllFunctionDefintionExportFlags (struct List *fn_defs_p);
+
+
+void SortFunctionDefinitions (struct List *fn_defs_p, int (*compare_fn) (const void *node0_p, const void *node1_p));
 
 
 #ifdef __cplusplus
