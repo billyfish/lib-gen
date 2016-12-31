@@ -130,7 +130,7 @@ int main (int argc, char *argv [])
 			
 			memset (args, 0, AR_NUM_ARGS * sizeof (int32));
 
-			args_p = IDOS->ReadArgs ("I=Input/A,R=Recurse/S,L=LibraryName/A,HP=HeaderFilePattern/K,SP=SourceFilePattern/K,PP=PrototypePattern/K,VER=Version/N,FL=Flags/K,GC=GenerateCode/S,V=Verbose/N,NL=Newlib/S,D=DefsFilename/A,IGN=Ignore/F", args, NULL);
+			args_p = IDOS->ReadArgs ("I=Input/A,R=Recurse/S,L=LibraryName/A,HP=HeaderFilePattern/K,SP=SourceFilePattern/K,PP=PrototypePattern/K,VER=Version/N,FL=Flags/K,GC=GenerateCode/S,V=Verbose/N,NL=Newlib/S,D=DefsFilename/K,IGN=Ignore/F", args, NULL);
 
 			if (args_p != NULL)
 				{
@@ -216,6 +216,7 @@ int main (int argc, char *argv [])
 							IDOS->Printf ("Input Dir = \"%s\"\n", input_dir_s);
 							IDOS->Printf ("Library Name  = \"%s\"\n", library_s);
 							IDOS->Printf ("Header Filename Pattern = \"%s\"\n", header_filename_pattern_s);
+							IDOS->Printf ("Ordering file = \"%s\"\n", defs_filename_s ? defs_filename_s : "");
 							IDOS->Printf ("Source Filename Pattern = \"%s\"\n", source_filename_pattern_s);
 							IDOS->Printf ("Recurse = \"%s\"\n", recurse_flag ? "TRUE" : "FALSE");
 							IDOS->Printf ("Generate Code = \"%s\"\n", generate_code_flag ? "TRUE" : "FALSE");
@@ -541,7 +542,8 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR header_filename_pattern_s, CONST
 	STRPTR prototype_regexp_s = NULL;
 	STRPTR header_filename_regexp_s = NULL;
 	STRPTR source_filename_regexp_s = NULL;
-	
+	BOOL success_flag = FALSE;
+
 	/* List of FunctionDefinitionsNodes */
 	struct List function_defs;
 
@@ -638,6 +640,8 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR header_filename_pattern_s, CONST
 		
 									if (out_p)
 										{
+											success_flag = TRUE;
+											
 											DB (KPRINTF ("%s %ld - opened output_s %s", __FILE__, __LINE__, output_s));
 		
 											if (verbosity >= VB_NORMAL)
@@ -646,52 +650,67 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR header_filename_pattern_s, CONST
 												}
 												
 											
+											/*
+											 * Get any previous ordering file 
+											 */ 
 											if (defs_filename_s)
-												{
+												{	
+													ClearAllFunctionDefintionExportFlags (&function_defs);
+													
 													if (ReadWindowsExportsFile (defs_filename_s, &function_defs))
 														{
-															SortFunctionDefinitions (&function_defs, NULL);
-														}
-												}	
-												
-												
-											if (WriteFunctionDefinitionsList (writer_p, &function_defs, library_s, prefix_s, version, flag, out_p))
-												{
-													STRPTR makefile_s = ConcatenateStrings (library_s, ".makefile");
-		
-													if (verbosity >= VB_NORMAL)
-														{
-															IDOS->Printf ("Successfully wrote header definitions to %s\n", output_s);
-														}		
-		
-													if (makefile_s)
-														{
-															if (WriteMakefile (makefile_s, root_path_s, library_s, &function_defs, source_files_p))
+															if (verbosity >= VB_LOUDER)
 																{
-																	DB (KPRINTF ("%s %ld - wrote makefile to %s", __FILE__, __LINE__, makefile_s));
+																	PrintAllFunctionDefinitions (&function_defs, IDOS->Output ());
 																}
-															else
-																{
-		
-																}
-		
-															IExec->FreeVec (makefile_s);
 														}
 													else
 														{
-															IDOS->Printf ("Failed to create makefile at %s", makefile_s);
-														}
-		
-													/*
-														Write the makefile, vectors, init, autoinit_base, obtain and release files
-													*/
-		
-												}
-											else
+															IDOS->Printf ("Failed to read exported function names from  %s\n", defs_filename_s);
+														}					
+												}		/* if (defs_filename_s) */	
+												
+											if (success_flag)
 												{
-													DB (KPRINTF ("%s %ld - failed to open output_s %s", __FILE__, __LINE__, output_s));
-													IDOS->Printf ("Failed to write header definitions to %s\n", output_s);
-												}
+													if (WriteFunctionDefinitionsList (writer_p, &function_defs, library_s, prefix_s, version, flag, out_p))
+														{
+															STRPTR makefile_s = ConcatenateStrings (library_s, ".makefile");
+				
+															if (verbosity >= VB_NORMAL)
+																{
+																	IDOS->Printf ("Successfully wrote header definitions to %s\n", output_s);
+																}		
+				
+															if (makefile_s)
+																{
+																	if (WriteMakefile (makefile_s, root_path_s, library_s, &function_defs, source_files_p))
+																		{
+																			DB (KPRINTF ("%s %ld - wrote makefile to %s", __FILE__, __LINE__, makefile_s));
+																		}
+																	else
+																		{
+				
+																		}
+				
+																	IExec->FreeVec (makefile_s);
+																}
+															else
+																{
+																	IDOS->Printf ("Failed to create makefile at %s", makefile_s);
+																}
+				
+															/*
+																Write the makefile, vectors, init, autoinit_base, obtain and release files
+															*/
+				
+														}
+													else
+														{
+															DB (KPRINTF ("%s %ld - failed to open output_s %s", __FILE__, __LINE__, output_s));
+															IDOS->Printf ("Failed to write header definitions to %s\n", output_s);
+														}													
+												}	
+
 		
 											IDOS->FClose (out_p);
 										}
@@ -736,7 +755,7 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR header_filename_pattern_s, CONST
 			IExec->FreeVec (source_filename_regexp_s);
 		}
 
-	if (gen_source_flag)
+	if (success_flag && gen_source_flag)
 		{
 			STRPTR output_dir_s = ConcatenateStrings (library_s, SOURCE_DIR_SUFFIX_S);
 
@@ -941,6 +960,7 @@ static BOOL ReadWindowsExportsFile (CONST_STRPTR filename_s, struct List *functi
 							if (strstr (line_data_p -> frld_Line, "EXPORTS"))
 								{
 									int32 index = 0;
+									success_flag = TRUE;
 									
 									while ((count = IDOS->FReadLine (handle_p, line_data_p)) > 0)
 										{
@@ -1000,6 +1020,7 @@ static BOOL ReadWindowsExportsFile (CONST_STRPTR filename_s, struct List *functi
 									if (index > 0)
 										{
 											SortFunctionDefinitions (function_defs_p, NULL);
+
 										}
 								}
 								

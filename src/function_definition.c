@@ -467,11 +467,17 @@ BOOL PrintFunctionDefinition (BPTR out_p, const struct FunctionDefinition * cons
 		{
 			if (PrintParameter (out_p, fn_p -> fd_definition_p))
 				{
-					if (IDOS->FPrintf (out_p, "\nPARAMS:\n") >= 0)
+					if (IDOS->FPrintf (out_p, " export: %ld", fn_p -> fd_export_index) >= 0)
 						{
-							success_flag = PrintParameterList (out_p, fn_p -> fd_args_p);
-							
-							IDOS->FPrintf (out_p, "\n");
+					
+							if (IDOS->FPrintf (out_p, "\nPARAMS:\n") >= 0)
+								{
+									success_flag = PrintParameterList (out_p, fn_p -> fd_args_p);
+									
+									IDOS->FPrintf (out_p, "\n");
+									
+									
+								}
 						}
 				}
 		}
@@ -1215,6 +1221,8 @@ void ClearAllFunctionDefintionExportFlags (struct List *fn_defs_p)
 			struct FunctionDefinition *fn_def_p = node_p -> fdn_function_def_p;
 			
 			fn_def_p -> fd_export_index = -1;
+			
+			node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p);
 		}
 		
 		
@@ -1254,6 +1262,35 @@ BOOL WriteAllInterfaceFunctionDefinitions (struct List *fn_defs_p, BPTR out_p, C
 }
 
 
+BOOL PrintAllFunctionDefinitions (struct List *fn_defs_p, BPTR out_p)
+{
+	ENTER ();
+
+	BOOL success_flag = TRUE;
+	struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (fn_defs_p);
+
+	while (node_p && success_flag)
+		{
+			struct FunctionDefinition *fn_def_p = node_p -> fdn_function_def_p;
+			
+			success_flag  = PrintFunctionDefinition (out_p, fn_def_p);
+				
+			if (success_flag)
+				{
+					node_p = (struct FunctionDefinitionNode *) IExec->GetSucc ((struct Node *) node_p);
+				}
+			else
+				{
+					IDOS->Printf ("Error printing source for %s", fn_def_p -> fd_definition_p -> pa_name_s);								
+				}
+		}
+		
+		
+	LEAVE ();
+	return success_flag;
+}
+
+
 void SortFunctionDefinitions (struct List *fn_defs_p, int (*compare_fn) (const void *node0_p, const void *node1_p))
 {
 	ENTER ();
@@ -1277,13 +1314,15 @@ static int CompareFunctionDefinitionExportIndices (const void *node0_p, const vo
 	
 	ENTER ();
 	
-	const struct FunctionDefinition *fd0_p = ((const struct FunctionDefinitionNode *) node0_p) -> fdn_function_def_p;
-	const struct FunctionDefinition *fd1_p = ((const struct FunctionDefinitionNode *) node1_p) -> fdn_function_def_p;
+	const struct FunctionDefinition *fd0_p = (* ((const struct FunctionDefinitionNode **) node0_p)) -> fdn_function_def_p;
+	const struct FunctionDefinition *fd1_p = (* ((const struct FunctionDefinitionNode **) node1_p)) -> fdn_function_def_p;
 	
+	/*
 	IDOS->Printf ("\nCompareFunctionDefinitionExportIndices\n");
 	PrintFunctionDefinition (IDOS->Output (), fd0_p);
 	PrintFunctionDefinition (IDOS->Output (), fd1_p);
-		
+	*/
+	
 	if (fd0_p -> fd_export_index >= 0)
 		{
 			if (fd1_p -> fd_export_index >= 0)

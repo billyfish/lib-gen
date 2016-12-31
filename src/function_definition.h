@@ -82,6 +82,9 @@ int8 TokenizeFunctionPrototype (struct FunctionDefinition **fn_def_pp, const cha
 BOOL PrintFunctionDefinition (BPTR out_p, const struct FunctionDefinition * const fn_p);
 
 
+BOOL PrintAllFunctionDefinitions (struct List *fn_defs_p, BPTR out_p);
+
+
 BOOL WriteLibraryFunctionImplementation (BPTR out_p, const struct FunctionDefinition * const fd_p, CONST_STRPTR interface_struct_s, CONST_STRPTR prefix_s);
 
 
