@@ -127,10 +127,10 @@ int main (int argc, char *argv [])
 			BOOL generate_code_flag = FALSE;
 			int32 args [AR_NUM_ARGS];
 			struct RDArgs *args_p = NULL;
-			
+			STRPTR args_s = "I=Input/A,R=Recurse/S,L=LibraryName/A,HP=HeaderFilePattern/K,SP=SourceFilePattern/K,PP=PrototypePattern/K,VER=Version/N,FL=Flags/K,GC=GenerateCode/S,V=Verbose/N,NL=Newlib/S,D=DefsFilename/K,IGN=Ignore/F";
 			memset (args, 0, AR_NUM_ARGS * sizeof (int32));
 
-			args_p = IDOS->ReadArgs ("I=Input/A,R=Recurse/S,L=LibraryName/A,HP=HeaderFilePattern/K,SP=SourceFilePattern/K,PP=PrototypePattern/K,VER=Version/N,FL=Flags/K,GC=GenerateCode/S,V=Verbose/N,NL=Newlib/S,D=DefsFilename/K,IGN=Ignore/F", args, NULL);
+			args_p = IDOS->ReadArgs ("args_s, args, NULL);
 
 			if (args_p != NULL)
 				{
@@ -277,7 +277,7 @@ int main (int argc, char *argv [])
 				}
 			else
 				{
-					IDOS->PrintFault (IDOS->IoErr (), "Unable to parse command-line args");
+					IDOS->PrintF ("Required arguments missing, the arguments have the following pattern:\n%s\n", args_s);					
 				}
 
 			DB (KPRINTF ("%s %ld - closing lins\n", __FILE__, __LINE__));
