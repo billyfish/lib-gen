@@ -320,7 +320,7 @@ char *ParseDocument (struct DocumentParser *parser_p)
 				{
 					parser_p -> dp_typedef_flag = true;
 				}
-
+			"^(\w+( )?){2,}\([^!@#$+%^]+?\)"
 
 		}
 
