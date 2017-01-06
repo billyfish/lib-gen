@@ -22,6 +22,13 @@
 #include "byte_buffer.h"
 
 
+/*
+ Replace this with ctags like
+ 
+ ctags -f jansson.ctags --fields=n --c-kinds=pf  /home/billy/Applications/grassroots-0/grassroots/extras/jansson/include/jansson.h 
+*/
+
+
 enum ParserState
 {
 	PS_NORMAL,
