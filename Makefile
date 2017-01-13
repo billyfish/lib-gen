@@ -4,7 +4,7 @@
 #
 # Project: libgen
 #
-# Created on: 31-12-2016 17:33:03
+# Created on: 12-01-2017 21:28:42
 #
 #
 
@@ -23,11 +23,11 @@ BIN = libgen
 
 INCPATH = -I.
 
-CFLAGS = $(INCPATH) -Wall -Wextra -Wwrite-strings -D_AMIGA_  -D_DEBUG -gstabs
+CFLAGS = $(INCPATH) -Wall -Wextra -Wwrite-strings -D_AMIGA_  -D_DEBUG  -D_DEBUG_STACK -IWorkspace:ctags58 -gstabs
 
-LDFLAGS = 
+LDFLAGS =
 
-LIBS = 
+LIBS = workspace:ctags58/ctags.a
 #	add any extra linker libraries you want here
 
 .PHONY: all all-before all-after clean clean-custom realclean
@@ -46,7 +46,7 @@ clean: clean-custom
 realclean:
 	rm -v $(OBJ) $(BIN)
 
-$(BIN): $(OBJ) $(LIBS)
+$(BIN): $(OBJ)
 #	You may need to move the LDFLAGS variable in this rule depending on its contents
 	@echo "Linking $(BIN)"
 	@$(LD) -o $(BIN).debug $(OBJ) $(LDFLAGS) $(LIBS)

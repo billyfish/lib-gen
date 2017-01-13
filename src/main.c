@@ -46,6 +46,9 @@
 #include "vectors.h"
 
 
+/* from ctags */
+#include "main.h"
+
 static CONST CONST_STRPTR S_DEFAULT_HEADER_FILENAME_PATTERN_S = "#?.h";
 static CONST CONST_STRPTR S_DEFAULT_SOURCE_FILENAME_PATTERN_S = "#?.c";
 static CONST CONST_STRPTR S_DEFAULT_PROTOTYPE_PATTERN_S = "{#?}";
@@ -1151,6 +1154,11 @@ BOOL GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR 
 										}
 								}
 
+							if (verbosity >= VB_LOUD)
+								{
+									IDOS->Printf ("Finished parsing files");
+								}
+
 							FreeDocumentParser (document_parser_p);
 						}
 					else
@@ -1188,6 +1196,150 @@ struct List *GetFilesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_regex
 	LEAVE ();
 	return filenames_p;
 }
+
+
+BOOL ReadCTagsFile (CONST_STRPTR ctags_file_s, CONST_STRPTR pattern_s, CONST_STRPTR filename_s, struct List *function_defs_p)
+{
+	BOOL success_flag = FALSE;
+	BPTR handle_p = ZERO;
+
+	ENTER ();
+
+
+	DB (KPRINTF ("%s %ld - ReadCTagsFile: About to open \"%s\"\n", __FILE__, __LINE__, ctags_file_s));
+
+	handle_p = IDOS->FOpen (ctags_file_s, MODE_OLDFILE, 0);
+
+	if (handle_p)
+		{
+			struct FReadLineData *line_p = IDOS->AllocDosObjectTags (DOS_FREADLINEDATA, TAG_DONE);
+			
+			if (line_p)
+				{
+					while (IDOS->FReadLine (handle_p, line_p) > 0)
+						{
+							
+							DB (KPRINTF ("%s %ld - ReadCTagsFile: got linen \"%s\"\n", __FILE__, __LINE__, line_p -> frld_Line));
+							/* ctags comments begin with a ! so make sure we haven't got one of those */
+							if (* (line_p -> frld_Line) != '!')
+								{
+									/*
+										json_array	/jansson-2.9/src/jansson.h	/^json_t *json_array(void);$/;"	p	line:85
+										json_array_append	/jansson-2.9/src/jansson.h	/^int json_array_append(json_t *array, json_t *value)$/;"	f	line:214
+										json_array_append_new	/jansson-2.9/src/jansson.h	/^int json_array_append_new(json_t *array, json_t *value);$/;"	p	line:201
+								 	*/
+								 CONST_STRPTR start_marker_s = "/^";
+								 CONST_STRPTR end_marker_s = "$/";
+
+								 STRPTR start_s = strstr (line_p -> frld_Line, start_marker_s);
+								 
+								 if (start_s)
+								 	{
+								 		CONST_STRPTR line_marker_s = "line:";
+								 		STRPTR line_s;
+								 		
+								 		start_s += strlen (start_marker_s);	
+
+										line_s = strstr (start_s, line_marker_s);
+										
+										if (line_s)
+											{
+												int32 line_number = 0;
+												
+												line_s += strlen (line_marker_s);
+												
+												IDOS->Printf ("start_s %s", start_s);
+												IDOS->Printf ("line_s \"%s\"\n", line_s);
+												if (sscanf (line_s, "%ld", &line_number) == 1)
+													{
+														if (GetAndAddFunctionDefinitionFromString (start_s, filename_s, line_number, function_defs_p))
+															{
+																success_flag = TRUE;
+															}
+														else
+															{
+																IDOS->Printf ("Failed to add definition for \"%s\"\n", start_s);
+															}
+													}
+												
+											}
+											
+										
+								 		
+									}
+								 
+								 
+								}
+						}
+						
+					IDOS->FreeDosObject (DOS_FREADLINEDATA, line_p);
+				}
+											
+			IDOS->FClose (handle_p);
+		}
+		
+		
+	LEAVE ();
+		
+	return success_flag;
+}
+
+
+BOOL GetMatchingPrototypesWithCTags (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, struct DocumentParser *parser_p, struct List *function_defs_p)
+{
+	BOOL success_flag = FALSE;
+	struct ByteBuffer *buffer_p = NULL;
+	
+	ENTER ();	
+		
+	buffer_p = AllocateByteBuffer (256);
+	
+	if (buffer_p)
+		{
+			CONST_STRPTR local_filename_s = IDOS->FilePart (filename_s);			
+			STRPTR tags_filename_s = MakeFilename ("T:", local_filename_s);
+			
+			if (tags_filename_s)
+				{
+					if (AppendStringsToByteBuffer (buffer_p, "workspace:ctags58/ctags ", "-f ", tags_filename_s, " --fields=+n --c-kinds=+pf-dmstne ", filename_s, NULL))
+						{
+							int res;
+							
+							DB (KPRINTF ("%s %ld - GetMatchingPrototypesWithCTags: About to open \"%s\"\n", __FILE__, __LINE__, filename_s));							
+							res = IDOS->System (buffer_p -> bb_data_p, NULL); //RunCTagsFromStringArgs (buffer_p -> bb_data_p);
+							
+							
+							
+							DB (KPRINTF ("%s %ld - GetMatchingPrototypesWithCTags: RunCTagsFromStringArgs returned \"%d\"\n", __FILE__, __LINE__, res));	
+							
+							if (res == 0)
+								{
+									success_flag = ReadCTagsFile (tags_filename_s, pattern_s, filename_s, function_defs_p);
+								}
+							else
+								{
+									IDOS->Printf ("%s %ld - GetMatchingPrototypesWithCTags: RunCTagsFromStringArgs failed \"%s\"\n", __FILE__, __LINE__, buffer_p -> bb_data_p);	
+								}
+								
+							//IDOS->Delete (tags_filename_s);
+						}			
+						
+					IExec->FreeVec (tags_filename_s);		
+				}
+			else
+				{
+					DB (KPRINTF ("%s %ld - GetMatchingPrototypesWithCTags: RunCTagsFromStringArgs failed to create tag filename for \"%s\"\n", __FILE__, __LINE__, local_filename_s));	
+				}
+		
+			FreeByteBuffer (buffer_p);	
+		}
+	
+	
+	
+	LEAVE ();
+	return success_flag;
+}
+
 
 
 BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, struct DocumentParser *parser_p, struct List *function_defs_p)
@@ -1388,7 +1540,7 @@ void ClearCapturedExpression (struct CapturedExpression *capture_p)
 BOOL ParseFile (CONST_STRPTR function_regexp_s, CONST_STRPTR filename_s, struct List *function_defs_p, struct DocumentParser *document_parser_p)
 {
 	ENTER ();
-	BOOL success_flag = GetMatchingPrototypes (filename_s, function_regexp_s, document_parser_p, function_defs_p);
+	BOOL success_flag = GetMatchingPrototypesWithCTags (filename_s, function_regexp_s, document_parser_p, function_defs_p);
 
 	if (success_flag)
 		{

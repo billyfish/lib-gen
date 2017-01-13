@@ -220,6 +220,76 @@ struct Parameter *GetNextParameter (const char **start_pp, BOOL function_flag)
 }
 
 
+BOOL GetAndAddFunctionDefinitionFromString (STRPTR prototype_s, CONST_STRPTR filename_s, int32 line_number, struct List *function_defs_p)
+{
+	BOOL success_flag = FALSE;
+	struct FunctionDefinition *fn_def_p = NULL;
+	int8 tokenized_flag = 0;
+	enum Verbosity v = GetVerbosity ();									
+	//IDOS->Printf (">>> matched line:= %s", line_p -> frld_Line);
+
+	ENTER ();
+
+	/* For easier debugging, overwrite the \n with a \0 */
+	size_t l = strlen (prototype_s);
+	if (* (prototype_s + l - 1) == '\n')
+		{
+			* (prototype_s + l - 1) = '\0';
+		}
+
+	if (v >= VB_LOUDER)
+		{
+			IDOS->Printf ("About to parse \"%s\"\n", prototype_s);
+		}
+
+	tokenized_flag = TokenizeFunctionPrototype (&fn_def_p, prototype_s, filename_s, line_number);
+
+	switch (tokenized_flag)
+		{
+			case 1:
+				{													
+					if (v >= VB_LOUDER)
+						{
+							IDOS->Printf ("Function definition for \"%s\" :: -> \n", prototype_s);
+							BPTR out_p = IDOS->Output ();
+							PrintFunctionDefinition (out_p, fn_def_p);
+						}
+					
+					/* Add the prototype */
+
+					if (AddFunctionDefinitionToList (fn_def_p, function_defs_p))
+						{
+							success_flag = TRUE;
+							DB (KPRINTF ("%s %ld - GetMatchingPrototypes: Added function definition for \"%s\"\n", __FILE__, __LINE__, prototype_s));
+						}
+					else
+						{
+							IDOS->Printf ("Failed to add function definition for \"%s\"\n", prototype_s);
+							success_flag = FALSE;
+						}
+				}
+				break;
+				
+			
+			case 0:
+				/* function callback ignore */
+				break;
+		
+			case -1:
+				if (v >= VB_LOUDER)
+					{
+						IDOS->Printf ("Could not parse \"%s\" as a function prototype\n", prototype_s);
+					}	
+				success_flag = FALSE;
+				break;
+		}	
+
+	LEAVE ();
+
+	return success_flag;	
+}
+
+
 
 /*
 	<type> <function> (<type> <name>, ....);

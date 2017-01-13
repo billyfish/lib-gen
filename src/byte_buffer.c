@@ -104,6 +104,71 @@ BOOL ResizeByteBuffer (ByteBuffer *buffer_p, size_t new_size)
 }
 
 
+
+BOOL AppendStringsToByteBuffer (struct ByteBuffer *buffer_p, const char *value_s, ...)
+{
+	BOOL success_flag = FALSE;
+	va_list args;
+	
+	ENTER ();
+
+	va_start (args, value_s);
+	
+	success_flag = AppendVarArgsToByteBuffer (buffer_p, value_s, args);
+
+	va_end (args);
+	
+	LEAVE ();
+	
+	return success_flag;
+}
+
+
+BOOL AppendVarArgsToByteBuffer (struct ByteBuffer *buffer_p, const char *value_s, va_list args)
+{
+	BOOL success_flag = TRUE;
+	BOOL loop_flag = TRUE;	
+	const char *arg_s = value_s;
+	 
+	ENTER ();
+
+	while (success_flag && loop_flag)
+		{
+			if (arg_s)
+				{
+					success_flag = AppendStringToByteBuffer (buffer_p, arg_s);
+					arg_s = va_arg (args, char *);
+				}
+			else
+				{
+					loop_flag = FALSE;
+				}
+		}
+
+	
+	
+	va_end (args);
+	
+	LEAVE ();
+	
+	return success_flag;
+}
+
+
+BOOL AppendStringToByteBuffer (struct ByteBuffer *buffer_p, const char *data_s)
+{
+	BOOL success_flag = FALSE;
+	
+	ENTER ();
+
+	success_flag = AppendToByteBuffer (buffer_p, data_s, strlen (data_s));
+	
+	LEAVE ();
+	
+	return success_flag;
+}
+	
+
 BOOL AppendToByteBuffer (struct ByteBuffer *buffer_p, const void *data_p, const size_t data_length)
 {
 	ENTER ();
