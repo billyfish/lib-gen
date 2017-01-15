@@ -4,7 +4,7 @@
 #
 # Project: libgen
 #
-# Created on: 12-01-2017 21:28:42
+# Created on: 15-01-2017 13:49:32
 #
 #
 
@@ -17,17 +17,17 @@ OBJ = \
 	 src/idl_writer.o src/main.o src/utils.o \
 	 src/parameter.o src/function_definition.o src/writer.o \
 	 src/c_writer.o src/makefile_utils.o src/vectors.o \
-	 src/interface_h_writer.o
+	 src/interface_h_writer.o prefs.o
 
 BIN = libgen
 
 INCPATH = -I.
 
-CFLAGS = $(INCPATH) -Wall -Wextra -Wwrite-strings -D_AMIGA_  -D_DEBUG  -D_DEBUG_STACK -IWorkspace:ctags58 -gstabs
+CFLAGS = $(INCPATH) -Wall -Wextra -Wwrite-strings -D_AMIGA_  -D_DEBUG  -IWorkspace:ctags58 -gstabs
 
-LDFLAGS =
+LDFLAGS = 
 
-LIBS = workspace:ctags58/ctags.a
+LIBS = 
 #	add any extra linker libraries you want here
 
 .PHONY: all all-before all-after clean clean-custom realclean
@@ -46,10 +46,9 @@ clean: clean-custom
 realclean:
 	rm -v $(OBJ) $(BIN)
 
-$(BIN): $(OBJ)
+$(BIN): $(OBJ) $(LIBS)
 #	You may need to move the LDFLAGS variable in this rule depending on its contents
-	@echo "Linking $(BIN)"
-	@$(LD) -o $(BIN).debug $(OBJ) $(LDFLAGS) $(LIBS)
+	$(LD) -o $(BIN).debug $(OBJ) $(LDFLAGS) $(LIBS)
 	strip $(BIN).debug -o $(BIN)
 
 ###################################################################
@@ -58,48 +57,63 @@ $(BIN): $(OBJ)
 ##
 ###################################################################
 
-# A default rule to make all the objects listed below
-# because we are hiding compiler commands from the output
-
-.c.o:
-	@echo "Compiling $<"
-	@$(CC) -c $< -o $*.o $(CFLAGS)
-
 auto_init_writer.o: src/auto_init_writer.c src/auto_init_writer.h src/utils.h src/debugging_utils.h
+	$(CC) -c src/auto_init_writer.c -o src/auto_init_writer.o $(CFLAGS)
 
 init_writer.o: src/init_writer.c src/debugging_utils.h src/utils.h src/init_writer.h
+	$(CC) -c src/init_writer.c -o src/init_writer.o $(CFLAGS)
 
 inline_header_writer.o: src/inline_header_writer.c src/inline_header_writer.h src/debugging_utils.h src/function_definition.h src/parameter.h src/utils.h
+	$(CC) -c src/inline_header_writer.c -o src/inline_header_writer.o $(CFLAGS)
 
 makefile_writer.o: src/makefile_writer.c src/makefile_writer.h src/function_definition.h src/parameter.h src/utils.h src/debugging_utils.h src/makefile_utils.h
+	$(CC) -c src/makefile_writer.c -o src/makefile_writer.o $(CFLAGS)
 
 proto_header_writer.o: src/proto_header_writer.c src/proto_header_writer.h src/debugging_utils.h src/utils.h
+	$(CC) -c src/proto_header_writer.c -o src/proto_header_writer.o $(CFLAGS)
 
 list_utils.o: src/list_utils.c src/list_utils.h src/debugging_utils.h
+	$(CC) -c src/list_utils.c -o src/list_utils.o $(CFLAGS)
 
 byte_buffer.o: src/byte_buffer.c src/byte_buffer.h src/utils.h src/debugging_utils.h
+	$(CC) -c src/byte_buffer.c -o src/byte_buffer.o $(CFLAGS)
 
 document_parser.o: src/document_parser.c src/document_parser.h src/byte_buffer.h src/utils.h src/debugging_utils.h
+	$(CC) -c src/document_parser.c -o src/document_parser.o $(CFLAGS)
 
 library_utils.o: src/library_utils.c src/library_utils.h src/debugging_utils.h
+	$(CC) -c src/library_utils.c -o src/library_utils.o $(CFLAGS)
 
 idl_writer.o: src/idl_writer.c src/idl_writer.h src/writer.h src/function_definition.h src/parameter.h src/debugging_utils.h src/utils.h
+	$(CC) -c src/idl_writer.c -o src/idl_writer.o $(CFLAGS)
 
 main.o: src/main.c src/utils.h src/function_definition.h src/parameter.h src/document_parser.h src/byte_buffer.h src/debugging_utils.h src/idl_writer.h src/writer.h src/inline_header_writer.h src/auto_init_writer.h src/init_writer.h src/proto_header_writer.h src/interface_h_writer.h src/library_utils.h src/list_utils.h src/makefile_writer.h src/vectors.h
+	$(CC) -c src/main.c -o src/main.o $(CFLAGS)
 
 utils.o: src/utils.c src/debugging_utils.h src/utils.h src/parameter.h src/function_definition.h
+	$(CC) -c src/utils.c -o src/utils.o $(CFLAGS)
 
 parameter.o: src/parameter.c src/debugging_utils.h src/parameter.h src/utils.h
+	$(CC) -c src/parameter.c -o src/parameter.o $(CFLAGS)
 
 function_definition.o: src/function_definition.c src/function_definition.h src/parameter.h src/debugging_utils.h src/utils.h src/list_utils.h
+	$(CC) -c src/function_definition.c -o src/function_definition.o $(CFLAGS)
 
 writer.o: src/writer.c src/writer.h src/function_definition.h src/parameter.h src/debugging_utils.h
+	$(CC) -c src/writer.c -o src/writer.o $(CFLAGS)
 
 c_writer.o: src/c_writer.c src/c_writer.h src/writer.h src/function_definition.h src/debugging_utils.h
+	$(CC) -c src/c_writer.c -o src/c_writer.o $(CFLAGS)
 
 makefile_utils.o: src/makefile_utils.c src/makefile_utils.h src/function_definition.h src/parameter.h src/utils.h src/debugging_utils.h
+	$(CC) -c src/makefile_utils.c -o src/makefile_utils.o $(CFLAGS)
 
 vectors.o: src/vectors.c src/function_definition.h src/parameter.h src/debugging_utils.h src/utils.h
+	$(CC) -c src/vectors.c -o src/vectors.o $(CFLAGS)
 
 interface_h_writer.o: src/interface_h_writer.c src/interface_h_writer.h src/utils.h src/debugging_utils.h src/function_definition.h src/parameter.h
+	$(CC) -c src/interface_h_writer.c -o src/interface_h_writer.o $(CFLAGS)
+
+prefs.o: prefs.c prefs.h
+	$(CC) -c prefs.c -o prefs.o $(CFLAGS)
 

@@ -28,7 +28,7 @@
 
 
 #ifdef _DEBUG
-#define FUNCTION_DEFINITIONS_DEBUG (1)
+#define FUNCTION_DEFINITIONS_DEBUG (0)
 #endif
 
 
@@ -40,6 +40,9 @@ static BPTR GetSourceFileHandle (const struct FunctionDefinition *fn_def_p, CONS
 static BOOL WriteLibraryFunctionDefinitionVariant (BPTR out_p, CONST CONST_STRPTR library_s, const struct FunctionDefinition * const fd_p, CONST CONST_STRPTR type_prefix_s, CONST CONST_STRPTR type_suffix_s, CONST CONST_STRPTR function_prefix_s, CONST CONST_STRPTR function_suffix_s, CONST CONST_STRPTR self_type_s);
 
 static int CompareFunctionDefinitionExportIndices (const void *node0_p, const void *node1_p);
+
+
+static BOOL KeepFunction (const struct FunctionDefinition *fn_def_p, struct List *functions_to_ignore_p);
 
 
 
@@ -162,7 +165,7 @@ struct Parameter *GetNextParameter (const char **start_pp, BOOL function_flag)
 		{
 			const char *temp_p = end_p;
 
-			#ifdef FUNCTION_DEFINITIONS_DEBUG
+			#if FUNCTION_DEFINITIONS_DEBUG > 4
 			char *param_s = NULL;
 			#endif
 
@@ -204,7 +207,7 @@ struct Parameter *GetNextParameter (const char **start_pp, BOOL function_flag)
 					DB (KPRINTF ("%s %ld - Failed to extract parameter from \"%s\"\n", __FILE__, __LINE__, start_p));
 				}
 
-			#ifdef FUNCTION_DEFINITIONS_DEBUG
+			#if FUNCTION_DEFINITIONS_DEBUG > 4
 			param_s = CopyToNewString (start_p, end_p, FALSE);
 
 			if (param_s)
@@ -220,9 +223,41 @@ struct Parameter *GetNextParameter (const char **start_pp, BOOL function_flag)
 }
 
 
-BOOL GetAndAddFunctionDefinitionFromString (STRPTR prototype_s, CONST_STRPTR filename_s, int32 line_number, struct List *function_defs_p)
+
+static BOOL KeepFunction (const struct FunctionDefinition *fn_def_p, struct List *functions_to_ignore_p)
 {
-	BOOL success_flag = FALSE;
+	BOOL keep_flag = TRUE;
+	
+	ENTER ();
+	
+	if (functions_to_ignore_p)
+		{
+			CONST_STRPTR function_name_s = fn_def_p -> fd_definition_p -> pa_name_s;
+			struct Node *node_p = IExec->GetHead (functions_to_ignore_p);
+			
+			while (node_p)
+				{
+					if (strcmp (node_p -> ln_Name, function_name_s) == 0)
+						{
+							keep_flag = FALSE;
+							node_p = NULL;	
+						}
+					else
+						{
+							node_p = IExec->GetSucc (node_p);				
+						}	
+				}
+		}
+	
+	LEAVE ();	
+	
+	return keep_flag;
+}
+
+
+int32 GetAndAddFunctionDefinitionFromString (STRPTR prototype_s, CONST_STRPTR filename_s, int32 line_number, struct List *function_defs_p, struct List *functions_to_ignore_p)
+{
+	int32 status = -1;
 	struct FunctionDefinition *fn_def_p = NULL;
 	int8 tokenized_flag = 0;
 	enum Verbosity v = GetVerbosity ();									
@@ -256,16 +291,22 @@ BOOL GetAndAddFunctionDefinitionFromString (STRPTR prototype_s, CONST_STRPTR fil
 						}
 					
 					/* Add the prototype */
-
-					if (AddFunctionDefinitionToList (fn_def_p, function_defs_p))
+					
+					if (KeepFunction (fn_def_p, functions_to_ignore_p))
 						{
-							success_flag = TRUE;
-							DB (KPRINTF ("%s %ld - GetMatchingPrototypes: Added function definition for \"%s\"\n", __FILE__, __LINE__, prototype_s));
+							if (AddFunctionDefinitionToList (fn_def_p, function_defs_p))
+								{
+									status = 1;
+									DB (KPRINTF ("%s %ld - GetMatchingPrototypes: Added function definition for \"%s\"\n", __FILE__, __LINE__, prototype_s));
+								}
+							else
+								{
+									IDOS->Printf ("Failed to add function definition for \"%s\"\n", prototype_s);
+								}
 						}
 					else
 						{
-							IDOS->Printf ("Failed to add function definition for \"%s\"\n", prototype_s);
-							success_flag = FALSE;
+							status = 0;	
 						}
 				}
 				break;
@@ -280,13 +321,12 @@ BOOL GetAndAddFunctionDefinitionFromString (STRPTR prototype_s, CONST_STRPTR fil
 					{
 						IDOS->Printf ("Could not parse \"%s\" as a function prototype\n", prototype_s);
 					}	
-				success_flag = FALSE;
 				break;
 		}	
 
 	LEAVE ();
 
-	return success_flag;	
+	return status;	
 }
 
 
@@ -326,7 +366,7 @@ int8 TokenizeFunctionPrototype (struct FunctionDefinition **fn_def_pp, const cha
 
 			while (loop_flag && success_flag)
 				{
-					#ifdef FUNCTION_DEFINITIONS_DEBUG
+					#if FUNCTION_DEFINITIONS_DEBUG > 4
 					DB (KPRINTF ("%s %ld - Getting next param from \"%s\"\n", __FILE__, __LINE__, start_p));
 					#endif
 
@@ -401,6 +441,7 @@ int8 TokenizeFunctionPrototype (struct FunctionDefinition **fn_def_pp, const cha
 			else
 				{
 					FreeFunctionDefinition (fd_p);
+					DB (KPRINTF ("%s %ld - Failed to tokenize \"%s\"\n", __FILE__, __LINE__, prototype_s));
 				}
 
 		}		/* if (fd_p) */
@@ -775,8 +816,6 @@ BOOL WriteLibraryFunctionImplementation (BPTR out_p, const struct FunctionDefini
 	BOOL success_flag = FALSE;
 
 	ENTER ();
-
-	DB (KPRINTF ("%s %ld - WriteLibraryFunctionImplementation for  %s\n", __FILE__, __LINE__, fd_p -> fd_definition_p -> pa_name_s));
 
 	if (WriteLibraryFunctionDefinition (out_p, library_s, prefix_s, fd_p))
 		{
@@ -1154,7 +1193,7 @@ BOOL WriteSourceForAllFunctionDeclarations (struct List *fn_defs_p, CONST_STRPTR
 							
 							if (current_include_guard_s)
 								{
-									ReplaceChars (current_include_guard_s, ".:/ ", '_');									
+									ReplaceChars (current_include_guard_s, ".:/- ", '_');									
 									
 									if (IDOS->FPrintf (output_f, "#ifndef %s\n#define %s\n\n\n", current_include_guard_s, current_include_guard_s)>= 0)
 										{

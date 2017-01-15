@@ -58,7 +58,7 @@ uint32 GetFunctionDefinitionsListSize (struct List * const list_p);
 void ClearFunctionDefinitionsList (struct List *function_definitions_p);
 
 
-BOOL GetAndAddFunctionDefinitionFromString (STRPTR prototype_s, CONST_STRPTR filename_s, int32 line_number, struct List *function_defs_p);
+int32 GetAndAddFunctionDefinitionFromString (STRPTR prototype_s, CONST_STRPTR filename_s, int32 line_number, struct List *function_defs_p,  struct List *functions_to_ignore_p);
 
 
 struct FunctionDefinition *AllocateFunctionDefinition (CONST CONST_STRPTR filename_s, const int32 line_number);

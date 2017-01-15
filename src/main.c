@@ -59,13 +59,13 @@ static void CloseLibs (void);
 
 
 BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, struct DocumentParser *document_parser_p, struct List *function_defs_p);
-BOOL ParseFile (CONST_STRPTR pattern_s, CONST_STRPTR filename_s, struct List *function_defs_p, struct DocumentParser *document_parser_p);
-BOOL GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR filename_regexp_s, CONST CONST_STRPTR prototype_regexp_s, CONST BOOL recurse_flag, struct List *function_definitions_p, struct List *paths_to_ignore_p);
+BOOL ParseFile (CONST_STRPTR pattern_s, CONST_STRPTR filename_s, struct List *function_defs_p, struct DocumentParser *document_parser_p, struct List *functions_to_ignore_p);
+BOOL GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR filename_regexp_s, CONST CONST_STRPTR prototype_regexp_s, CONST BOOL recurse_flag, struct List *function_definitions_p, struct List *paths_to_ignore_p, struct List *functions_to_ignore_p);
 
 STRPTR CreateRegEx (CONST_STRPTR pattern_s, BOOL capture_flag);
 void ClearCapturedExpression (struct CapturedExpression *capture_p);
 
-int Run (CONST_STRPTR root_path_s, CONST_STRPTR header_filename_pattern_s, CONST_STRPTR source_filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, CONST_STRPTR prefix_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag, const BOOL gen_source_flag, CONST_STRPTR defs_filename_s, struct List *paths_to_ignore_p);
+int Run (CONST_STRPTR root_path_s, CONST_STRPTR header_filename_pattern_s, CONST_STRPTR source_filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, CONST_STRPTR prefix_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag, const BOOL gen_source_flag, CONST_STRPTR defs_filename_s, struct List *paths_to_ignore_p, struct List *functions_to_ignore_p);
 
 STRPTR MakePrototypePattern (CONST_STRPTR pattern_s);
 
@@ -75,8 +75,11 @@ static void ClearList (struct List *list_p, BOOL free_list_flag);
 
 static struct List *ParsePaths (CONST_STRPTR root_path_s, CONST_STRPTR paths_s);
 
+static struct List *GetFunctionsToIgnore (CONST_STRPTR filename_s);
+
 BOOL WriteHeaderFiles (struct List *function_defs_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR output_dir_s);
 
+static BOOL ReadCTagsFile (CONST_STRPTR ctags_file_s, CONST_STRPTR pattern_s, CONST_STRPTR filename_s, struct List *function_defs_p, struct List *functions_to_ignore_p);
 
 static BOOL ReadWindowsExportsFile (CONST_STRPTR filename_s, struct List *function_defs_p);
 
@@ -102,7 +105,8 @@ enum Args
 //	AR_OUTPUT_FORMAT,
 	AR_VERBOSE,
 	AR_NEWLIB,
-	AR_DEFS_FILENAME,
+	AR_ORDERING_FILENAME,
+	AR_EXCLUDED_FUNCTIONS_FILENAME,
 	AR_PATHS_TO_IGNORE,
 	AR_NUM_ARGS
 };
@@ -123,17 +127,18 @@ int main (int argc, char *argv [])
 			CONST_STRPTR header_filename_pattern_s = S_DEFAULT_HEADER_FILENAME_PATTERN_S;
 			CONST_STRPTR source_filename_pattern_s = S_DEFAULT_SOURCE_FILENAME_PATTERN_S;
 			CONST_STRPTR defs_filename_s = NULL;
-			STRPTR prototype_pattern_s = S_DEFAULT_PROTOTYPE_PATTERN_S;
+			CONST_STRPTR functions_to_ignore_filename_s = NULL;
+			STRPTR prototype_pattern_s = (STRPTR) S_DEFAULT_PROTOTYPE_PATTERN_S;
 			int32 version = 1;
 			enum InterfaceFlag flag = IF_PUBLIC;
 			BOOL recurse_flag = FALSE;
 			BOOL generate_code_flag = FALSE;
 			int32 args [AR_NUM_ARGS];
 			struct RDArgs *args_p = NULL;
-			STRPTR args_s = "I=Input/A,R=Recurse/S,L=LibraryName/A,HP=HeaderFilePattern/K,SP=SourceFilePattern/K,PP=PrototypePattern/K,VER=Version/N,FL=Flags/K,GC=GenerateCode/S,V=Verbose/N,NL=Newlib/S,D=DefsFilename/K,IGN=Ignore/F";
+			STRPTR args_s = (STRPTR) "I=Input/A,R=Recurse/S,L=LibraryName/A,HP=HeaderFilePattern/K,SP=SourceFilePattern/K,PP=PrototypePattern/K,VER=Version/N,FL=Flags/K,GC=GenerateCode/S,V=Verbose/N,NL=Newlib/S,ORD=OrderingFile/K,EXC=ExcludeFile/K,IGN=Ignore/F";
 			memset (args, 0, AR_NUM_ARGS * sizeof (int32));
 
-			args_p = IDOS->ReadArgs ("args_s, args, NULL);
+			args_p = IDOS->ReadArgs (args_s, args, NULL);
 
 			if (args_p != NULL)
 				{
@@ -162,10 +167,18 @@ int main (int argc, char *argv [])
 						}
 
 
-					if (args [AR_DEFS_FILENAME])
+					if (args [AR_ORDERING_FILENAME])
 						{
-							defs_filename_s = (CONST_STRPTR) args [AR_DEFS_FILENAME];
+							defs_filename_s = (CONST_STRPTR) args [AR_ORDERING_FILENAME];
 						}
+
+
+					if (args [AR_EXCLUDED_FUNCTIONS_FILENAME])
+						{
+							functions_to_ignore_filename_s = (CONST_STRPTR) args [AR_EXCLUDED_FUNCTIONS_FILENAME];
+						}
+
+
 
 					if (args [AR_FLAGS])
 						{
@@ -252,13 +265,24 @@ int main (int argc, char *argv [])
 							if (prefix_s)
 								{
 									struct List *paths_to_ignore_p = NULL;
+									struct List *functions_to_ignore_p = NULL;
 									
 									if (paths_to_ignore_s)
 										{
 											paths_to_ignore_p = ParsePaths (input_dir_s, paths_to_ignore_s);
 										}
 									
-									result = Run (input_dir_s, header_filename_pattern_s, source_filename_pattern_s, prototype_pattern_s, library_s, prefix_s, recurse_flag, version, flag, generate_code_flag, defs_filename_s, paths_to_ignore_p);
+									if (functions_to_ignore_filename_s)
+										{
+											functions_to_ignore_p = GetFunctionsToIgnore (functions_to_ignore_filename_s);
+										}
+									
+									result = Run (input_dir_s, header_filename_pattern_s, source_filename_pattern_s, prototype_pattern_s, library_s, prefix_s, recurse_flag, version, flag, generate_code_flag, defs_filename_s, paths_to_ignore_p, functions_to_ignore_p);
+								
+									if (functions_to_ignore_p)
+										{
+											ClearList (functions_to_ignore_p, TRUE);
+										}
 								
 									if (paths_to_ignore_p)
 										{
@@ -280,7 +304,7 @@ int main (int argc, char *argv [])
 				}
 			else
 				{
-					IDOS->PrintF ("Required arguments missing, the arguments have the following pattern:\n%s\n", args_s);					
+					IDOS->Printf ("Required arguments missing, the arguments have the following pattern:\n%s\n", args_s);					
 				}
 
 			DB (KPRINTF ("%s %ld - closing lins\n", __FILE__, __LINE__));
@@ -294,6 +318,75 @@ int main (int argc, char *argv [])
 	LEAVE ();
 	return 0;
 }
+
+
+static struct List *GetFunctionsToIgnore (CONST_STRPTR filename_s)
+{
+	struct List *names_p = NULL;	
+	BPTR input_f = ZERO;
+	
+	ENTER ();
+	
+	if ((input_f = IDOS->FOpen (filename_s, MODE_OLDFILE, 0)) != ZERO)
+		{
+			names_p = IExec->AllocSysObjectTags (ASOT_LIST, TAG_DONE);
+	
+			if (names_p)
+				{					
+					char line_s [1024];
+										
+					while (IDOS->FGets (input_f, line_s, 1024))
+						{
+							char buffer_s [1024];
+							char *end_p = buffer_s;
+							
+							while ((*end_p != '\0') && (sscanf (line_s, "%s", end_p) == 1))
+								{
+									STRPTR name_s = NULL;
+																		
+									end_p = buffer_s + strlen (buffer_s);
+						
+									name_s = CopyToNewString (buffer_s, end_p, FALSE);									
+
+									while ((*end_p != '\0') && (isspace (*end_p)))
+										{
+											++ end_p;	
+										}
+									
+									if (name_s)
+										{
+											IDOS->Printf ("ignoring \"%s\"\n", name_s);
+											
+											struct Node *node_p = IExec->AllocSysObjectTags (ASOT_NODE,
+												ASONODE_Name, name_s,
+												ASONODE_Size, sizeof (struct Node),
+												TAG_DONE);
+							
+											if (node_p)
+												{
+													IExec->AddTail (names_p, node_p);
+												}						
+											else
+												{
+													DB (KPRINTF ("%s %ld - Failed to allocate node for \"%s\"\n", __FILE__, __LINE__, name_s));
+													IExec->FreeVec (name_s);							
+												}										
+											
+										}									
+									
+								}
+						}
+				}		
+				
+			IDOS->FClose (input_f);	
+		}	
+	
+
+	LEAVE ();
+	
+	return names_p;
+}
+
 
 
 static struct List *ParsePaths (CONST_STRPTR root_path_s, CONST_STRPTR paths_s)
@@ -539,14 +632,14 @@ STRPTR CreateRegEx (CONST_STRPTR pattern_s, BOOL capture_flag)
 }
 
 
-int Run (CONST_STRPTR root_path_s, CONST_STRPTR header_filename_pattern_s, CONST_STRPTR source_filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, CONST_STRPTR prefix_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag, const BOOL gen_source_flag, CONST_STRPTR defs_filename_s, struct List *paths_to_ignore_p)
+int Run (CONST_STRPTR root_s, CONST_STRPTR header_filename_pattern_s, CONST_STRPTR source_filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, CONST_STRPTR prefix_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag, const BOOL gen_source_flag, CONST_STRPTR defs_filename_s, struct List *paths_to_ignore_p, struct List *functions_to_ignore_p)
 {
 	int res = 0;
 	STRPTR prototype_regexp_s = NULL;
 	STRPTR header_filename_regexp_s = NULL;
 	STRPTR source_filename_regexp_s = NULL;
 	BOOL success_flag = FALSE;
-
+	
 	/* List of FunctionDefinitionsNodes */
 	struct List function_defs;
 
@@ -599,30 +692,15 @@ int Run (CONST_STRPTR root_path_s, CONST_STRPTR header_filename_pattern_s, CONST
 				}
 		}
 
-	if (verbosity >= VB_LOUD)
-		{
-			char buffer [4096] = "\0";
-			BPTR lock_p = IDOS->GetProgramDir ();
-			int32 success = IDOS->GetCliProgramName (buffer, 4096);
-			IDOS->Printf ("success %ld\n prog name \"%s\"\nIOErr %s", success, buffer, IDOS->PrintFault (success, NULL));
-			
-			success = IDOS->GetCliCurrentDirName (buffer, 4096);
-			IDOS->Printf ("success %ld\n dir name \"%s\"\nIOErr %s", success, buffer, IDOS->PrintFault (success, NULL));
-
-
-			if (lock_p)
-				{
-					success = IDOS->NameFromLock (lock_p, buffer, 4096);
-					IDOS->Printf ("success %ld\n lock \"%s\"\nIOErr %s", success, buffer, IDOS->PrintFault (success, NULL));
-					
-				}
-			
+	if (verbosity >= VB_LOUDER)
+		{			
 			IDOS->Printf ("source pattern \"%s\" regexp \"%s\"\n", source_filename_pattern_s, source_filename_regexp_s);
 			IDOS->Printf ("header pattern \"%s\" regexp \"%s\"\n", header_filename_pattern_s, header_filename_regexp_s);
 		}
 			
-	if (GeneratePrototypesList (root_path_s, header_filename_regexp_s, prototype_regexp_s, recurse_flag, &function_defs, paths_to_ignore_p))
+	if (GeneratePrototypesList (root_s, header_filename_regexp_s, prototype_regexp_s, recurse_flag, &function_defs, paths_to_ignore_p, functions_to_ignore_p))
 		{
+			
 			struct List *source_files_p = GetFilesList (root_path_s, source_filename_regexp_s, recurse_flag, paths_to_ignore_p);
 			
 			if (source_files_p)
@@ -1111,7 +1189,7 @@ BOOL GetPreviousLibraryOrder (CONST_STRPTR filename_s, CONST_STRPTR struct_name_
 
 
 
-BOOL GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR filename_regexp_s, CONST CONST_STRPTR prototype_regexp_s, CONST BOOL recurse_flag, struct List *function_definitions_p, struct List *paths_to_ignore_p)
+BOOL GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR filename_regexp_s, CONST CONST_STRPTR prototype_regexp_s, CONST BOOL recurse_flag, struct List *function_definitions_p, struct List *paths_to_ignore_p, struct List *functions_to_ignore_p)
 {
 	ENTER ();
 
@@ -1148,7 +1226,7 @@ BOOL GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR 
 										}
 
 									/* Get the list of matching prototypes in each file */
-									if (!ParseFile (prototype_regexp_s, filename_s, function_definitions_p, document_parser_p))
+									if (!ParseFile (prototype_regexp_s, filename_s, function_definitions_p, document_parser_p, functions_to_ignore_p))
 										{
 											IDOS->Printf ("Failed to parse \"%s\"\n", filename_s);
 										}
@@ -1185,7 +1263,7 @@ struct List *GetFilesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_regex
 
 	if (filenames_p)
 		{
-			if (!ScanDirectories (root_path_s, filenames_p, filename_regexp_s, recurse_flag, paths_to_ignore_p))
+			if (!ScanPath (root_path_s, filenames_p, filename_regexp_s, recurse_flag, paths_to_ignore_p))
 				{
 					FreeList (filenames_p);
 					filenames_p = NULL;
@@ -1198,7 +1276,7 @@ struct List *GetFilesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_regex
 }
 
 
-BOOL ReadCTagsFile (CONST_STRPTR ctags_file_s, CONST_STRPTR pattern_s, CONST_STRPTR filename_s, struct List *function_defs_p)
+static BOOL ReadCTagsFile (CONST_STRPTR ctags_file_s, CONST_STRPTR pattern_s, CONST_STRPTR filename_s, struct List *function_defs_p, struct List *functions_to_ignore_p)
 {
 	BOOL success_flag = FALSE;
 	BPTR handle_p = ZERO;
@@ -1228,46 +1306,59 @@ BOOL ReadCTagsFile (CONST_STRPTR ctags_file_s, CONST_STRPTR pattern_s, CONST_STR
 										json_array_append	/jansson-2.9/src/jansson.h	/^int json_array_append(json_t *array, json_t *value)$/;"	f	line:214
 										json_array_append_new	/jansson-2.9/src/jansson.h	/^int json_array_append_new(json_t *array, json_t *value);$/;"	p	line:201
 								 	*/
-								 CONST_STRPTR start_marker_s = "/^";
-								 CONST_STRPTR end_marker_s = "$/";
-
-								 STRPTR start_s = strstr (line_p -> frld_Line, start_marker_s);
+									CONST_STRPTR start_marker_s = "/^";
+								 	STRPTR start_s = strstr (line_p -> frld_Line, start_marker_s);
 								 
-								 if (start_s)
-								 	{
-								 		CONST_STRPTR line_marker_s = "line:";
-								 		STRPTR line_s;
+								 	if (start_s)
+								 		{
+									 		CONST_STRPTR end_marker_s = "$/";								 		
+									 		STRPTR end_s = strstr (line_p -> frld_Line, end_marker_s);
+									 		
+									 		if (end_s)
+									 			{
+													CONST_STRPTR line_marker_s = "line:";
+											 		STRPTR line_s;
+											 		
+									 				/* 
+									 					The protoype tokenizer depends upon a ; at the end of the prototype which 
+									 					inline functions don't have so add it if it's needed.
+									 				*/
+									 				if (* (end_s - 1) == ')')
+									 					{
+									 						*end_s = ';';
+									 					}
+											 		
+											 		start_s += strlen (start_marker_s);	
+			
+													line_s = strstr (start_s, line_marker_s);
+													
+													if (line_s)
+														{
+															int32 line_number = 0;
+															
+															line_s += strlen (line_marker_s);
+															
+															//IDOS->Printf ("start_s %s", start_s);
+															//IDOS->Printf ("line_s \"%s\"\n", line_s);
+															if (sscanf (line_s, "%ld", &line_number) == 1)
+																{
+																	int32 res = GetAndAddFunctionDefinitionFromString (start_s, filename_s, line_number, function_defs_p, functions_to_ignore_p);
+																																		
+																	if (res >= 0)
+																		{
+																			success_flag = TRUE;
+																		}
+																	else
+																		{
+																			IDOS->Printf ("Failed to add definition for \"%s\"\n", start_s);
+																		}
+																}
+															
+														}
+									 				
+									 			}		/* if (end_s) */
 								 		
-								 		start_s += strlen (start_marker_s);	
-
-										line_s = strstr (start_s, line_marker_s);
-										
-										if (line_s)
-											{
-												int32 line_number = 0;
-												
-												line_s += strlen (line_marker_s);
-												
-												IDOS->Printf ("start_s %s", start_s);
-												IDOS->Printf ("line_s \"%s\"\n", line_s);
-												if (sscanf (line_s, "%ld", &line_number) == 1)
-													{
-														if (GetAndAddFunctionDefinitionFromString (start_s, filename_s, line_number, function_defs_p))
-															{
-																success_flag = TRUE;
-															}
-														else
-															{
-																IDOS->Printf ("Failed to add definition for \"%s\"\n", start_s);
-															}
-													}
-												
-											}
-											
-										
-								 		
-									}
-								 
+										}
 								 
 								}
 						}
@@ -1285,7 +1376,7 @@ BOOL ReadCTagsFile (CONST_STRPTR ctags_file_s, CONST_STRPTR pattern_s, CONST_STR
 }
 
 
-BOOL GetMatchingPrototypesWithCTags (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, struct DocumentParser *parser_p, struct List *function_defs_p)
+BOOL GetMatchingPrototypesWithCTags (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, struct DocumentParser *parser_p, struct List *function_defs_p, struct List *functions_to_ignore_p)
 {
 	BOOL success_flag = FALSE;
 	struct ByteBuffer *buffer_p = NULL;
@@ -1301,7 +1392,7 @@ BOOL GetMatchingPrototypesWithCTags (CONST_STRPTR filename_s, CONST_STRPTR patte
 			
 			if (tags_filename_s)
 				{
-					if (AppendStringsToByteBuffer (buffer_p, "workspace:ctags58/ctags ", "-f ", tags_filename_s, " --fields=+n --c-kinds=+pf-dmstne ", filename_s, NULL))
+					if (AppendStringsToByteBuffer (buffer_p, "ctags ", "-f ", tags_filename_s, " --fields=+n --c-kinds=+pf-dmstne ", filename_s, NULL))
 						{
 							int res;
 							
@@ -1314,7 +1405,7 @@ BOOL GetMatchingPrototypesWithCTags (CONST_STRPTR filename_s, CONST_STRPTR patte
 							
 							if (res == 0)
 								{
-									success_flag = ReadCTagsFile (tags_filename_s, pattern_s, filename_s, function_defs_p);
+									success_flag = ReadCTagsFile (tags_filename_s, pattern_s, filename_s, function_defs_p, functions_to_ignore_p);
 								}
 							else
 								{
@@ -1537,10 +1628,10 @@ void ClearCapturedExpression (struct CapturedExpression *capture_p)
 }
 
 
-BOOL ParseFile (CONST_STRPTR function_regexp_s, CONST_STRPTR filename_s, struct List *function_defs_p, struct DocumentParser *document_parser_p)
+BOOL ParseFile (CONST_STRPTR function_regexp_s, CONST_STRPTR filename_s, struct List *function_defs_p, struct DocumentParser *document_parser_p, struct List *functions_to_ignore_p)
 {
 	ENTER ();
-	BOOL success_flag = GetMatchingPrototypesWithCTags (filename_s, function_regexp_s, document_parser_p, function_defs_p);
+	BOOL success_flag = GetMatchingPrototypesWithCTags (filename_s, function_regexp_s, document_parser_p, function_defs_p, functions_to_ignore_p);
 
 	if (success_flag)
 		{

@@ -255,8 +255,10 @@ char *CopyToNewString (const char *start_p, const char *end_p, const BOOL trim_f
 				}
 		}
 
+	#if UTILS_DEBUG > 4
 	DB (KPRINTF ("%s %ld - Copying \"%s\" - \"%s\" to a new string\n", __FILE__, __LINE__, start_p ? start_p : "NULL", end_p ? end_p : "NULL"));
-
+	#endif
+	
 	if (start_p <= end_p)
 		{
 			size_t len = end_p - start_p + 1;
@@ -335,109 +337,169 @@ BOOL AddFullFilenameToList (struct List *filenames_p, CONST_STRPTR dir_s, CONST_
 }
 
 
-int32 ScanDirectories (CONST_STRPTR dir_s, struct List *filenames_p, CONST_STRPTR filename_pattern_s, const BOOL recurse_flag, struct List *paths_to_ignore_p)
+static BOOL CheckAndAddHeaderFile (CONST_STRPTR filename_s, CONST_STRPTR dir_s, CONST_STRPTR filename_pattern_s, struct List *filenames_p, struct List *paths_to_ignore_p)
+{
+	BOOL success_flag = TRUE;
+	BOOL add_flag = TRUE;
+
+	ENTER ();
+				
+	if (filename_pattern_s)
+		{
+			add_flag = IDOS->MatchPatternNoCase (filename_pattern_s, filename_s);
+
+			if (!add_flag)
+				{
+					#if UTILS_DEBUG >= 2
+					DB (KPRINTF ("%s %ld - ScanDirectories; no match for %s\n", __FILE__, __LINE__, dat_p -> Name));
+					#endif
+				}
+		}
+
+	if (add_flag)
+		{
+			if (AddFullFilenameToList (filenames_p, dir_s, filename_s, paths_to_ignore_p))
+				{
+					#if UTILS_DEBUG >= 2
+					DB (KPRINTF ("%s %ld - ScanDirectories; added %s size %lu\n", __FILE__, __LINE__, filename_s, GetListSize (header_definitions_p)));
+					#endif
+				}
+			else
+				{
+					IDOS->Printf ("failed to add filename=%s to list of headers files\n", filename_s);
+					success_flag = FALSE;
+				}
+		}
+	
+	LEAVE ();	
+		
+	return success_flag;
+}
+
+
+int32 ScanPath (CONST_STRPTR path_s, struct List *filenames_p, CONST_STRPTR filename_pattern_s, const BOOL recurse_flag, struct List *paths_to_ignore_p)
 {
 	ENTER ();
 
 	int32 success = FALSE;
-	APTR context_p = IDOS->ObtainDirContextTags (EX_StringNameInput, dir_s,
-		EX_DataFields, (EXF_NAME | EXF_LINK | EXF_TYPE),
-		TAG_END);
+	
 
-	if (context_p)
+	struct ExamineData *data_p = IDOS->ExamineObjectTags (EX_StringNameInput, path_s, TAG_END);
+	
+	if (data_p)
 		{
-			struct ExamineData *dat_p;
-			const enum Verbosity v = GetVerbosity ();
-
-			if (v >= VB_LOUD)
+			if (EXD_IS_FILE (data_p))
 				{
-					IDOS->Printf ("Scanning \"%s\" with pattern %s\n", dir_s, filename_pattern_s);
+					STRPTR dir_s = GetParentName (path_s);
+					
+					if (dir_s)
+						{
+							CONST_STRPTR filename_s = IDOS->FilePart (path_s);
+							
+							if (CheckAndAddHeaderFile (filename_s, dir_s, filename_pattern_s, filenames_p, paths_to_ignore_p))
+								{
+									success = TRUE;
+								}
+							else
+								{
+									IDOS->Printf ("Failed to add header file \"%s\"\n", path_s);
+								}
+								
+							IExec->FreeVec (dir_s);
+						}
 				}
-
-			while ((dat_p = IDOS->ExamineDir (context_p)))
+			else if (EXD_IS_DIRECTORY (data_p))
 				{
-					if (v >= VB_LOUD)
+					APTR context_p = IDOS->ObtainDirContextTags (EX_StringNameInput, path_s,
+						EX_DataFields, (EXF_NAME | EXF_LINK | EXF_TYPE),
+						TAG_END);
+				
+					if (context_p)
 						{
-							IDOS->Printf ("filename=%s\n", dat_p -> Name);
-						}
-
-					#if UTILS_DEBUG >= 2
-					DB (KPRINTF ("%s %ld - ScanDirectories; scanning \"%s\"\n", __FILE__, __LINE__, dat_p -> Name));
-					#endif
-
-					if (EXD_IS_FILE (dat_p))
-						{
-							BOOL add_flag = TRUE;
-
-							if (filename_pattern_s)
+							struct ExamineData *dat_p;
+							const enum Verbosity v = GetVerbosity ();
+				
+							if (v >= VB_LOUD)
 								{
-									add_flag = IDOS->MatchPatternNoCase (filename_pattern_s, dat_p -> Name);
-
-									if (!add_flag)
-										{
-											#if UTILS_DEBUG >= 2
-											DB (KPRINTF ("%s %ld - ScanDirectories; no match for %s\n", __FILE__, __LINE__, dat_p -> Name));
-											#endif
-										}
+									IDOS->Printf ("Scanning \"%s\" with pattern %s\n", path_s, filename_pattern_s);
 								}
-
-							if (add_flag)
+				
+							/*
+								context_p takes care of deleting the returned dat_p objects
+								when we call ReleaseDirContext, so we mustn't call 
+								FreeDosObject on them
+							*/
+							while ((dat_p = IDOS->ExamineDir (context_p)))
 								{
-									if (AddFullFilenameToList (filenames_p, dir_s, dat_p -> Name, paths_to_ignore_p))
+									if (v >= VB_LOUD)
 										{
-											#if UTILS_DEBUG >= 2
-											DB (KPRINTF ("%s %ld - ScanDirectories; added %s size %lu\n", __FILE__, __LINE__, dat_p -> Name, GetHeaderDefinitionsListSize (header_definitions_p)));
-											#endif
+											IDOS->Printf ("filename=%s\n", dat_p -> Name);
 										}
-									else
+				
+									#if UTILS_DEBUG >= 2
+									DB (KPRINTF ("%s %ld - ScanPath; scanning \"%s\"\n", __FILE__, __LINE__, dat_p -> Name));
+									#endif
+				
+									if (EXD_IS_FILE (dat_p))
 										{
-											IDOS->Printf ("failed to add filename=%s to list of headers files\n", dat_p -> Name);
-										}
-								}
-
-						}
-					else if (EXD_IS_DIRECTORY (dat_p))
-						{
-							if (recurse_flag)
-								{
-									STRPTR path_s = MakeFilename (dir_s, dat_p -> Name);
-
-									if (path_s)
-										{
-											if (IsPathValid (path_s, paths_to_ignore_p))
+											if (CheckAndAddHeaderFile (dat_p -> Name, path_s, filename_pattern_s, filenames_p, paths_to_ignore_p))
 												{
-													if (!ScanDirectories (path_s, filenames_p, filename_pattern_s, recurse_flag, paths_to_ignore_p))  /* recurse */
+													success = TRUE;
+												}
+											else
+												{
+													IDOS->Printf ("Failed to add header file \"%s\" in \"%s\"\n", dat_p -> Name, path_s);
+												}			
+										}
+									else if (EXD_IS_DIRECTORY (dat_p))
+										{
+											if (recurse_flag)
+												{
+													STRPTR path_s = MakeFilename (path_s, dat_p -> Name);
+				
+													if (path_s)
 														{
-															break;
+															if (IsPathValid (path_s, paths_to_ignore_p))
+																{
+																	if (!ScanPath (path_s, filenames_p, filename_pattern_s, recurse_flag, paths_to_ignore_p))  /* recurse */
+																		{
+																			break;
+																		}
+																}
+				
+															IExec->FreeVec (path_s);
+														}
+													else
+														{
+															IDOS->Printf ("ScanPath: Not enough memory to allocate filename\n");
 														}
 												}
-
-											IExec->FreeVec (path_s);
-										}
-									else
-										{
-											IDOS->Printf ("ScanDirectories: Not enough memory to allocate filename\n");
 										}
 								}
-						}
-				}
-
-			if (ERROR_NO_MORE_ENTRIES == IDOS->IoErr ())
-				{
-					success = TRUE;           /* normal exit */
-				}
-			else
-				{
-					IDOS->PrintFault (IDOS->IoErr (), NULL); /* failure - why ? */
-				}
-		}
-	else
-		{
-			IDOS->PrintFault (IDOS->IoErr (), NULL);  /* no context - why ? */
-		}
-
-	IDOS->ReleaseDirContext (context_p);          /* NULL safe */
-
+				
+							if (ERROR_NO_MORE_ENTRIES == IDOS->IoErr ())
+								{
+									success = TRUE;           /* normal exit */
+								}
+							else
+								{
+									IDOS->Printf ("Failed to obtain directory context for \"%s\"\n", path_s);
+									IDOS->PrintFault (IDOS->IoErr (), NULL); /* failure - why ? */
+								}						
+											
+							IDOS->ReleaseDirContext (context_p);          /* NULL safe */
+						}		/* if (context_p) */
+					else
+						{
+							IDOS->Printf ("oops\n");
+							IDOS->PrintFault (IDOS->IoErr (), NULL);  /* no context - why ? */
+						}					
+					
+				}	/* else if (EXD_IS_DIRECTORY (data_p)) */	
+		
+			IDOS->FreeDosObject (DOS_EXAMINEDATA, data_p);
+		}		/* if (data_p) */
+	
 	LEAVE ();
 	return success;
 }

@@ -37,7 +37,7 @@ STRPTR MakeFilename (CONST_STRPTR first_s, CONST_STRPTR second_s);
 
 STRPTR GetParentName (CONST_STRPTR filename_s);
 
-int32 ScanDirectories (CONST_STRPTR name_s, struct List *matching_files_list_p, CONST_STRPTR filename_pattern_s, const BOOL recurse_flag, struct List *paths_to_ignore_p);
+int32 ScanPath (CONST_STRPTR path_s, struct List *matching_files_list_p, CONST_STRPTR filename_pattern_s, const BOOL recurse_flag, struct List *paths_to_ignore_p);
 
 BOOL AddFullFilenameToList (struct List *header_definitions_p, CONST_STRPTR dir_s, CONST_STRPTR name_s, struct List *paths_to_ignore_p);
 
