@@ -75,8 +75,6 @@ static void ClearList (struct List *list_p, BOOL free_list_flag);
 
 static struct List *ParsePaths (CONST_STRPTR root_path_s, CONST_STRPTR paths_s);
 
-static struct List *GetFunctionsToIgnore (CONST_STRPTR filename_s);
-
 BOOL WriteHeaderFiles (struct List *function_defs_p, CONST CONST_STRPTR library_s, CONST CONST_STRPTR output_dir_s);
 
 static BOOL ReadCTagsFile (CONST_STRPTR ctags_file_s, CONST_STRPTR pattern_s, CONST_STRPTR filename_s, struct List *function_defs_p, struct List *functions_to_ignore_p);
@@ -271,11 +269,7 @@ int main (int argc, char *argv [])
 										{
 											paths_to_ignore_p = ParsePaths (input_dir_s, paths_to_ignore_s);
 										}
-									
-									if (functions_to_ignore_filename_s)
-										{
-											functions_to_ignore_p = GetFunctionsToIgnore (functions_to_ignore_filename_s);
-										}
+
 									
 									result = Run (input_dir_s, header_filename_pattern_s, source_filename_pattern_s, prototype_pattern_s, library_s, prefix_s, recurse_flag, version, flag, generate_code_flag, defs_filename_s, paths_to_ignore_p, functions_to_ignore_p);
 								
@@ -320,72 +314,6 @@ int main (int argc, char *argv [])
 }
 
 
-static struct List *GetFunctionsToIgnore (CONST_STRPTR filename_s)
-{
-	struct List *names_p = NULL;	
-	BPTR input_f = ZERO;
-	
-	ENTER ();
-	
-	if ((input_f = IDOS->FOpen (filename_s, MODE_OLDFILE, 0)) != ZERO)
-		{
-			names_p = IExec->AllocSysObjectTags (ASOT_LIST, TAG_DONE);
-	
-			if (names_p)
-				{					
-					char line_s [1024];
-										
-					while (IDOS->FGets (input_f, line_s, 1024))
-						{
-							char buffer_s [1024];
-							char *end_p = buffer_s;
-							
-							while ((*end_p != '\0') && (sscanf (line_s, "%s", end_p) == 1))
-								{
-									STRPTR name_s = NULL;
-																		
-									end_p = buffer_s + strlen (buffer_s);
-						
-									name_s = CopyToNewString (buffer_s, end_p, FALSE);									
-
-									while ((*end_p != '\0') && (isspace (*end_p)))
-										{
-											++ end_p;	
-										}
-									
-									if (name_s)
-										{
-											IDOS->Printf ("ignoring \"%s\"\n", name_s);
-											
-											struct Node *node_p = IExec->AllocSysObjectTags (ASOT_NODE,
-												ASONODE_Name, name_s,
-												ASONODE_Size, sizeof (struct Node),
-												TAG_DONE);
-							
-											if (node_p)
-												{
-													IExec->AddTail (names_p, node_p);
-												}						
-											else
-												{
-													DB (KPRINTF ("%s %ld - Failed to allocate node for \"%s\"\n", __FILE__, __LINE__, name_s));
-													IExec->FreeVec (name_s);							
-												}										
-											
-										}									
-									
-								}
-						}
-				}		
-				
-			IDOS->FClose (input_f);	
-		}	
-	
-
-	LEAVE ();
-	
-	return names_p;
-}
 
 
 
@@ -635,9 +563,6 @@ STRPTR CreateRegEx (CONST_STRPTR pattern_s, BOOL capture_flag)
 int Run (CONST_STRPTR root_s, CONST_STRPTR header_filename_pattern_s, CONST_STRPTR source_filename_pattern_s, CONST_STRPTR prototype_pattern_s, CONST_STRPTR library_s, CONST_STRPTR prefix_s, const BOOL recurse_flag, const int32 version, const enum InterfaceFlag flag, const BOOL gen_source_flag, CONST_STRPTR defs_filename_s, struct List *paths_to_ignore_p, struct List *functions_to_ignore_p)
 {
 	int res = 0;
-	STRPTR prototype_regexp_s = NULL;
-	STRPTR header_filename_regexp_s = NULL;
-	STRPTR source_filename_regexp_s = NULL;
 	BOOL success_flag = FALSE;
 	
 	/* List of FunctionDefinitionsNodes */
@@ -659,38 +584,6 @@ int Run (CONST_STRPTR root_s, CONST_STRPTR header_filename_pattern_s, CONST_STRP
 	IExec->NewList (&function_defs);
 	IExec->NewList (&previous_fns_ordering_list);
 	
-	if (prototype_pattern_s)
-		{
-			prototype_regexp_s = CreateRegEx (prototype_pattern_s, TRUE);
-
-			if (!prototype_regexp_s)
-				{
-					LEAVE ();
-					return -1;
-				}
-		}
-
-	if (source_filename_pattern_s)
-		{
-			source_filename_regexp_s = CreateRegEx (source_filename_pattern_s, TRUE);
-
-			if (!source_filename_regexp_s)
-				{
-					LEAVE ();
-					return -1;
-				}
-		}
-
-	if (header_filename_pattern_s)
-		{
-			header_filename_regexp_s = CreateRegEx (header_filename_pattern_s, TRUE);
-
-			if (!header_filename_regexp_s)
-				{
-					LEAVE ();
-					return -1;
-				}
-		}
 
 	if (verbosity >= VB_LOUDER)
 		{			

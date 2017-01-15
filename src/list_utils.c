@@ -17,7 +17,7 @@ void FreeList (struct List *list_p)
 
 			if (node_p -> ln_Name)
 				{
-					//IExec->FreeVec (node_p -> ln_Name);
+					IExec->FreeVec (node_p -> ln_Name);
 				}
 
 			next_node_p = IExec->GetSucc (node_p);
