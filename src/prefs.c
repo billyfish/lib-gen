@@ -14,26 +14,34 @@
 
 */
 
+#include <ctype.h>
+#include <stdio.h>
+#include <string.h>
+
+#include <proto/dos.h>
 #include <proto/exec.h>
 
 #include "prefs.h"
-
+#include "utils.h"
+#include "debugging_utils.h"
+#include "list_utils.h"
 
 
 static struct List *GetFunctionsToIgnore (CONST_STRPTR filename_s);
 
+static BOOL SetLibGenPrefsRegExp (STRPTR *regexp_ss, CONST_STRPTR pattern_s);
 
 
 
 
-BOOL InitLibGenPrefs (LibGenPrefs *prefs_p, CONST_STRPTR prototype_pattern_s, CONST_STRPTR header_filename_pattern_s, CONST_STRPTR source_filename_pattern_s, CONST_STRPTR functions_to_ignore_filename_s)
+BOOL InitLibGenPrefs (LibGenPrefs *prefs_p)
 {
 	BOOL success_flag = TRUE;
 	
-	prefs_p -> lgp_header_input_s = NULL;
+	prefs_p -> lgp_header_input_dir_s = NULL;
 	prefs_p -> lgp_source_input_dir_s = NULL;	
 	prefs_p -> lgp_library_s = NULL;
-	prefs_p -> lgp_paths_to_ignore_s = NULL;
+	prefs_p -> lgp_paths_to_ignore_p = NULL;
 	prefs_p -> lgp_prototype_prefix_s = NULL;
 	prefs_p -> lgp_header_filename_regexp_s = NULL;
 	prefs_p -> lgp_source_filename_regexp_s = NULL;
@@ -46,50 +54,10 @@ BOOL InitLibGenPrefs (LibGenPrefs *prefs_p, CONST_STRPTR prototype_pattern_s, CO
 	prefs_p -> lgp_generate_code_flag = FALSE;	
 	prefs_p -> lgp_newlib_flag = FALSE;
 
-	if (prototype_pattern_s)
-		{
-			prefs_p -> lgp_prototype_regexp_s = CreateRegEx (prototype_pattern_s, TRUE);
-
-			if (! (prefs_p -> lgp_prototype_regexp_s))
-				{
-					success_flag = FALSE;
-				}
-		}
-
-	if (success_flag && source_filename_pattern_s)
-		{
-			prefs_p -> lgp_source_filename_regexp_s = CreateRegEx (source_filename_pattern_s, TRUE);
-
-			if (! (prefs_p -> lgp_source_filename_regexp_s))
-				{
-					success_flag = FALSE;
-				}
-		}
-
-	if (success_flag && header_filename_pattern_s)
-		{
-			prefs_p -> lgp_header_filename_regexp_s = CreateRegEx (header_filename_pattern_s, TRUE);
-
-			if (! (prefs_p -> lgp_header_filename_regexp_s))
-				{
-					success_flag = FALSE;
-				}
-		}
-
-	if (success_flag && functions_to_ignore_filename_s)
-		{
-			prefs_p -> lgp_functions_to_ignore_p = GetFunctionsToIgnore (functions_to_ignore_filename_s);
-			
-			if (! (prefs_p -> lgp_functions_to_ignore_p))
-				{
-					
-					success_flag = FALSE;
-				}
-		}
 
 
 									
-	if (success_flag && paths_to_ignore_s)
+/*	if (success_flag && paths_to_ignore_s)
 		{
 			prefs_p -> lgp_paths_to_ignore_p = ParsePaths (input_dir_s, paths_to_ignore_s);
 			
@@ -98,9 +66,35 @@ BOOL InitLibGenPrefs (LibGenPrefs *prefs_p, CONST_STRPTR prototype_pattern_s, CO
 					success_flag = FALSE;	
 				}
 		}
-
+*/
 
 	return success_flag;
+}
+
+
+BOOL SetLibGenPrefsPrototypePattern (LibGenPrefs *prefs_p, CONST_STRPTR pattern_s)
+{
+	return SetLibGenPrefsRegExp (& (prefs_p -> lgp_prototype_regexp_s), pattern_s);
+}
+
+
+BOOL SetLibGenPrefsHeadersPattern (LibGenPrefs *prefs_p, CONST_STRPTR pattern_s)
+{
+	return SetLibGenPrefsRegExp (& (prefs_p -> lgp_header_filename_regexp_s), pattern_s);
+}
+
+
+BOOL SetLibGenPrefsSourcesPattern (LibGenPrefs *prefs_p, CONST_STRPTR pattern_s)
+{
+	return SetLibGenPrefsRegExp (& (prefs_p -> lgp_source_filename_regexp_s), pattern_s);
+}
+
+
+static BOOL SetLibGenPrefsRegExp (STRPTR *regexp_ss, CONST_STRPTR pattern_s)
+{
+	*regexp_ss = CreateRegEx (pattern_s, TRUE);
+
+	return (*regexp_ss) ? TRUE : FALSE;
 }
 
 
@@ -136,12 +130,18 @@ void ClearLibGenPrefs (LibGenPrefs *prefs_p)
 
 BOOL ArePrefsValid (const LibGenPrefs *prefs_p)
 {
-	return ((prefs_p -> lgp_input_s) && 
-		(prefs_p -> lgp_header_filename_pattern_s) && 
+	return ((prefs_p -> lgp_header_input_dir_s) &&
+		(prefs_p -> lgp_header_filename_regexp_s) &&
 		(prefs_p -> lgp_library_s) && 
-		(prefs_p -> lgp_prototype_pattern_s));
+		(prefs_p -> lgp_prototype_regexp_s));
 }
 
+
+
+void PrintPrefs (const LibGenPrefs * const prefs_p, BPTR output_p)
+{
+
+}
 
 
 

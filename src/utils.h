@@ -70,6 +70,7 @@ STRPTR GetCapitalizedString (CONST_STRPTR src_s);
 
 STRPTR ScrollPastWhitespace (STRPTR data_s);		
 
+STRPTR CreateRegEx (CONST_STRPTR pattern_s, BOOL capture_flag);
 
 void ReplaceChars (STRPTR value_s, CONST CONST_STRPTR old_values_s, const char new_value);
 

@@ -8,6 +8,8 @@
 #
 #
 
+-include environment.prefs
+
 ###################################################################
 ##
 ##////  Objects
@@ -21,7 +23,7 @@ libgen_OBJ := \
 	 src/main.o src/utils.o src/parameter.o \
 	 src/function_definition.o src/writer.o src/c_writer.o \
 	 src/makefile_utils.o src/vectors.o src/interface_h_writer.o \
-	 prefs.o
+	 src/prefs.o src/auto_init_writer.o
 
 
 ###################################################################
@@ -30,11 +32,19 @@ libgen_OBJ := \
 ##
 ###################################################################
 
-CC := gcc:bin/gcc
+ifeq ($(CC),1)
+CC := gcc
+endif
 
-INCPATH := -I.
+ifeq (CTAGS_PATH,)
+CTAGS_PATH = Workspace:ctags58
+endif
 
-CFLAGS := $(INCPATH) -gstabs -Wall -Wextra -Wwrite-strings -D_AMIGA_  -D_DEBUG  -IWorkspace:ctags58
+INCPATH := -I. -Isrc
+
+
+
+CFLAGS := $(INCPATH) -gstabs -Wall -Wextra -Wwrite-strings -D_AMIGA_  -D_DEBUG  -I$(CTAGS_PATH)
 
 
 ###################################################################
@@ -43,7 +53,7 @@ CFLAGS := $(INCPATH) -gstabs -Wall -Wextra -Wwrite-strings -D_AMIGA_  -D_DEBUG  
 ##
 ###################################################################
 
-.PHONY: all all-before all-after clean clean-custom realclean
+.PHONY: all all-before all-after clean clean-custom realclean config
 
 all: all-before libgen all-after
 
@@ -59,6 +69,9 @@ clean: clean-custom
 realclean:
 	rm -f -v  $(libgen_OBJ) libgen
 
+config:
+	@echo "CC = $(CC)"
+	@echo "CTAGS_PATH = $(CTAGS_PATH)"
 
 ###################################################################
 ##
@@ -67,7 +80,7 @@ realclean:
 ###################################################################
 
 libgen: $(libgen_OBJ)
-	gcc:bin/gcc -o libgen.debug $(libgen_OBJ) -lauto
+	$(CC) -o libgen.debug $(libgen_OBJ) -lauto
 	cp -f -p libgen.debug libgen
 
 
@@ -154,6 +167,8 @@ src/interface_h_writer.o: src/interface_h_writer.c src/interface_h_writer.h src/
 	 src/debugging_utils.h src/function_definition.h
 	$(CC) -c src/interface_h_writer.c -o src/interface_h_writer.o $(CFLAGS)
 
-prefs.o: prefs.c
-	$(CC) -c prefs.c -o prefs.o $(CFLAGS)
+src/prefs.o: src/prefs.c
+	$(CC) -c src/prefs.c -o src/prefs.o $(CFLAGS)
 
+src/auto_init_writer.o: src/auto_init_writer.c src/auto_init_writer.h src/utils.h src/debugging_utils.h src/list_utils.h
+	$(CC) -c src/auto_init_writer.c -o src/auto_init_writer.o $(CFLAGS)

@@ -822,3 +822,44 @@ STRPTR ScrollPastWhitespace (STRPTR data_s)
 	return start_s;
 }	
 
+
+
+STRPTR CreateRegEx (CONST_STRPTR pattern_s, BOOL capture_flag)
+{
+	STRPTR reg_ex_s = NULL;
+
+	ENTER ();
+
+	if (pattern_s)
+		{
+			size_t l = (2 * strlen (pattern_s)) + 2;
+
+			reg_ex_s = (STRPTR) IExec->AllocVecTags (l, TAG_DONE);
+
+			if (reg_ex_s)
+				{
+					int32 is_wild;
+
+					if (capture_flag)
+						{
+							is_wild = IDOS->ParseCapturePattern (pattern_s, reg_ex_s, l, TRUE);
+						}
+					else
+						{
+							is_wild = IDOS->ParsePatternNoCase (pattern_s, reg_ex_s, l);
+						}
+
+					if (is_wild < 0)
+						{
+							IDOS->Printf ("Error creating pattern from \"%s\"\n", pattern_s);
+						}
+				}
+			else
+				{
+					IDOS->Printf ("Not enough memory to create regular expression from \"%s\"\n", pattern_s);
+				}
+		}
+
+	LEAVE ();
+	return reg_ex_s;
+}
