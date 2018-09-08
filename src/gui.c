@@ -15,21 +15,27 @@
 */
 
 #include <classes/window.h>
+
+#include <gadgets/checkbox.h>
+#include <gadgets/getfile.h>
 #include <gadgets/integer.h>
 #include <gadgets/layout.h>
-#include <gadgets/getfile.h>
+#include <gadgets/radiobutton.h>
 #include <gadgets/string.h>
+
 #include <images/label.h>
 
-#include <proto/intuition.h>
-#include <proto/exec.h>
-#include <proto/layout.h>
+#include <proto/chooser.h>
 #include <proto/checkbox.h>
-#include <proto/window.h>
+#include <proto/exec.h>
 #include <proto/getfile.h>
-#include <proto/label.h>
 #include <proto/integer.h>
+#include <proto/intuition.h>
+#include <proto/label.h>
+#include <proto/layout.h>
+#include <proto/radiobutton.h>
 #include <proto/string.h>
+#include <proto/window.h>
 
 #include "debugging_utils.h"
 #include "gui.h"
@@ -57,6 +63,7 @@ enum
 };
 
 
+static struct List *GetRadioButtonLabels (void);
 
 
 BOOL OpenPrefsGUI (LibGenPrefs *prefs_p)
@@ -64,7 +71,7 @@ BOOL OpenPrefsGUI (LibGenPrefs *prefs_p)
 	BOOL success_flag = FALSE;
 
     // Make sure class files were loaded.
-    if (WindowBase == NULL || LayoutBase == NULL || CheckBoxBase == NULL || GetFileBase == NULL || LabelBase == NULL || IntegerBase == NULL || StringBase == NULL)
+    if (WindowBase == NULL || LayoutBase == NULL || CheckBoxBase == NULL || GetFileBase == NULL || LabelBase == NULL || IntegerBase == NULL || StringBase == NULL || RadioButtonBase == NULL)
     	{
         DB (KPRINTF ("%s %ld - Failed to open gui libs\n", __FILE__, __LINE__));	
         return success_flag;
@@ -91,7 +98,7 @@ BOOL OpenPrefsGUI (LibGenPrefs *prefs_p)
 					LAYOUT_Orientation, LAYOUT_ORIENT_VERT,
 					LAYOUT_SpaceOuter, TRUE,
 					LAYOUT_DeferLayout, TRUE,
-					
+				
 					/* Library Name */
 					LAYOUT_AddChild, gadgets_p [GID_LIBRARY_NAME] = (struct Gadget *) IIntuition -> NewObject (NULL, "string.gadget",
 						GA_Text, "Library name",
@@ -122,6 +129,16 @@ BOOL OpenPrefsGUI (LibGenPrefs *prefs_p)
 						LABEL_Text, "Headers file pattern", 
 					TAG_DONE),				
 					
+
+					/* Header paths to ignore */
+					LAYOUT_AddChild, gadgets_p [GID_PATHS_TO_IGNORE] = (struct Gadget *) IIntuition -> NewObject (NULL, "string.gadget",
+						GA_ID, GID_PATHS_TO_IGNORE,
+						STRINGA_TextVal, "",
+					TAG_DONE),
+					CHILD_Label,  IIntuition -> NewObject (NULL, "label.image",
+						LABEL_Text, "Header paths to ignore", 
+					TAG_DONE),		
+
 					/* Sources directory */
 					LAYOUT_AddChild, gadgets_p [GID_SOURCES_DIR] = (struct Gadget *) IIntuition -> NewObject (NULL, "getfile.gadget",
 						GA_ID, GID_SOURCES_DIR,
@@ -165,7 +182,12 @@ BOOL OpenPrefsGUI (LibGenPrefs *prefs_p)
 						GA_Text, "Generate code",
 						GA_ID, GID_GENERATE_CODE_CHECKBOX,
 					TAG_DONE),
-				
+
+					/* Generate code for newlib */
+					LAYOUT_AddChild, gadgets_p [GID_NEWLIB] = (struct Gadget *) IIntuition -> NewObject (NULL, "checkbox.gadget",
+						GA_Text, "Generate code uses NewLib",
+						GA_ID, GID_NEWLIB,
+					TAG_DONE),
 
 					/* Interface version */
 					LAYOUT_AddChild, gadgets_p [GID_VERSION_INT] = (struct Gadget *) IIntuition -> NewObject (NULL, "integer.gadget",
@@ -176,7 +198,45 @@ BOOL OpenPrefsGUI (LibGenPrefs *prefs_p)
 					CHILD_Label,  IIntuition -> NewObject (NULL, "label.image",
 						LABEL_Text, "Interface version", 
 					TAG_DONE),				
-				
+	
+					/* Interface flags */
+					LAYOUT_AddChild, gadgets_p [GID_FLAGS] = (struct Gadget *) IIntuition -> NewObject (NULL, "radiobutton.gadget",
+						GA_ID, GID_FLAGS,
+					TAG_DONE),
+					CHILD_Label,  IIntuition -> NewObject (NULL, "label.image",
+						LABEL_Text, "Interface flags", 
+					TAG_DONE),	
+
+					/* Ordering filename */
+					LAYOUT_AddChild, gadgets_p [GID_ORDERING_FILENAME] = (struct Gadget *) IIntuition -> NewObject (NULL, "getfile.gadget",
+						GA_ID, GID_ORDERING_FILENAME,
+						GETFILE_TitleText, "Choose file containing function ordering",
+						GETFILE_FilesOnly, TRUE,
+						GETFILE_Pattern,            "#?",
+						GETFILE_DoSaveMode,         FALSE,
+					TAG_DONE),
+					CHILD_Label,  IIntuition -> NewObject (NULL, "label.image",
+						LABEL_Text, "Function order filenaem", 
+					TAG_DONE),
+			
+					/* Excluded functions filename */
+					LAYOUT_AddChild, gadgets_p [GID_EXCLUDED_FUNCTIONS_FILENAME] = (struct Gadget *) IIntuition -> NewObject (NULL, "getfile.gadget",
+						GA_ID, GID_EXCLUDED_FUNCTIONS_FILENAME,
+						GETFILE_TitleText, "Choose file containing excluded functions",
+						GETFILE_FilesOnly, TRUE,
+						GETFILE_Pattern,            "#?",
+						GETFILE_DoSaveMode,         FALSE,
+					TAG_DONE),
+					CHILD_Label,  IIntuition -> NewObject (NULL, "label.image",
+						LABEL_Text, "Functions to ignore", 
+					TAG_DONE),
+
+					/* Verbose */
+					LAYOUT_AddChild, gadgets_p [GID_VERBOSE] = (struct Gadget *) IIntuition -> NewObject (NULL, "checkbox.gadget",
+						GA_Text, "Verbose",
+						GA_ID, GID_VERBOSE,
+					TAG_DONE),
+
 				TAG_DONE),
 				
 			TAG_DONE);	
@@ -270,3 +330,12 @@ BOOL OpenPrefsGUI (LibGenPrefs *prefs_p)
 		
 	return success_flag;
 }
+
+
+static struct List *GetRadioButtonLabels (void)
+{	
+	struct List *labels_p = NULL;
+
+	return NULL;
+}
+
