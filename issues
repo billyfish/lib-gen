@@ -1,6 +1,6 @@
 TODO:
 
-FIX for static JSON_INLINE declarartions in jansson.h e.g. json_incref and json_decref
+FIX for static JSON_INLINE declarations in jansson.h e.g. json_incref and json_decref
 
 
 
@@ -53,7 +53,7 @@ LIB_API int Subtract (int value1, int value2);
 
 would only see Subtract
 
-wheraes 
+whereas 
 
 ~~~~~~~~~~~~~~~
 #ifndef ADD_IMPL

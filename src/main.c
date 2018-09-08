@@ -45,6 +45,7 @@
 #include "makefile_writer.h"
 #include "vectors.h"
 #include "prefs.h"
+#include "gui.h"
 
 /* from ctags */
 #include "main.h"
@@ -118,91 +119,93 @@ int main (int argc, char *argv [])
 
 	if (OpenLibs ())
 		{
-			int32 args [AR_NUM_ARGS];
-			struct RDArgs *args_p = NULL;
-			STRPTR args_s = (STRPTR) "HI=HeadersInput/A,SI=SourceInput/A,R=Recurse/S,L=LibraryName/A,HP=HeaderFilePattern/K,SP=SourceFilePattern/K,PP=PrototypePattern/K,VER=Version/N,FL=Flags/K,GC=GenerateCode/S,V=Verbose/N,NL=Newlib/S,ORD=OrderingFile/K,EXC=ExcludeFile/K,IGN=Ignore/F";
-			
-			memset (args, 0, AR_NUM_ARGS * sizeof (int32));
-
-			args_p = IDOS->ReadArgs (args_s, args, NULL);
-
-			if (args_p != NULL)
+			LibGenPrefs prefs;
+			CONST_STRPTR paths_to_ignore_s = NULL;
+																
+			InitLibGenPrefs (&prefs);
+														
+			if (argc == 1)
 				{
-					LibGenPrefs prefs;
-					CONST_STRPTR paths_to_ignore_s = NULL;
-							
-					InitLibGenPrefs (&prefs);
-					
-					if (FillInPrefs (&prefs, args))
-						{
-							if (GetVerbosity () >= VB_LOUD)
-								{
-									PrintPrefs (&prefs, IDOS -> Output ());
-
-									switch (prefs.lgp_visibility_flag)
-										{
-											case IF_PUBLIC:
-												IDOS->Printf ("Flags = \"none\"\n");
-												break;
-
-											case IF_PROTECTED:
-												IDOS->Printf ("Flags = \"protected\"\n");
-												break;
-
-											case IF_PRIVATE:
-												IDOS->Printf ("Flags = \"private\"\n");
-												break;
-										}
-
-								}		/* if (GetVerbosity () >= VB_LOUD) */
-
-
-							if (ArePrefsValid (&prefs))
-								{
-									STRPTR prefix_s = GetPrefixString (prefs.lgp_library_s);
-									
-									if (prefix_s)
-										{
-											struct List *paths_to_ignore_p = NULL;
-											struct List *functions_to_ignore_p = NULL;
-
-											if (paths_to_ignore_s)
-												{
-													paths_to_ignore_p = ParsePaths (prefs.lgp_source_input_dir_s, paths_to_ignore_s);
-												}
-
-
-											result = Run (&prefs, prefix_s);
-
-											if (functions_to_ignore_p)
-												{
-													ClearList (functions_to_ignore_p, TRUE);
-												}
-
-											if (paths_to_ignore_p)
-												{
-													ClearList (paths_to_ignore_p, TRUE);
-												}
-
-											IExec->FreeVec (prefix_s);
-										}
-
-								}		/* if (ArePrefsValid (&prefs)) */
-
-						}		/* if (FillInPrefs (&prefs, args)) */
-
-
-
-					ClearLibGenPrefs (&prefs);
-
-
-					DB (KPRINTF ("%s %ld - freeing args\n", __FILE__, __LINE__));
-					IDOS->FreeArgs (args_p);
-				}
+					OpenPrefsGUI (&prefs);
+				}		/* if (argc == 1) */
 			else
 				{
-					IDOS->Printf ("Required arguments missing, the arguments have the following pattern:\n%s\n", args_s);					
-				}
+					int32 args [AR_NUM_ARGS];
+					struct RDArgs *args_p = NULL;
+					STRPTR args_s = (STRPTR) "HI=HeadersInput/A,SI=SourceInput/A,R=Recurse/S,L=LibraryName/A,HP=HeaderFilePattern/K,SP=SourceFilePattern/K,PP=PrototypePattern/K,VER=Version/N,FL=Flags/K,GC=GenerateCode/S,V=Verbose/N,NL=Newlib/S,ORD=OrderingFile/K,EXC=ExcludeFile/K,IGN=Ignore/F";
+					
+					memset (args, 0, AR_NUM_ARGS * sizeof (int32));
+						
+					args_p = IDOS->ReadArgs (args_s, args, NULL);
+		
+					if (args_p != NULL)
+						{							
+							if (FillInPrefs (&prefs, args))
+								{
+									if (GetVerbosity () >= VB_LOUD)
+										{
+											PrintPrefs (&prefs, IDOS -> Output ());
+		
+											switch (prefs.lgp_visibility_flag)
+												{
+													case IF_PUBLIC:
+														IDOS->Printf ("Flags = \"none\"\n");
+														break;
+		
+													case IF_PROTECTED:
+														IDOS->Printf ("Flags = \"protected\"\n");
+														break;
+		
+													case IF_PRIVATE:
+														IDOS->Printf ("Flags = \"private\"\n");
+														break;
+												}
+		
+										}		/* if (GetVerbosity () >= VB_LOUD) */
+								
+								}		/* if (FillInPrefs (&prefs, args)) */
+						
+							IDOS->FreeArgs (args_p);
+						}		/* if (args_p != NULL) */
+
+				}		/* if (argc == 1) else ... */
+		
+			if (ArePrefsValid (&prefs))
+				{
+					STRPTR prefix_s = GetPrefixString (prefs.lgp_library_s);
+					
+					if (prefix_s)
+						{
+							struct List *paths_to_ignore_p = NULL;
+							struct List *functions_to_ignore_p = NULL;
+
+							if (paths_to_ignore_s)
+								{
+									paths_to_ignore_p = ParsePaths (prefs.lgp_source_input_dir_s, paths_to_ignore_s);
+								}
+
+
+							result = Run (&prefs, prefix_s);
+
+							if (functions_to_ignore_p)
+								{
+									ClearList (functions_to_ignore_p, TRUE);
+								}
+
+							if (paths_to_ignore_p)
+								{
+									ClearList (paths_to_ignore_p, TRUE);
+								}
+
+							IExec->FreeVec (prefix_s);
+						}
+
+				}		/* if (ArePrefsValid (&prefs)) */
+
+			ClearLibGenPrefs (&prefs);
+
+			DB (KPRINTF ("%s %ld - freeing args\n", __FILE__, __LINE__));
+
 
 			DB (KPRINTF ("%s %ld - closing lins\n", __FILE__, __LINE__));
 			CloseLibs ();

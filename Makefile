@@ -4,7 +4,7 @@
 #
 # Project: libgen
 #
-# Created on: 12-07-2018 17:58:11
+# Created on: 08-09-2018 00:37:46
 #
 #
 
@@ -17,13 +17,14 @@
 ###################################################################
 
 libgen_OBJ := \
-	 src/init_writer.o src/inline_header_writer.o src/makefile_writer.o \
-	 src/proto_header_writer.o src/list_utils.o src/byte_buffer.o \
-	 src/document_parser.o src/library_utils.o src/idl_writer.o \
-	 src/main.o src/utils.o src/parameter.o \
-	 src/function_definition.o src/writer.o src/c_writer.o \
-	 src/makefile_utils.o src/vectors.o src/interface_h_writer.o \
-	 src/prefs.o src/auto_init_writer.o
+	 src/auto_init_writer.o src/init_writer.o src/inline_header_writer.o \
+	 src/makefile_writer.o src/proto_header_writer.o src/list_utils.o \
+	 src/byte_buffer.o src/document_parser.o src/library_utils.o \
+	 src/idl_writer.o src/main.o src/utils.o \
+	 src/parameter.o src/function_definition.o src/writer.o \
+	 src/c_writer.o src/makefile_utils.o src/vectors.o \
+	 src/interface_h_writer.o src/prefs.o src/gui.o \
+	
 
 
 ###################################################################
@@ -32,19 +33,11 @@ libgen_OBJ := \
 ##
 ###################################################################
 
-ifeq ($(CC),1)
-CC := gcc
-endif
+CC := gcc:bin/gcc
 
-ifeq (CTAGS_PATH,)
-CTAGS_PATH = Workspace:ctags58
-endif
+INCPATH := -I.
 
-INCPATH := -I. -Isrc
-
-
-
-CFLAGS := $(INCPATH) -gstabs -Wall -Wextra -Wwrite-strings -D_AMIGA_  -D_DEBUG  -I$(CTAGS_PATH)
+CFLAGS := $(INCPATH) -gstabs -Wall -Wextra -Wwrite-strings -D_AMIGA_  -D_DEBUG  -IWorkspace:ctags58
 
 
 ###################################################################
@@ -53,7 +46,7 @@ CFLAGS := $(INCPATH) -gstabs -Wall -Wextra -Wwrite-strings -D_AMIGA_  -D_DEBUG  
 ##
 ###################################################################
 
-.PHONY: all all-before all-after clean clean-custom realclean config
+.PHONY: all all-before all-after clean clean-custom realclean
 
 all: all-before libgen all-after
 
@@ -69,9 +62,6 @@ clean: clean-custom
 realclean:
 	rm -f -v  $(libgen_OBJ) libgen
 
-config:
-	@echo "CC = $(CC)"
-	@echo "CTAGS_PATH = $(CTAGS_PATH)"
 
 ###################################################################
 ##
@@ -80,7 +70,7 @@ config:
 ###################################################################
 
 libgen: $(libgen_OBJ)
-	$(CC) -o libgen.debug $(libgen_OBJ) -lauto
+	gcc:bin/gcc -o libgen.debug $(libgen_OBJ) -lauto
 	cp -f -p libgen.debug libgen
 
 
@@ -89,6 +79,18 @@ libgen: $(libgen_OBJ)
 ##////  Standard rules
 ##
 ###################################################################
+
+src/auto_init_writer.o: src/auto_init_writer.c src/auto_init_writer.h src/utils.h \
+	
+	$(CC) -c src/auto_init_writer.c -o src/auto_init_writer.o $(CFLAGS)
+
+src/byte_buffer.o: src/byte_buffer.c src/byte_buffer.h src/utils.h \
+	
+	$(CC) -c src/byte_buffer.c -o src/byte_buffer.o $(CFLAGS)
+
+src/document_parser.o: src/document_parser.c src/document_parser.h src/byte_buffer.h \
+	 src/utils.h
+	$(CC) -c src/document_parser.c -o src/document_parser.o $(CFLAGS)
 
 src/init_writer.o: src/init_writer.c src/debugging_utils.h src/utils.h \
 	
@@ -103,20 +105,17 @@ src/makefile_writer.o: src/makefile_writer.c src/makefile_writer.h src/function_
 	
 	$(CC) -c src/makefile_writer.c -o src/makefile_writer.o $(CFLAGS)
 
+src/prefs.o: src/prefs.c src/prefs.h src/function_definition.h \
+	 src/parameter.h src/utils.h src/debugging_utils.h \
+	
+	$(CC) -c src/prefs.c -o src/prefs.o $(CFLAGS)
+
 src/proto_header_writer.o: src/proto_header_writer.c src/proto_header_writer.h src/debugging_utils.h \
 	
 	$(CC) -c src/proto_header_writer.c -o src/proto_header_writer.o $(CFLAGS)
 
 src/list_utils.o: src/list_utils.c src/list_utils.h
 	$(CC) -c src/list_utils.c -o src/list_utils.o $(CFLAGS)
-
-src/byte_buffer.o: src/byte_buffer.c src/byte_buffer.h src/utils.h \
-	
-	$(CC) -c src/byte_buffer.c -o src/byte_buffer.o $(CFLAGS)
-
-src/document_parser.o: src/document_parser.c src/document_parser.h src/byte_buffer.h \
-	 src/utils.h
-	$(CC) -c src/document_parser.c -o src/document_parser.o $(CFLAGS)
 
 src/library_utils.o: src/library_utils.c src/library_utils.h
 	$(CC) -c src/library_utils.c -o src/library_utils.o $(CFLAGS)
@@ -132,7 +131,7 @@ src/main.o: src/main.c src/utils.h src/function_definition.h \
 	 src/inline_header_writer.h src/auto_init_writer.h src/init_writer.h \
 	 src/proto_header_writer.h src/interface_h_writer.h src/library_utils.h \
 	 src/list_utils.h src/makefile_writer.h src/vectors.h \
-	
+	 src/prefs.h
 	$(CC) -c src/main.c -o src/main.o $(CFLAGS)
 
 src/utils.o: src/utils.c src/debugging_utils.h src/utils.h \
@@ -167,8 +166,7 @@ src/interface_h_writer.o: src/interface_h_writer.c src/interface_h_writer.h src/
 	 src/debugging_utils.h src/function_definition.h
 	$(CC) -c src/interface_h_writer.c -o src/interface_h_writer.o $(CFLAGS)
 
-src/prefs.o: src/prefs.c
-	$(CC) -c src/prefs.c -o src/prefs.o $(CFLAGS)
+src/gui.o: src/gui.c src/gui.h src/prefs.h \
+	
+	$(CC) -c src/gui.c -o src/gui.o $(CFLAGS)
 
-src/auto_init_writer.o: src/auto_init_writer.c src/auto_init_writer.h src/utils.h src/debugging_utils.h src/list_utils.h
-	$(CC) -c src/auto_init_writer.c -o src/auto_init_writer.o $(CFLAGS)
