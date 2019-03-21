@@ -94,6 +94,11 @@ static BOOL SetLibGenPrefsRegExp (STRPTR *regexp_ss, CONST_STRPTR pattern_s)
 {
 	*regexp_ss = CreateRegEx (pattern_s, TRUE);
 
+	if (! (*regexp_ss)) 
+		{
+			IDOS->Printf ("Failed to create a regex for \"%s\"\n", pattern_s);
+		}
+
 	return (*regexp_ss) ? TRUE : FALSE;
 }
 
@@ -140,7 +145,10 @@ BOOL ArePrefsValid (const LibGenPrefs *prefs_p)
 
 void PrintPrefs (const LibGenPrefs * const prefs_p, BPTR output_p)
 {
-
+	IDOS->FPrintf (output_p, "lgp_header_input_dir_s \"%s\"\n", prefs_p -> lgp_header_input_dir_s);
+	IDOS->FPrintf (output_p, "lgp_header_filename_regexp_s \"%s\"\n", prefs_p -> lgp_header_filename_regexp_s);
+	IDOS->FPrintf (output_p, "lgp_library_s \"%s\"\n", prefs_p -> lgp_library_s);	
+	IDOS->FPrintf (output_p, "lgp_prototype_regexp_s \"%s\"\n", prefs_p -> lgp_prototype_regexp_s);
 }
 
 

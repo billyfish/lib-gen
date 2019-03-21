@@ -27,6 +27,7 @@
 
 #include <proto/chooser.h>
 #include <proto/checkbox.h>
+#include <proto/dos.h>
 #include <proto/exec.h>
 #include <proto/getfile.h>
 #include <proto/integer.h>
@@ -36,6 +37,7 @@
 #include <proto/radiobutton.h>
 #include <proto/string.h>
 #include <proto/window.h>
+
 
 #include "debugging_utils.h"
 #include "gui.h"
@@ -59,6 +61,7 @@ enum
 	GID_ORDERING_FILENAME,
 	GID_EXCLUDED_FUNCTIONS_FILENAME,
 	GID_PATHS_TO_IGNORE,
+	GID_RUN,
 	GID_LAST
 };
 
@@ -69,16 +72,17 @@ static struct List *GetRadioButtonLabels (void);
 BOOL OpenPrefsGUI (LibGenPrefs *prefs_p)
 {
 	BOOL success_flag = FALSE;
+	struct MsgPort *app_port_p = NULL;
 
-    // Make sure class files were loaded.
-    if (WindowBase == NULL || LayoutBase == NULL || CheckBoxBase == NULL || GetFileBase == NULL || LabelBase == NULL || IntegerBase == NULL || StringBase == NULL || RadioButtonBase == NULL)
-    	{
-        DB (KPRINTF ("%s %ld - Failed to open gui libs\n", __FILE__, __LINE__));	
-        return success_flag;
-    	}
+  // Make sure class files were loaded.
+  if (WindowBase == NULL || LayoutBase == NULL || CheckBoxBase == NULL || GetFileBase == NULL || LabelBase == NULL || IntegerBase == NULL || StringBase == NULL || RadioButtonBase == NULL)
+  	{
+      DB (KPRINTF ("%s %ld - Failed to open gui libs\n", __FILE__, __LINE__));	
+      return success_flag;
+  	}
 
 
-	struct MsgPort *app_port_p = IExec -> AllocSysObjectTags (ASOT_PORT, TAG_DONE);
+	app_port_p = IExec -> AllocSysObjectTags (ASOT_PORT, TAG_DONE);
 
 	if (app_port_p)
 		{
@@ -91,9 +95,10 @@ BOOL OpenPrefsGUI (LibGenPrefs *prefs_p)
 				WA_DepthGadget, TRUE,
 				WA_DragBar, TRUE,
 				WA_CloseGadget, TRUE,
-				WINDOW_IconifyGadget,  TRUE,
+//				WA_IDCMP,        IDCMP_GADGETUP | IDCMP_CLOSEWINDOW | IDCMP_MENUPICK,
+//				WINDOW_IconifyGadget,  TRUE,
 				WINDOW_Position,       WPOS_CENTERSCREEN,
-				WINDOW_AppPort, app_port_p,
+//				WINDOW_AppPort, app_port_p,
 				WINDOW_Layout, IIntuition -> NewObject (NULL, "layout.gadget",
 					LAYOUT_Orientation, LAYOUT_ORIENT_VERT,
 					LAYOUT_SpaceOuter, TRUE,
@@ -136,7 +141,7 @@ BOOL OpenPrefsGUI (LibGenPrefs *prefs_p)
 						STRINGA_TextVal, "",
 					TAG_DONE),
 					CHILD_Label,  IIntuition -> NewObject (NULL, "label.image",
-						LABEL_Text, "Header paths to ignore", 
+						LABEL_Text, "Header directories to ignore", 
 					TAG_DONE),		
 
 					/* Sources directory */
@@ -158,7 +163,7 @@ BOOL OpenPrefsGUI (LibGenPrefs *prefs_p)
 						STRINGA_TextVal, "#?.c",
 					TAG_DONE),
 					CHILD_Label,  IIntuition -> NewObject (NULL, "label.image",
-						LABEL_Text, "Source file pattern", 
+						LABEL_Text, "Sources file pattern", 
 					TAG_DONE),				
 
 					
@@ -175,23 +180,27 @@ BOOL OpenPrefsGUI (LibGenPrefs *prefs_p)
 					LAYOUT_AddChild, gadgets_p [GID_RECURSE_CHECKBOX] = (struct Gadget *) IIntuition -> NewObject (NULL, "checkbox.gadget",
 						GA_Text, "Recurse",
 						GA_ID, GID_RECURSE_CHECKBOX,
+						GA_RelVerify, TRUE,						
 					TAG_DONE),
 
 					/* Generate code checkbox */
 					LAYOUT_AddChild, gadgets_p [GID_GENERATE_CODE_CHECKBOX] = (struct Gadget *) IIntuition -> NewObject (NULL, "checkbox.gadget",
 						GA_Text, "Generate code",
 						GA_ID, GID_GENERATE_CODE_CHECKBOX,
+						GA_RelVerify, TRUE,						
 					TAG_DONE),
 
 					/* Generate code for newlib */
 					LAYOUT_AddChild, gadgets_p [GID_NEWLIB] = (struct Gadget *) IIntuition -> NewObject (NULL, "checkbox.gadget",
-						GA_Text, "Generate code uses NewLib",
+						GA_Text, "Generated code uses NewLib",
 						GA_ID, GID_NEWLIB,
+						GA_RelVerify, TRUE,						
 					TAG_DONE),
 
 					/* Interface version */
 					LAYOUT_AddChild, gadgets_p [GID_VERSION_INT] = (struct Gadget *) IIntuition -> NewObject (NULL, "integer.gadget",
 						GA_ID, GID_VERSION_INT,
+						GA_RelVerify, TRUE,						
 						INTEGER_Minimum, 1,
 						INTEGER_Number, 1,
 					TAG_DONE),
@@ -211,19 +220,17 @@ BOOL OpenPrefsGUI (LibGenPrefs *prefs_p)
 					LAYOUT_AddChild, gadgets_p [GID_ORDERING_FILENAME] = (struct Gadget *) IIntuition -> NewObject (NULL, "getfile.gadget",
 						GA_ID, GID_ORDERING_FILENAME,
 						GETFILE_TitleText, "Choose file containing function ordering",
-						GETFILE_FilesOnly, TRUE,
 						GETFILE_Pattern,            "#?",
 						GETFILE_DoSaveMode,         FALSE,
 					TAG_DONE),
 					CHILD_Label,  IIntuition -> NewObject (NULL, "label.image",
-						LABEL_Text, "Function order filenaem", 
+						LABEL_Text, "Function order filename", 
 					TAG_DONE),
 			
 					/* Excluded functions filename */
 					LAYOUT_AddChild, gadgets_p [GID_EXCLUDED_FUNCTIONS_FILENAME] = (struct Gadget *) IIntuition -> NewObject (NULL, "getfile.gadget",
 						GA_ID, GID_EXCLUDED_FUNCTIONS_FILENAME,
 						GETFILE_TitleText, "Choose file containing excluded functions",
-						GETFILE_FilesOnly, TRUE,
 						GETFILE_Pattern,            "#?",
 						GETFILE_DoSaveMode,         FALSE,
 					TAG_DONE),
@@ -235,6 +242,14 @@ BOOL OpenPrefsGUI (LibGenPrefs *prefs_p)
 					LAYOUT_AddChild, gadgets_p [GID_VERBOSE] = (struct Gadget *) IIntuition -> NewObject (NULL, "checkbox.gadget",
 						GA_Text, "Verbose",
 						GA_ID, GID_VERBOSE,
+						GA_RelVerify, TRUE,						
+					TAG_DONE),
+
+					/* Run */
+					LAYOUT_AddChild, gadgets_p [GID_RUN] = (struct Gadget *) IIntuition -> NewObject (NULL, "button.gadget",
+						GA_Text, "Run",
+						GA_ID, GID_RUN,
+						GA_RelVerify, TRUE,						
 					TAG_DONE),
 
 				TAG_DONE),
@@ -249,47 +264,85 @@ BOOL OpenPrefsGUI (LibGenPrefs *prefs_p)
 
 				if (window_p)
 					{
-						ULONG wait, signal, app = (1L << app_port_p -> mp_SigBit);
-						ULONG done = FALSE;
-						ULONG result;
-						UWORD code;
-		
+						uint32 signal; /*, app = (1L << app_port_p -> mp_SigBit) */;
+						uint32 done = FALSE;
+						uint32 value;
+						
 					 	// Obtain the window wait signal mask.
 						IIntuition -> GetAttr (WINDOW_SigMask, main_obj_p, &signal);
 
 						// Input Event Loop		
 						while (!done)
 							{
-								wait = IExec->Wait (signal | SIGBREAKF_CTRL_C | app);
+								uint32 wait = IExec->Wait (signal | SIGBREAKF_CTRL_C /* | app*/ );
 		
-								if ( wait & SIGBREAKF_CTRL_C )
+								if (wait & SIGBREAKF_CTRL_C)
 									{
 										done = TRUE;
 									}
-								else
+								else if (wait & signal)
 									{
-										while ((result = IIntuition -> IDoMethod (main_obj_p, WM_HANDLEINPUT, &code)) != WMHI_LASTMSG)
+										uint32 result = WMHI_LASTMSG;
+										int16 code = 0;
+
+										while ((result = IIntuition->IDoMethod (main_obj_p, WM_HANDLEINPUT, &code)) != WMHI_LASTMSG)
 											{
+												DB (KPRINTF ("%s %ld - code %d result %lu mapped %lu\n", __FILE__, __LINE__, code, result, result & WMHI_CLASSMASK));
+												                    	IDOS->Printf ("res %lu code %d WMHI_CLASSMASK %lu\n", result, code, WMHI_CLASSMASK);
+												                    	
 												switch (result & WMHI_CLASSMASK)
 													{
 														case WMHI_CLOSEWINDOW:
+															DB (KPRINTF ("%s %ld - WMHI_CLOSEWINDOW\n", __FILE__, __LINE__));
 															window_p = NULL;
 															done = TRUE;
 															break;
+
+
 			
-														case WMHI_GADGETUP:
+														case WMHI_GADGETDOWN:
+															DB (KPRINTF ("%s %ld - WMHI_GADGETDOWN result %ld\n", __FILE__, __LINE__, result));
+															
 															switch (result & WMHI_GADGETMASK)
 																{
-
+																	case GID_GENERATE_CODE_CHECKBOX:
+																		{
+																			uint32 res = IIntuition -> GetAttr (CHECKBOX_Checked, (Object *) gadgets_p [GID_GENERATE_CODE_CHECKBOX], &value);
+																			DB (KPRINTF ("%s %ld - GID_GENERATE_CODE_CHECKBOX res %ld val %ld\n", __FILE__, __LINE__, res, value));
+																		}
+																		break;
+							
+																	default:
+																		break;
+																}
+															break;
+															
+			
+														case WMHI_GADGETUP:
+															DB (KPRINTF ("%s %ld - WMHI_GADGETUP result %ld\n", __FILE__, __LINE__, result));
+															
+															switch (result & WMHI_GADGETMASK)
+																{
+																	case GID_GENERATE_CODE_CHECKBOX:
+																		{
+																			uint32 res = IIntuition -> GetAttr (CHECKBOX_Checked, (Object *) gadgets_p [GID_GENERATE_CODE_CHECKBOX], &value);
+																			DB (KPRINTF ("%s %ld - GID_GENERATE_CODE_CHECKBOX res %ld val %ld\n", __FILE__, __LINE__, res, value));
+																		}
+																		break;
+							
+																	default:
+																		break;
 																}
 															break;
 						
 														case WMHI_ICONIFY:
+															DB (KPRINTF ("%s %ld - WMHI_ICONIFY\n", __FILE__, __LINE__));
 															IIntuition -> IDoMethod (main_obj_p, WM_ICONIFY);
 															window_p = NULL;
 															break;
 						
 														case WMHI_UNICONIFY:
+															DB (KPRINTF ("%s %ld - WMHI_UNICONIFY\n", __FILE__, __LINE__));															
 															window_p = (struct Window *) IIntuition -> IDoMethod (main_obj_p, WM_OPEN);
 	
 															if (window_p)
@@ -300,6 +353,10 @@ BOOL OpenPrefsGUI (LibGenPrefs *prefs_p)
 																{
 																	done = TRUE;	// error re-opening window!
 																}
+												 			break;
+												 			
+												 		default:
+												 			DB (KPRINTF ("%s %ld - unknown result %ld\n", __FILE__, __LINE__, result));
 												 			break;
 													}
 											}

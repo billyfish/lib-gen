@@ -82,6 +82,7 @@ static BOOL FillInPrefs (LibGenPrefs *prefs_p, const int32 * const args_p);
 
 static STRPTR GetPrefixString (CONST_STRPTR value_s);
 
+static void DebugArgs (const int32 * const args_p);
 
 
 enum Args
@@ -121,7 +122,8 @@ int main (int argc, char *argv [])
 		{
 			LibGenPrefs prefs;
 			CONST_STRPTR paths_to_ignore_s = NULL;
-																
+			struct RDArgs *args_p = NULL;
+																					
 			InitLibGenPrefs (&prefs);
 														
 			if (argc == 1)
@@ -132,7 +134,7 @@ int main (int argc, char *argv [])
 				{
 					int32 args [AR_NUM_ARGS];
 					struct RDArgs *args_p = NULL;
-					STRPTR args_s = (STRPTR) "HI=HeadersInput/A,SI=SourceInput/A,R=Recurse/S,L=LibraryName/A,HP=HeaderFilePattern/K,SP=SourceFilePattern/K,PP=PrototypePattern/K,VER=Version/N,FL=Flags/K,GC=GenerateCode/S,V=Verbose/N,NL=Newlib/S,ORD=OrderingFile/K,EXC=ExcludeFile/K,IGN=Ignore/F";
+					CONST_STRPTR args_s = "HI=HeadersInput/A,SI=SourceInput/K,R=Recurse/S,L=LibraryName/A,HP=HeaderFilePattern/K,SP=SourceFilePattern/K,PP=PrototypePattern/K,VER=Version/N,FL=Flags/K,GC=GenerateCode/S,V=Verbose/N,NL=Newlib/S,ORD=OrderingFile/K,EXC=ExcludeFile/K,IGN=Ignore/F";
 					
 					memset (args, 0, AR_NUM_ARGS * sizeof (int32));
 						
@@ -140,6 +142,8 @@ int main (int argc, char *argv [])
 		
 					if (args_p != NULL)
 						{							
+							DebugArgs (args);
+						
 							if (FillInPrefs (&prefs, args))
 								{
 									if (GetVerbosity () >= VB_LOUD)
@@ -164,10 +168,11 @@ int main (int argc, char *argv [])
 										}		/* if (GetVerbosity () >= VB_LOUD) */
 								
 								}		/* if (FillInPrefs (&prefs, args)) */
-						
-							IDOS->FreeArgs (args_p);
 						}		/* if (args_p != NULL) */
-
+					else
+						{
+							IDOS->Printf ("Reading args failed\n");
+						}
 				}		/* if (argc == 1) else ... */
 		
 			if (ArePrefsValid (&prefs))
@@ -201,13 +206,21 @@ int main (int argc, char *argv [])
 						}
 
 				}		/* if (ArePrefsValid (&prefs)) */
-
+			else
+				{
+					PrintPrefs (&prefs, IDOS->Output ());
+					
+				}
+				
 			ClearLibGenPrefs (&prefs);
 
 			DB (KPRINTF ("%s %ld - freeing args\n", __FILE__, __LINE__));
+			if (args_p)
+				{
+					IDOS->FreeArgs (args_p);	
+				}
 
-
-			DB (KPRINTF ("%s %ld - closing lins\n", __FILE__, __LINE__));
+			DB (KPRINTF ("%s %ld - closing libs\n", __FILE__, __LINE__));
 			CloseLibs ();
 		}
 	else
@@ -1431,6 +1444,27 @@ STRPTR MakePrototypePattern (CONST_STRPTR pattern_s)
 }
 
 
+
+static void DebugArgs (const int32 * const args_p)
+{
+	IDOS->Printf ("AR_HEADER_INPUT_DIR \"%s\"\n", (CONST_STRPTR) args_p [AR_HEADER_INPUT_DIR]);
+	IDOS->Printf ("AR_SOURCE_INPUT_DIR \"%s\"\n", (CONST_STRPTR) args_p [AR_SOURCE_INPUT_DIR]);		
+	IDOS->Printf ("AR_RECURSE \"%d\"\n",  args_p [AR_RECURSE]);
+	IDOS->Printf ("AR_LIBRARY_NAME \"%s\"\n", (CONST_STRPTR) args_p [AR_LIBRARY_NAME]);
+	IDOS->Printf ("AR_INPUT_HEADER_FILE_PATTERN \"%s\"\n", (CONST_STRPTR) args_p [AR_INPUT_HEADER_FILE_PATTERN]);
+	IDOS->Printf ("AR_INPUT_SOURCE_FILE_PATTERN \"%s\"\n", (CONST_STRPTR) args_p [AR_INPUT_SOURCE_FILE_PATTERN]);		
+	IDOS->Printf ("AR_PROTOTYPE_PATTERN \"%s\"\n", (CONST_STRPTR) args_p [AR_PROTOTYPE_PATTERN]);	
+	IDOS->Printf ("AR_VERSION \"%d\"\n",  args_p [AR_VERSION]);
+	IDOS->Printf ("AR_FLAGS \"%s\"\n", (CONST_STRPTR) args_p [AR_FLAGS]);
+	IDOS->Printf ("AR_GENERATE_CODE \"%d\"\n", args_p [AR_GENERATE_CODE]);
+	IDOS->Printf ("AR_VERBOSE \"%d\"\n", args_p [AR_VERBOSE]);		
+	IDOS->Printf ("AR_NEWLIB \"%d\"\n",  args_p [AR_NEWLIB]);
+	IDOS->Printf ("AR_ORDERING_FILENAME \"%s\"\n", (CONST_STRPTR) args_p [AR_ORDERING_FILENAME]);
+	IDOS->Printf ("AR_EXCLUDED_FUNCTIONS_FILENAME \"%s\"\n", (CONST_STRPTR) args_p [AR_EXCLUDED_FUNCTIONS_FILENAME]);
+	IDOS->Printf ("AR_PATHS_TO_IGNORE \"%s\"\n", (CONST_STRPTR) args_p [AR_PATHS_TO_IGNORE]);		
+} 
+
+
 static BOOL FillInPrefs (LibGenPrefs *prefs_p, const int32 * const args_p)
 {
 	BOOL success_flag = TRUE;
@@ -1439,14 +1473,20 @@ static BOOL FillInPrefs (LibGenPrefs *prefs_p, const int32 * const args_p)
 
 	if (args_p [AR_INPUT_HEADER_FILE_PATTERN])
 		{
-			success_flag = SetLibGenPrefsHeadersPattern (prefs_p, (CONST_STRPTR) args_p [AR_INPUT_HEADER_FILE_PATTERN]);
+			if (!SetLibGenPrefsHeadersPattern (prefs_p, (CONST_STRPTR) args_p [AR_INPUT_HEADER_FILE_PATTERN]))
+				{
+					IDOS->Printf ("SetLibGenPrefsHeadersPattern failed for \"%s\"\n", (CONST_STRPTR) args_p [AR_INPUT_HEADER_FILE_PATTERN]);	
+				}
 		}
 
 	if (success_flag)
-		{
+		{				
 			if (args_p [AR_INPUT_SOURCE_FILE_PATTERN])
 				{
-					success_flag = SetLibGenPrefsSourcesPattern (prefs_p, (CONST_STRPTR) args_p [AR_INPUT_SOURCE_FILE_PATTERN]);
+					if (!SetLibGenPrefsSourcesPattern (prefs_p, (CONST_STRPTR) args_p [AR_INPUT_SOURCE_FILE_PATTERN]))
+						{
+							IDOS->Printf ("SetLibGenPrefsSourcesPattern failed for \"%s\"\n", (CONST_STRPTR) args_p [AR_INPUT_SOURCE_FILE_PATTERN]);	
+						}
 				}
 
 		}		/* if (success_flag) */
@@ -1454,8 +1494,11 @@ static BOOL FillInPrefs (LibGenPrefs *prefs_p, const int32 * const args_p)
 	if (success_flag)
 		{
 			if (args_p [AR_PROTOTYPE_PATTERN])
-				{
-					success_flag = SetLibGenPrefsPrototypePattern (prefs_p, (CONST_STRPTR) args_p [AR_INPUT_SOURCE_FILE_PATTERN]);
+				{					
+					if (!SetLibGenPrefsPrototypePattern (prefs_p, (CONST_STRPTR) args_p [AR_PROTOTYPE_PATTERN]))
+						{
+							IDOS->Printf ("SetLibGenPrefsPrototypePattern failed for \"%s\"\n", (CONST_STRPTR) args_p [AR_PROTOTYPE_PATTERN]);	
+						}
 				}
 
 		}		/* if (success_flag) */
@@ -1505,7 +1548,7 @@ static BOOL FillInPrefs (LibGenPrefs *prefs_p, const int32 * const args_p)
 				}
 			else
 				{
-					IDOS->Printf ("Ignoring invalid flag \"%s\", must be either private, protected or none");
+					IDOS->Printf ("Ignoring invalid flag \"%s\", must be either private, protected or none", value_s);
 				}
 		}
 

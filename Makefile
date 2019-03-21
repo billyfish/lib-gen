@@ -166,7 +166,6 @@ src/interface_h_writer.o: src/interface_h_writer.c src/interface_h_writer.h src/
 	 src/debugging_utils.h src/function_definition.h
 	$(CC) -c src/interface_h_writer.c -o src/interface_h_writer.o $(CFLAGS)
 
-src/gui.o: src/gui.c src/gui.h src/prefs.h \
-	
+src/gui.o: src/gui.c src/gui.h src/prefs.h
 	$(CC) -c src/gui.c -o src/gui.o $(CFLAGS)
 
