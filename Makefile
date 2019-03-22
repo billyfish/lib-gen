@@ -37,7 +37,7 @@ CC := gcc:bin/gcc
 
 INCPATH := -I.
 
-CFLAGS := $(INCPATH) -gstabs -Wall -Wextra -Wwrite-strings -D_AMIGA_  -D_DEBUG  -IWorkspace:ctags58
+CFLAGS := $(INCPATH) -gstabs -Wall -Wextra -Wwrite-strings -D_AMIGA_  -D_DEBUG -D_DEBUG_STACK  -IWorkspace:ctags58
 
 
 ###################################################################

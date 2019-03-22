@@ -472,7 +472,7 @@ int Run (LibGenPrefs *prefs_p, STRPTR prefix_s)
 //			IDOS->Printf ("header pattern \"%s\" regexp \"%s\"\n", header_filename_pattern_s, header_filename_regexp_s);
 		}
 			
-	if (GeneratePrototypesList (prefs_p -> lgp_source_input_dir_s, prefs_p -> lgp_header_filename_regexp_s, prefs_p -> lgp_prototype_regexp_s, prefs_p -> lgp_recurse_flag, &function_defs, prefs_p -> lgp_paths_to_ignore_p, prefs_p -> lgp_functions_to_ignore_p))
+	if (GeneratePrototypesList (prefs_p -> lgp_header_input_dir_s, prefs_p -> lgp_header_filename_regexp_s, prefs_p -> lgp_prototype_regexp_s, prefs_p -> lgp_recurse_flag, &function_defs, prefs_p -> lgp_paths_to_ignore_p, prefs_p -> lgp_functions_to_ignore_p))
 		{
 			struct List *source_files_p = GetFilesList (prefs_p -> lgp_source_input_dir_s, prefs_p -> lgp_source_filename_regexp_s, prefs_p -> lgp_recurse_flag, prefs_p -> lgp_paths_to_ignore_p);
 			
@@ -1020,6 +1020,7 @@ struct List *GetFilesList (CONST_STRPTR root_path_s, CONST_STRPTR filename_regex
 
 	if (filenames_p)
 		{
+			IDOS->Printf ("About to call ScanPath with root \"%s\"\n", root_path_s);
 			if (!ScanPath (root_path_s, filenames_p, filename_regexp_s, recurse_flag, paths_to_ignore_p))
 				{
 					FreeList (filenames_p);

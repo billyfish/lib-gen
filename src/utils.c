@@ -9,10 +9,10 @@
 #include "utils.h"
 #include "parameter.h"
 #include "function_definition.h"
-
+#include "list_utils.h"
 
 #ifdef _DEBUG
-#define UTILS_DEBUG (1)
+#define UTILS_DEBUG (3)
 #endif
 
 
@@ -351,7 +351,7 @@ static BOOL CheckAndAddHeaderFile (CONST_STRPTR filename_s, CONST_STRPTR dir_s, 
 			if (!add_flag)
 				{
 					#if UTILS_DEBUG >= 2
-					DB (KPRINTF ("%s %ld - ScanDirectories; no match for %s\n", __FILE__, __LINE__, dat_p -> Name));
+					DB (KPRINTF ("%s %ld - ScanDirectories; no match for %s\n", __FILE__, __LINE__, filename_s));
 					#endif
 				}
 		}
@@ -361,7 +361,7 @@ static BOOL CheckAndAddHeaderFile (CONST_STRPTR filename_s, CONST_STRPTR dir_s, 
 			if (AddFullFilenameToList (filenames_p, dir_s, filename_s, paths_to_ignore_p))
 				{
 					#if UTILS_DEBUG >= 2
-					DB (KPRINTF ("%s %ld - ScanDirectories; added %s size %lu\n", __FILE__, __LINE__, filename_s, GetListSize (header_definitions_p)));
+					DB (KPRINTF ("%s %ld - ScanDirectories; added %s size %lu\n", __FILE__, __LINE__, filename_s, GetListSize (filenames_p)));
 					#endif
 				}
 			else
@@ -383,7 +383,7 @@ int32 ScanPath (CONST_STRPTR path_s, struct List *filenames_p, CONST_STRPTR file
 
 	int32 success = FALSE;
 	
-
+	IDOS->Printf ("*** ObtainDirContextTags with path \"%s\"\n", path_s);
 	struct ExamineData *data_p = IDOS->ExamineObjectTags (EX_StringNameInput, path_s, TAG_END);
 	
 	if (data_p)
@@ -410,7 +410,10 @@ int32 ScanPath (CONST_STRPTR path_s, struct List *filenames_p, CONST_STRPTR file
 				}
 			else if (EXD_IS_DIRECTORY (data_p))
 				{
-					APTR context_p = IDOS->ObtainDirContextTags (EX_StringNameInput, path_s,
+					APTR context_p = NULL;
+					IDOS->Printf ("ObtainDirContextTags for \"%s\"\n", path_s);
+					
+					context_p = IDOS->ObtainDirContextTags (EX_StringNameInput, path_s,
 						EX_DataFields, (EXF_NAME | EXF_LINK | EXF_TYPE),
 						TAG_END);
 				
@@ -421,7 +424,7 @@ int32 ScanPath (CONST_STRPTR path_s, struct List *filenames_p, CONST_STRPTR file
 				
 							if (v >= VB_LOUD)
 								{
-									IDOS->Printf ("Scanning \"%s\" with pattern %s\n", path_s, filename_pattern_s);
+									IDOS->Printf ("Scanning \"%s\" with pattern %s\n", data_p -> Name, filename_pattern_s);
 								}
 				
 							/*
@@ -455,23 +458,29 @@ int32 ScanPath (CONST_STRPTR path_s, struct List *filenames_p, CONST_STRPTR file
 										{
 											if (recurse_flag)
 												{
-													STRPTR path_s = MakeFilename (path_s, dat_p -> Name);
+													STRPTR new_path_s = MakeFilename (path_s, dat_p -> Name);
 				
-													if (path_s)
+													if (new_path_s)
 														{
-															if (IsPathValid (path_s, paths_to_ignore_p))
+															IDOS->Printf ("Got new path \"%s\"\n", new_path_s);
+															
+															if (IsPathValid (new_path_s, paths_to_ignore_p))
 																{
-																	if (!ScanPath (path_s, filenames_p, filename_pattern_s, recurse_flag, paths_to_ignore_p))  /* recurse */
+																	if (!ScanPath (new_path_s, filenames_p, filename_pattern_s, recurse_flag, paths_to_ignore_p))  /* recurse */
 																		{
 																			break;
 																		}
 																}
+															else
+																{
+																	IDOS->Printf ("IsPathValid ignoring \"%s\"\n", new_path_s);
+																}
 				
-															IExec->FreeVec (path_s);
+															IExec->FreeVec (new_path_s);
 														}
 													else
 														{
-															IDOS->Printf ("ScanPath: Not enough memory to allocate filename\n");
+															IDOS->Printf ("MakeFilename failed for \"%s\" and \"%s\"\n", path_s, dat_p -> Name);
 														}
 												}
 										}
@@ -483,7 +492,7 @@ int32 ScanPath (CONST_STRPTR path_s, struct List *filenames_p, CONST_STRPTR file
 								}
 							else
 								{
-									IDOS->Printf ("Failed to obtain directory context for \"%s\"\n", path_s);
+									IDOS->Printf ("Failed to obtain directory context for \"%s\"\n", data_p -> Name);
 									IDOS->PrintFault (IDOS->IoErr (), NULL); /* failure - why ? */
 								}						
 											
