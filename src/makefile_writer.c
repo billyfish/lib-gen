@@ -349,19 +349,70 @@ STATIC BOOL WriteMakefileOriginalSources (BPTR makefile_p, struct List * const o
 	
 	while (node_p && success_flag)
 		{
+			STRPTR filename_s = node_p -> ln_Name;
+			uint32 num_starting_slashes = 0;
+			BOOL alloc_flag = FALSE;
+			
+			IDOS->Printf ("original source filename %s\n", filename_s);
+			
+			/*
+				Make requires UNIX-style parent directory strings, ../, whereas 
+				AmigaOS has /, so do any conversion needed.
+			*/
+			while ((*filename_s != '\0') && (*filename_s == '/'))
+				{
+					++ num_starting_slashes;
+					++ filename_s;
+				}
+			
+
+			IDOS->Printf ("original source filename %s, num slashes %lu\n", filename_s, num_starting_slashes);
+			
+			if (num_starting_slashes > 0)
+				{
+					uint32 l = strlen (filename_s);
+					l += (num_starting_slashes << 1) + 1;
+					 
+					filename_s = (STRPTR) IExec->AllocVecTags (l, AVT_ClearWithValue, 0, TAG_DONE);
+					
+					if (filename_s)
+						{
+							STRPTR temp_p = filename_s;
+							const uint32 UNIX_PARENT_STRING_LENGTH = 3;
+							alloc_flag = TRUE;
+							
+							for (l = num_starting_slashes; l > 0; -- l, temp_p += UNIX_PARENT_STRING_LENGTH)
+								{
+									IExec->CopyMem ("../", temp_p, UNIX_PARENT_STRING_LENGTH);
+									
+												IDOS->Printf ("wip source filename %s\n", filename_s);
+								}
+							
+							strcpy (temp_p, (node_p -> ln_Name) + num_starting_slashes);
+							
+							
+										IDOS->Printf ("adapted source filename %s\n", filename_s);
+						}
+				}
+			
 			if (first_time_flag)
 				{
-					success_flag = IDOS->FPrintf (makefile_p, "ORIGINAL_LIB_SRC = %s\n", node_p -> ln_Name) >= 0;
+					success_flag = IDOS->FPrintf (makefile_p, "ORIGINAL_LIB_SRC = %s\n", filename_s) >= 0;
 					first_time_flag = FALSE;
 				}
 			else
 				{
-					success_flag = IDOS->FPrintf (makefile_p, "ORIGINAL_LIB_SRC += %s\n", node_p -> ln_Name) >= 0;
+					success_flag = IDOS->FPrintf (makefile_p, "ORIGINAL_LIB_SRC += %s\n", filename_s) >= 0;
 				}
 					
 			if (success_flag)
 				{
 					node_p = IExec->GetSucc (node_p);
+				}
+				
+			if (alloc_flag)
+				{
+					IExec->FreeVec (filename_s);
 				}
 		}
 

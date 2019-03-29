@@ -1155,7 +1155,7 @@ BOOL WriteSourceForAllFunctionDeclarations (struct List *fn_defs_p, CONST_STRPTR
 	BOOL success_flag = TRUE;
 	struct FunctionDefinitionNode *node_p = (struct FunctionDefinitionNode *) IExec->GetHead (fn_defs_p);
 	CONST_STRPTR current_filename_s = "";
-	STRPTR current_include_guard_s = NULL;
+	STRPTR current_include_guard_s = "stuff";
 	BPTR output_f = ZERO;
 
 	while (node_p && success_flag)
