@@ -23,6 +23,7 @@ STATIC BOOL WriteMakefileOriginalSources (BPTR makefile_p, struct List * const o
 
 STATIC BOOL WriteOriginalLibraryIncludePaths (BPTR makefile_p, struct List * const function_defs_p);
 
+STATIC BOOL GetUnixStylePath (CONST CONST_STRPTR filename_s, STRPTR *unix_style_path_s);
 
 
 BOOL WriteMakefile (CONST CONST_STRPTR makefile_s, CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR library_s, struct List * const function_defs_p, struct List *original_source_filenames_p)
@@ -186,7 +187,39 @@ STATIC BOOL WriteOriginalLibraryIncludePaths (BPTR makefile_p, struct List * con
 								{
 									IDOS->Printf ("Adding \"%s\" to original include path from \"%s\"\n", parent_s, node_p -> fdn_function_def_p -> fd_header_filename_s);
 								}
-								
+		
+		/*						
+			TODO: Add this in!
+			
+							if (GetUnixStylePath (node_p -> ln_Name, &filename_s))
+								{
+					CONST_STRPTR temp_s = filename_s ? filename_s : node_p -> ln_Name;
+
+					if (first_time_flag)
+						{
+							success_flag = IDOS->FPrintf (makefile_p, "ORIGINAL_LIB_SRC = %s\n", temp_s) >= 0;
+							first_time_flag = FALSE;
+						}
+					else
+						{
+							success_flag = IDOS->FPrintf (makefile_p, "ORIGINAL_LIB_SRC += %s\n", temp_s) >= 0;
+						}
+							
+					if (success_flag)
+						{
+							node_p = IExec->GetSucc (node_p);
+						}
+						
+					if (filename_s)
+						{
+							IExec->FreeVec (filename_s);
+						}					
+				}
+			else
+				{
+					success_flag = false;
+				}	
+			*/		
 							success_flag = (IDOS->FPrintf (makefile_p, "CFLAGS += -I%s\n", parent_s) >= 0);
 						}
 						
@@ -338,6 +371,59 @@ STATIC BOOL WriteMakefileAmigaSources (BPTR makefile_p, CONST CONST_STRPTR libra
 }
 
 
+STATIC BOOL GetUnixStylePath (CONST CONST_STRPTR filename_s, STRPTR *unix_style_path_ss)
+{
+	BOOL success_flag = FALSE;
+	STRPTR unix_path_s = NULL;
+	uint32 num_starting_slashes = 0;
+	STRPTR temp_s = (CONST STRPTR) filename_s;
+	
+	/*
+		Make requires UNIX-style parent directory strings, ../, whereas 
+		AmigaOS has /, so do any conversion needed.
+	*/
+	while ((*temp_s != '\0') && (*temp_s == '/'))
+		{
+			++ num_starting_slashes;
+			++ temp_s;
+		}
+	
+	IDOS->Printf ("original source filename %s, num slashes %lu\n", filename_s, num_starting_slashes);
+	
+	if (num_starting_slashes > 0)
+		{
+			uint32 l = strlen (filename_s);
+			l += (num_starting_slashes << 1) + 1;
+			 
+			unix_path_s = (STRPTR) IExec->AllocVecTags (l, AVT_ClearWithValue, 0, TAG_DONE);
+			
+			if (unix_path_s)
+				{
+					temp_s = unix_path_s;
+					const uint32 UNIX_PARENT_STRING_LENGTH = 3;
+					
+					for (l = num_starting_slashes; l > 0; -- l, temp_s += UNIX_PARENT_STRING_LENGTH)
+						{
+							IExec->CopyMem ("../", temp_s, UNIX_PARENT_STRING_LENGTH);
+							
+							IDOS->Printf ("wip source filename %s\n", unix_path_s);
+						}
+					
+					strcpy (unix_path_s, filename_s + num_starting_slashes);
+										
+					IDOS->Printf ("adapted source filename %s\n", unix_path_s);
+					
+					*unix_style_path_ss = unix_path_s;
+				}
+		}
+	else
+		{
+			success_flag = TRUE;
+		}
+				
+	return success_flag;
+}
+
 
 STATIC BOOL WriteMakefileOriginalSources (BPTR makefile_p, struct List * const original_filenames_p)
 {
@@ -350,70 +436,36 @@ STATIC BOOL WriteMakefileOriginalSources (BPTR makefile_p, struct List * const o
 	while (node_p && success_flag)
 		{
 			STRPTR filename_s = node_p -> ln_Name;
-			uint32 num_starting_slashes = 0;
-			BOOL alloc_flag = FALSE;
 			
-			IDOS->Printf ("original source filename %s\n", filename_s);
-			
-			/*
-				Make requires UNIX-style parent directory strings, ../, whereas 
-				AmigaOS has /, so do any conversion needed.
-			*/
-			while ((*filename_s != '\0') && (*filename_s == '/'))
+			if (GetUnixStylePath (node_p -> ln_Name, &filename_s))
 				{
-					++ num_starting_slashes;
-					++ filename_s;
-				}
-			
+					CONST_STRPTR temp_s = filename_s ? filename_s : node_p -> ln_Name;
 
-			IDOS->Printf ("original source filename %s, num slashes %lu\n", filename_s, num_starting_slashes);
-			
-			if (num_starting_slashes > 0)
-				{
-					uint32 l = strlen (filename_s);
-					l += (num_starting_slashes << 1) + 1;
-					 
-					filename_s = (STRPTR) IExec->AllocVecTags (l, AVT_ClearWithValue, 0, TAG_DONE);
-					
+					if (first_time_flag)
+						{
+							success_flag = IDOS->FPrintf (makefile_p, "ORIGINAL_LIB_SRC = %s\n", temp_s) >= 0;
+							first_time_flag = FALSE;
+						}
+					else
+						{
+							success_flag = IDOS->FPrintf (makefile_p, "ORIGINAL_LIB_SRC += %s\n", temp_s) >= 0;
+						}
+							
+					if (success_flag)
+						{
+							node_p = IExec->GetSucc (node_p);
+						}
+						
 					if (filename_s)
 						{
-							STRPTR temp_p = filename_s;
-							const uint32 UNIX_PARENT_STRING_LENGTH = 3;
-							alloc_flag = TRUE;
-							
-							for (l = num_starting_slashes; l > 0; -- l, temp_p += UNIX_PARENT_STRING_LENGTH)
-								{
-									IExec->CopyMem ("../", temp_p, UNIX_PARENT_STRING_LENGTH);
-									
-												IDOS->Printf ("wip source filename %s\n", filename_s);
-								}
-							
-							strcpy (temp_p, (node_p -> ln_Name) + num_starting_slashes);
-							
-							
-										IDOS->Printf ("adapted source filename %s\n", filename_s);
-						}
-				}
-			
-			if (first_time_flag)
-				{
-					success_flag = IDOS->FPrintf (makefile_p, "ORIGINAL_LIB_SRC = %s\n", filename_s) >= 0;
-					first_time_flag = FALSE;
+							IExec->FreeVec (filename_s);
+						}					
 				}
 			else
 				{
-					success_flag = IDOS->FPrintf (makefile_p, "ORIGINAL_LIB_SRC += %s\n", filename_s) >= 0;
+					success_flag = FALSE;
 				}
-					
-			if (success_flag)
-				{
-					node_p = IExec->GetSucc (node_p);
-				}
-				
-			if (alloc_flag)
-				{
-					IExec->FreeVec (filename_s);
-				}
+
 		}
 
 	LEAVE ();
