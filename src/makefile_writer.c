@@ -183,44 +183,31 @@ STATIC BOOL WriteOriginalLibraryIncludePaths (BPTR makefile_p, struct List * con
 				{
 					if ((!old_parent_s) || (strcmp (old_parent_s, parent_s) != 0))	
 						{
+							STRPTR unix_style_path_s = NULL;
+
+							if (GetUnixStylePath (parent_s, &unix_style_path_s))
+								{
+									CONST_STRPTR temp_s = unix_style_path_s ? unix_style_path_s : parent_s;
+
+							
 							if (GetVerbosity () >= VB_LOUD)
 								{
-									IDOS->Printf ("Adding \"%s\" to original include path from \"%s\"\n", parent_s, node_p -> fdn_function_def_p -> fd_header_filename_s);
+									IDOS->Printf ("Adding \"%s\" to original include path from \"%s\"\n", temp_s, parent_s);
 								}
-		
-		/*						
-			TODO: Add this in!
-			
-							if (GetUnixStylePath (node_p -> ln_Name, &filename_s))
+								
+				
+									success_flag = (IDOS->FPrintf (makefile_p, "CFLAGS += -I%s\n", temp_s) >= 0);
+										
+									if (unix_style_path_s)
+										{
+											IExec->FreeVec (unix_style_path_s);
+										}					
+								}
+							else
 								{
-					CONST_STRPTR temp_s = filename_s ? filename_s : node_p -> ln_Name;
-
-					if (first_time_flag)
-						{
-							success_flag = IDOS->FPrintf (makefile_p, "ORIGINAL_LIB_SRC = %s\n", temp_s) >= 0;
-							first_time_flag = FALSE;
-						}
-					else
-						{
-							success_flag = IDOS->FPrintf (makefile_p, "ORIGINAL_LIB_SRC += %s\n", temp_s) >= 0;
-						}
-							
-					if (success_flag)
-						{
-							node_p = IExec->GetSucc (node_p);
-						}
-						
-					if (filename_s)
-						{
-							IExec->FreeVec (filename_s);
-						}					
-				}
-			else
-				{
-					success_flag = false;
-				}	
-			*/		
-							success_flag = (IDOS->FPrintf (makefile_p, "CFLAGS += -I%s\n", parent_s) >= 0);
+									success_flag = FALSE;
+								}	
+				
 						}
 						
 					if (old_parent_s)
@@ -409,11 +396,12 @@ STATIC BOOL GetUnixStylePath (CONST CONST_STRPTR filename_s, STRPTR *unix_style_
 							IDOS->Printf ("wip source filename %s\n", unix_path_s);
 						}
 					
-					strcpy (unix_path_s, filename_s + num_starting_slashes);
+					strcpy (temp_s, filename_s + num_starting_slashes);
 										
 					IDOS->Printf ("adapted source filename %s\n", unix_path_s);
 					
 					*unix_style_path_ss = unix_path_s;
+					success_flag = TRUE;
 				}
 		}
 	else
@@ -435,11 +423,16 @@ STATIC BOOL WriteMakefileOriginalSources (BPTR makefile_p, struct List * const o
 	
 	while (node_p && success_flag)
 		{
-			STRPTR filename_s = node_p -> ln_Name;
+			STRPTR filename_s = NULL;
+			
+
+			IDOS->Printf ("About to get unix style path for  \"%s\"\n", node_p -> ln_Name);			
 			
 			if (GetUnixStylePath (node_p -> ln_Name, &filename_s))
 				{
 					CONST_STRPTR temp_s = filename_s ? filename_s : node_p -> ln_Name;
+
+					IDOS->Printf ("temp_sr \"%s\"\n", temp_s);
 
 					if (first_time_flag)
 						{
@@ -464,6 +457,7 @@ STATIC BOOL WriteMakefileOriginalSources (BPTR makefile_p, struct List * const o
 			else
 				{
 					success_flag = FALSE;
+					IDOS->Printf ("Failed to get path for \"%s\"\n", node_p -> ln_Name);
 				}
 
 		}

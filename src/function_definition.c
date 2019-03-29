@@ -369,7 +369,11 @@ int8 TokenizeFunctionPrototype (struct FunctionDefinition **fn_def_pp, const cha
 					#if FUNCTION_DEFINITIONS_DEBUG > 4
 					DB (KPRINTF ("%s %ld - Getting next param from \"%s\"\n", __FILE__, __LINE__, start_p));
 					#endif
-
+	
+	
+					/*
+						@TODO deal with "extern" at start of prototype string
+					*/ 
 					param_p = GetNextParameter (&start_p, function_flag);
 
 					if (param_p)
