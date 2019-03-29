@@ -121,6 +121,9 @@ static BOOL WriteFunctionDeclarations (BPTR vector_file_p, CONST CONST_STRPTR li
 				{
 					BOOL new_file_flag = FALSE;
 					
+					
+					IDOS->Printf ("GetSourceFilename for \"%s\" and \"%s\" and \"h\" returned \"%s\"\n", library_s, fn_def_p -> fd_header_filename_s, filename_s);
+					
 					if (old_filename_s == NULL) 
 						{
 							new_file_flag = TRUE;
@@ -151,7 +154,7 @@ static BOOL WriteFunctionDeclarations (BPTR vector_file_p, CONST CONST_STRPTR li
 				}
 			else
 				{
-					IDOS->Printf ("Failed to geneate source filename for \"%s\" and \"%s\" and \".h\"\n", library_s, fn_def_p -> fd_header_filename_s);
+					IDOS->Printf ("Failed to generate source filename for \"%s\" and \"%s\" and \".h\"\n", library_s, fn_def_p -> fd_header_filename_s);
 					success_flag = FALSE;
 				}
 

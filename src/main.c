@@ -57,7 +57,7 @@ static void CloseLibs (void);
 
 BOOL GetMatchingPrototypes (CONST_STRPTR filename_s, CONST_STRPTR pattern_s, struct DocumentParser *document_parser_p, struct List *function_defs_p);
 BOOL ParseFile (CONST_STRPTR pattern_s, CONST_STRPTR filename_s, struct List *function_defs_p, struct DocumentParser *document_parser_p, struct List *functions_to_ignore_p);
-BOOL GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR filename_regexp_s, CONST CONST_STRPTR prototype_regexp_s, CONST BOOL recurse_flag, struct List *function_definitions_p, struct List *paths_to_ignore_p, struct List *functions_to_ignore_p);
+struct List *GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR filename_regexp_s, CONST CONST_STRPTR prototype_regexp_s, CONST BOOL recurse_flag, struct List *function_definitions_p, struct List *paths_to_ignore_p, struct List *functions_to_ignore_p);
 
 void ClearCapturedExpression (struct CapturedExpression *capture_p);
 
@@ -449,6 +449,8 @@ int Run (LibGenPrefs *prefs_p, STRPTR prefix_s)
 	/* List of FunctionDefinitionsNodes */
 	struct List function_defs;
 
+
+	struct List *header_filenames_p = NULL;
 	/*
 		List of the ordering of a previous version
 		of the library so that we remain compatible
@@ -472,7 +474,7 @@ int Run (LibGenPrefs *prefs_p, STRPTR prefix_s)
 //			IDOS->Printf ("header pattern \"%s\" regexp \"%s\"\n", header_filename_pattern_s, header_filename_regexp_s);
 		}
 			
-	if (GeneratePrototypesList (prefs_p -> lgp_header_input_dir_s, prefs_p -> lgp_header_filename_regexp_s, prefs_p -> lgp_prototype_regexp_s, prefs_p -> lgp_recurse_flag, &function_defs, prefs_p -> lgp_paths_to_ignore_p, prefs_p -> lgp_functions_to_ignore_p))
+	if ((header_filenames_p = GeneratePrototypesList (prefs_p -> lgp_header_input_dir_s, prefs_p -> lgp_header_filename_regexp_s, prefs_p -> lgp_prototype_regexp_s, prefs_p -> lgp_recurse_flag, &function_defs, prefs_p -> lgp_paths_to_ignore_p, prefs_p -> lgp_functions_to_ignore_p)) != NULL)
 		{
 			struct List *source_files_p = GetFilesList (prefs_p -> lgp_source_input_dir_s, prefs_p -> lgp_source_filename_regexp_s, prefs_p -> lgp_recurse_flag, prefs_p -> lgp_paths_to_ignore_p);
 			
@@ -586,7 +588,6 @@ int Run (LibGenPrefs *prefs_p, STRPTR prefix_s)
 					ClearList (source_files_p, TRUE);
 				}		/* if (source_files_p) */
 		
-				
 		}		/* if (GeneratePrototypesList (root_path_s, header_filename_regexp_s, prototype_regexp_s, recurse_flag, &function_defs)) */
 
 
@@ -713,6 +714,11 @@ int Run (LibGenPrefs *prefs_p, STRPTR prefix_s)
 	DB (KPRINTF ("%s %ld - pre ClearFunctionDefinitionsList\n", __FILE__, __LINE__));
 	ClearFunctionDefinitionsList (&function_defs);
 	DB (KPRINTF ("%s %ld - post ClearFunctionDefinitionsList\n", __FILE__, __LINE__));
+
+	if (header_filenames_p)
+		{
+			FreeList (header_filenames_p);	
+		}
 
 	LEAVE ();
 	return res;
@@ -946,7 +952,7 @@ BOOL GetPreviousLibraryOrder (CONST_STRPTR filename_s, CONST_STRPTR struct_name_
 
 
 
-BOOL GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR filename_regexp_s, CONST CONST_STRPTR prototype_regexp_s, CONST BOOL recurse_flag, struct List *function_definitions_p, struct List *paths_to_ignore_p, struct List *functions_to_ignore_p)
+struct List *GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR filename_regexp_s, CONST CONST_STRPTR prototype_regexp_s, CONST BOOL recurse_flag, struct List *function_definitions_p, struct List *paths_to_ignore_p, struct List *functions_to_ignore_p)
 {
 	ENTER ();
 
@@ -1003,11 +1009,15 @@ BOOL GeneratePrototypesList (CONST CONST_STRPTR root_path_s, CONST CONST_STRPTR 
 
 				}		/* if (num_header_files > 0) */
 
-			FreeList (headers_p);
+			if (!success_flag)
+				{
+					FreeList (headers_p);
+					headers_p = NULL;	
+				}
 		}		/* if (headers_p) */
 
 	LEAVE ();
-	return success_flag;
+	return headers_p;
 }
 
 
