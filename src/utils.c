@@ -789,9 +789,9 @@ void ReplaceChars (STRPTR value_s, CONST CONST_STRPTR old_values_s, const char n
 }
 	
 	
-STRPTR ScrollPastWhitespace (STRPTR data_s)
+STRPTR ScrollPastWhitespace (CONST_STRPTR data_s)
 {
-	STRPTR start_s = NULL;
+	CONST_STRPTR start_s = NULL;
 	
 	ENTER ();
 
@@ -828,7 +828,7 @@ STRPTR ScrollPastWhitespace (STRPTR data_s)
 
 	LEAVE ();
 	
-	return start_s;
+	return (STRPTR) start_s;
 }	
 
 

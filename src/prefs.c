@@ -31,7 +31,7 @@ static struct List *GetFunctionsToIgnore (CONST_STRPTR filename_s);
 
 static BOOL SetLibGenPrefsRegExp (STRPTR *regexp_ss, CONST_STRPTR pattern_s);
 
-
+static 
 
 
 BOOL InitLibGenPrefs (LibGenPrefs *prefs_p)

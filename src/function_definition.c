@@ -357,85 +357,106 @@ int8 TokenizeFunctionPrototype (struct FunctionDefinition **fn_def_pp, const cha
 
 	if (fd_p)
 		{
-			const char *start_p = prototype_s;
-			BOOL function_flag = TRUE;
-			BOOL loop_flag = TRUE;
-			struct Parameter *param_p = NULL;
-
-			success_flag = TRUE;
-
-			while (loop_flag && success_flag)
+			const char *start_p = ScrollPastWhitespace (prototype_s);
+			
+			if (*start_p != '\0')
 				{
-					#if FUNCTION_DEFINITIONS_DEBUG > 4
-					DB (KPRINTF ("%s %ld - Getting next param from \"%s\"\n", __FILE__, __LINE__, start_p));
-					#endif
-	
-	
-					/*
-						@TODO deal with "extern" at start of prototype string
-					*/ 
-					param_p = GetNextParameter (&start_p, function_flag);
-
-					if (param_p)
+					const char * const EXTERN_DECL_S = "extern ";
+					const size_t EXTERN_DECL_LENGTH = strlen (EXTERN_DECL_S);
+					
+					if (strncmp (EXTERN_DECL_S, start_p, EXTERN_DECL_LENGTH) == 0)
 						{
-							//IDOS->Printf ("\nGot next param!\n");
-							//PrintParameter (IDOS->Output (), param_p);
-							//IDOS->Printf ("\n");
+							start_p += 	EXTERN_DECL_LENGTH;
+						}
 
-							if (function_flag)
+					BOOL function_flag = TRUE;
+					BOOL loop_flag = TRUE;
+					struct Parameter *param_p = NULL;
+		
+					success_flag = TRUE;
+		
+				
+		
+					while (loop_flag && success_flag)
+						{
+							#if FUNCTION_DEFINITIONS_DEBUG > 4
+							DB (KPRINTF ("%s %ld - Getting next param from \"%s\"\n", __FILE__, __LINE__, start_p));
+							#endif
+			
+			
+							/*
+								@TODO deal with "extern" at start of prototype string
+							*/ 
+							param_p = GetNextParameter (&start_p, function_flag);
+		
+							if (param_p)
 								{
-									fd_p -> fd_definition_p = param_p;
-									function_flag = FALSE;
-
+									//IDOS->Printf ("\nGot next param!\n");
+									//PrintParameter (IDOS->Output (), param_p);
+									//IDOS->Printf ("\n");
+		
+									if (function_flag)
+										{
+											fd_p -> fd_definition_p = param_p;
+											function_flag = FALSE;
+		
+											while (isspace (*start_p))
+												{
+													++ start_p;
+												}
+		
+											if (*start_p == '(')
+												{
+													++ start_p;
+												}
+										}
+									else
+										{
+											success_flag = AddParameterAtBack (fd_p, param_p);
+										}
+								}
+							else
+								{
+									if (start_p)
+										{
+											//IDOS->Printf ("\nNo Param!\n");
+											success_flag = FALSE;
+										}
+									else
+										{
+											loop_flag = FALSE;
+										}
+								}
+		
+							if (start_p)
+								{
+									//IDOS->Printf ("start_p: \"%s\"\n", start_p);
+		
 									while (isspace (*start_p))
 										{
 											++ start_p;
 										}
-
-									if (*start_p == '(')
+		
+									if (*start_p == ')')
 										{
-											++ start_p;
+											loop_flag = FALSE;
 										}
 								}
 							else
 								{
-									success_flag = AddParameterAtBack (fd_p, param_p);
-								}
-						}
-					else
-						{
-							if (start_p)
-								{
-									//IDOS->Printf ("\nNo Param!\n");
-									success_flag = FALSE;
-								}
-							else
-								{
+									//IDOS->Printf ("\nstart_p = NULL!\n");
 									loop_flag = FALSE;
 								}
-						}
+		
+						}		/* while (start_p) */										
+					
+				}		/* if (*start_p != '\0') */
+			else
+				{
+					success_flag = FALSE;
+					DB (KPRINTF ("%s %ld - prototype is just whitespace \"%s\"\n", __FILE__, __LINE__, prototype_s));
+				}			
 
-					if (start_p)
-						{
-							//IDOS->Printf ("start_p: \"%s\"\n", start_p);
-
-							while (isspace (*start_p))
-								{
-									++ start_p;
-								}
-
-							if (*start_p == ')')
-								{
-									loop_flag = FALSE;
-								}
-						}
-					else
-						{
-							//IDOS->Printf ("\nstart_p = NULL!\n");
-							loop_flag = FALSE;
-						}
-
-				}		/* while (start_p) */
 
 			if (success_flag)
 				{

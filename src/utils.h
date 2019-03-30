@@ -68,7 +68,7 @@ STRPTR GetUpperCaseString (CONST_STRPTR src_s);
 STRPTR GetCapitalizedString (CONST_STRPTR src_s);
 
 
-STRPTR ScrollPastWhitespace (STRPTR data_s);		
+STRPTR ScrollPastWhitespace (CONST_STRPTR data_s);		
 
 STRPTR CreateRegEx (CONST_STRPTR pattern_s, BOOL capture_flag);
 
