@@ -60,7 +60,7 @@ with the options specifying the following:
 
 
 As a test of the nsbmp library, an example program based upon the ```decode_bmp``` program which comes as part of the libnsbmp project, 
-is in the ```nsbmp_example``` direectory.
+is in the ```nsbmp_example``` directory.
 
 
 
